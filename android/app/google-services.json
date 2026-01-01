@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "1020187359282",
+    "project_id": "eatwise-39b38",
+    "storage_bucket": "eatwise-39b38.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1020187359282:android:ba4222c44c05f874b4642b",
+        "android_client_info": {
+          "package_name": "com.mycompany.kalorik"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1020187359282-hh2q551seo5kvb8rumekrsqbke5tvnod.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB47S5t-FRNoU3fwjpQ9eeVN2cOftjgH9I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1020187359282-hh2q551seo5kvb8rumekrsqbke5tvnod.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1020187359282-cmo7c2bs8nlcjlr50kdipmeltb78disq.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.mycompany.kalorik"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

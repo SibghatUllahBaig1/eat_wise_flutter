@@ -1,0 +1,44 @@
+import '/backend/schema/structs/index.dart';
+import '/flutter_flow/flutter_flow_icon_button.dart';
+import '/flutter_flow/flutter_flow_theme.dart';
+import '/flutter_flow/flutter_flow_util.dart';
+import '/flutter_flow/flutter_flow_widgets.dart';
+import '/recipes/components/z_recipe_card/z_recipe_card_widget.dart';
+import 'dart:ui';
+import '/flutter_flow/custom_functions.dart' as functions;
+import 'diets_widget.dart' show DietsWidget;
+import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+
+class DietsModel extends FlutterFlowModel<DietsWidget> {
+  ///  Local state fields for this page.
+
+  int? pageItem = 0;
+
+  String? selectedDiet = 'Vegetarian';
+
+  ///  State fields for stateful widgets in this page.
+
+  // State field(s) for PageView widget.
+  PageController? pageViewController;
+
+  int get pageViewCurrentIndex => pageViewController != null &&
+          pageViewController!.hasClients &&
+          pageViewController!.page != null
+      ? pageViewController!.page!.round()
+      : 0;
+  // Models for zRecipeCard dynamic component.
+  late FlutterFlowDynamicModels<ZRecipeCardModel> zRecipeCardModels;
+
+  @override
+  void initState(BuildContext context) {
+    zRecipeCardModels = FlutterFlowDynamicModels(() => ZRecipeCardModel());
+  }
+
+  @override
+  void dispose() {
+    zRecipeCardModels.dispose();
+  }
+}
