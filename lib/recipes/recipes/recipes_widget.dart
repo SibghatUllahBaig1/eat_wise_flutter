@@ -338,24 +338,15 @@ class _RecipesWidgetState extends State<RecipesWidget>
                         mainAxisSize: MainAxisSize.max,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Padding(
-                              padding: EdgeInsetsDirectional.fromSTEB(
-                                  16.0, 0.0, 16.0, 0.0),
-                              child: Text(
-                                'Popular Categories',
-                                style: FlutterFlowTheme.of(context)
-                                    .titleLarge
-                                    .override(
-                                      font: GoogleFonts.inter(
-                                        fontWeight: FlutterFlowTheme.of(context)
-                                            .titleLarge
-                                            .fontWeight,
-                                        fontStyle: FlutterFlowTheme.of(context)
-                                            .titleLarge
-                                            .fontStyle,
-                                      ),
-                                      letterSpacing: 0.0,
+                          Padding(
+                            padding: EdgeInsetsDirectional.fromSTEB(
+                                16.0, 0.0, 16.0, 0.0),
+                            child: Text(
+                              'Popular Categories',
+                              style: FlutterFlowTheme.of(context)
+                                  .titleLarge
+                                  .override(
+                                    font: GoogleFonts.inter(
                                       fontWeight: FlutterFlowTheme.of(context)
                                           .titleLarge
                                           .fontWeight,
@@ -363,7 +354,14 @@ class _RecipesWidgetState extends State<RecipesWidget>
                                           .titleLarge
                                           .fontStyle,
                                     ),
-                              ),
+                                    letterSpacing: 0.0,
+                                    fontWeight: FlutterFlowTheme.of(context)
+                                        .titleLarge
+                                        .fontWeight,
+                                    fontStyle: FlutterFlowTheme.of(context)
+                                        .titleLarge
+                                        .fontStyle,
+                                  ),
                             ),
                           ),
                           Padding(
@@ -723,24 +721,15 @@ class _RecipesWidgetState extends State<RecipesWidget>
                               },
                             ),
                           ),
-                          Expanded(
-                            child: Padding(
-                              padding: EdgeInsetsDirectional.fromSTEB(
-                                  16.0, 24.0, 16.0, 0.0),
-                              child: Text(
-                                'Energy Value',
-                                style: FlutterFlowTheme.of(context)
-                                    .titleLarge
-                                    .override(
-                                      font: GoogleFonts.inter(
-                                        fontWeight: FlutterFlowTheme.of(context)
-                                            .titleLarge
-                                            .fontWeight,
-                                        fontStyle: FlutterFlowTheme.of(context)
-                                            .titleLarge
-                                            .fontStyle,
-                                      ),
-                                      letterSpacing: 0.0,
+                          Padding(
+                            padding: EdgeInsetsDirectional.fromSTEB(
+                                16.0, 24.0, 16.0, 0.0),
+                            child: Text(
+                              'Energy Value',
+                              style: FlutterFlowTheme.of(context)
+                                  .titleLarge
+                                  .override(
+                                    font: GoogleFonts.inter(
                                       fontWeight: FlutterFlowTheme.of(context)
                                           .titleLarge
                                           .fontWeight,
@@ -748,7 +737,14 @@ class _RecipesWidgetState extends State<RecipesWidget>
                                           .titleLarge
                                           .fontStyle,
                                     ),
-                              ),
+                                    letterSpacing: 0.0,
+                                    fontWeight: FlutterFlowTheme.of(context)
+                                        .titleLarge
+                                        .fontWeight,
+                                    fontStyle: FlutterFlowTheme.of(context)
+                                        .titleLarge
+                                        .fontStyle,
+                                  ),
                             ),
                           ),
                           Padding(
