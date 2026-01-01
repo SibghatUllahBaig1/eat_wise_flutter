@@ -739,52 +739,6 @@ class _LogInWidgetState extends State<LogInWidget>
                         ),
                       ),
                     ),
-                    Expanded(
-                      child: Container(
-                        width: 100.0,
-                        height: 50.0,
-                        decoration: BoxDecoration(
-                          color:
-                              FlutterFlowTheme.of(context).secondaryBackground,
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
-                        child: Align(
-                          alignment: AlignmentDirectional(0.0, 0.0),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(50.0),
-                            child: Image.asset(
-                              'assets/images/21_(3).png',
-                              width: 24.0,
-                              height: 24.0,
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Container(
-                        width: 100.0,
-                        height: 50.0,
-                        decoration: BoxDecoration(
-                          color:
-                              FlutterFlowTheme.of(context).secondaryBackground,
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
-                        child: Align(
-                          alignment: AlignmentDirectional(0.0, 0.0),
-                          child: Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(
-                                0.0, 0.0, 1.0, 1.0),
-                            child: Icon(
-                              Icons.tiktok,
-                              color: FlutterFlowTheme.of(context).primaryText,
-                              size: 27.0,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
                   ].divide(SizedBox(width: 12.0)),
                 ),
               ),

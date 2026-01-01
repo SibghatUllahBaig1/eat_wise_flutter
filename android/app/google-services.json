@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:1020187359282:android:ba4222c44c05f874b4642b",
         "android_client_info": {
-          "package_name": "com.mycompany.kalorik"
+          "package_name": "com.developlogix.eatwise"
         }
       },
       "oauth_client": [
@@ -34,7 +34,7 @@
               "client_id": "1020187359282-cmo7c2bs8nlcjlr50kdipmeltb78disq.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.mycompany.kalorik"
+                "bundle_id": "com.developlogix.eatwise"
               }
             }
           ]

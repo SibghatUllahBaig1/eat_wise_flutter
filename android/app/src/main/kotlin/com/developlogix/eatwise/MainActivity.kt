@@ -1,4 +1,4 @@
-package com.mycompany.kalorik
+package com.developlogix.eatwise
 
 import io.flutter.embedding.android.FlutterActivity
 
