@@ -90,6 +90,28 @@ class _HomePageWidgetState extends State<HomePageWidget>
       child: Scaffold(
         key: scaffoldKey,
         backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
+        appBar: AppBar(
+          backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
+          automaticallyImplyLeading: false,
+          title: Text(
+            'Home',
+            style: FlutterFlowTheme.of(context).titleLarge.override(
+                  font: GoogleFonts.inter(
+                    fontWeight:
+                        FlutterFlowTheme.of(context).titleLarge.fontWeight,
+                    fontStyle:
+                        FlutterFlowTheme.of(context).titleLarge.fontStyle,
+                  ),
+                  letterSpacing: 0.0,
+                  fontWeight:
+                      FlutterFlowTheme.of(context).titleLarge.fontWeight,
+                  fontStyle: FlutterFlowTheme.of(context).titleLarge.fontStyle,
+                ),
+          ),
+          actions: const [],
+          centerTitle: false,
+          elevation: 0.0,
+        ),
         body: Column(
           mainAxisSize: MainAxisSize.max,
           children: [
