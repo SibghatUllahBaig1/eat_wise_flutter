@@ -4,6 +4,7 @@ import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/tracker/components/z_step_calendar/z_step_calendar_widget.dart';
 import '/tracker/components/z_step_history_list/z_step_history_list_widget.dart';
+import '/tracker/components/z_step_tracker_edit/z_step_tracker_edit_widget.dart';
 import 'dart:ui';
 import '/custom_code/widgets/index.dart' as custom_widgets;
 import '/index.dart';
@@ -306,60 +307,39 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
                                   hoverColor: Colors.transparent,
                                   highlightColor: Colors.transparent,
                                   onTap: () async {
-                                    if (_model.play) {
-                                      _model.play = false;
-                                      safeSetState(() {});
-                                    } else {
-                                      _model.play = true;
-                                      safeSetState(() {});
-                                    }
-                                  },
-                                  child: Builder(
-                                    builder: (context) {
-                                      if (_model.play) {
-                                        return Container(
-                                          width: 44.0,
-                                          height: 44.0,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color:
-                                                  FlutterFlowTheme.of(context)
-                                                      .stepColor,
-                                              width: 2.5,
-                                            ),
-                                          ),
-                                          child: Icon(
-                                            FFIcons.kplayerPauseFilled,
-                                            color: FlutterFlowTheme.of(context)
-                                                .stepColor,
-                                            size: 22.0,
-                                          ),
-                                        );
-                                      } else {
-                                        return Container(
-                                          width: 44.0,
-                                          height: 44.0,
-                                          decoration: BoxDecoration(
-                                            color: FlutterFlowTheme.of(context)
-                                                .stepColor,
-                                            shape: BoxShape.circle,
-                                          ),
+                                    await showModalBottomSheet(
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      context: context,
+                                      builder: (context) {
+                                        return GestureDetector(
+                                          onTap: () {
+                                            FocusScope.of(context).unfocus();
+                                            FocusManager.instance.primaryFocus
+                                                ?.unfocus();
+                                          },
                                           child: Padding(
-                                            padding:
-                                                EdgeInsetsDirectional.fromSTEB(
-                                                    4.0, 0.0, 0.0, 0.0),
-                                            child: Icon(
-                                              FFIcons.kplayw1,
-                                              color:
-                                                  FlutterFlowTheme.of(context)
-                                                      .info,
-                                              size: 20.0,
-                                            ),
+                                            padding: MediaQuery.viewInsetsOf(
+                                                context),
+                                            child: ZStepTrackerEditWidget(),
                                           ),
                                         );
-                                      }
-                                    },
+                                      },
+                                    ).then((value) => safeSetState(() {}));
+                                  },
+                                  child: Container(
+                                    width: 44.0,
+                                    height: 44.0,
+                                    decoration: BoxDecoration(
+                                      color: FlutterFlowTheme.of(context)
+                                          .stepColor,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      FFIcons.kedit,
+                                      color: FlutterFlowTheme.of(context).info,
+                                      size: 20.0,
+                                    ),
                                   ),
                                 ),
                               ),

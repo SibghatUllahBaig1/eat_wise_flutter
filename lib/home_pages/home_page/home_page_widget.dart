@@ -1,4 +1,5 @@
 import '/flutter_flow/flutter_flow_animations.dart';
+import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/home_pages/components/z_activities/z_activities_widget.dart';
@@ -6,6 +7,7 @@ import '/home_pages/components/z_home_calendar/z_home_calendar_widget.dart';
 import '/home_pages/components/z_naw_bar/z_naw_bar_widget.dart';
 import '/home_pages/components/z_nutrition/z_nutrition_widget.dart';
 import '/home_pages/components/z_statistics/z_statistics_widget.dart';
+import '/tracker/components/z_calendar/z_calendar_widget.dart';
 import '/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -93,22 +95,67 @@ class _HomePageWidgetState extends State<HomePageWidget>
         appBar: AppBar(
           backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
           automaticallyImplyLeading: false,
-          title: Text(
-            'Home',
-            style: FlutterFlowTheme.of(context).titleLarge.override(
-                  font: GoogleFonts.inter(
-                    fontWeight:
-                        FlutterFlowTheme.of(context).titleLarge.fontWeight,
-                    fontStyle:
-                        FlutterFlowTheme.of(context).titleLarge.fontStyle,
-                  ),
-                  letterSpacing: 0.0,
-                  fontWeight:
-                      FlutterFlowTheme.of(context).titleLarge.fontWeight,
-                  fontStyle: FlutterFlowTheme.of(context).titleLarge.fontStyle,
-                ),
+          title: ClipRRect(
+            borderRadius: BorderRadius.circular(0.0),
+            child: Image.asset(
+              'assets/images/custom-images/logo.png',
+              height: 32.0,
+              fit: BoxFit.contain,
+              alignment: Alignment(-1.0, 0.0),
+            ),
           ),
-          actions: const [],
+          actions: [
+            FlutterFlowIconButton(
+              borderColor: Colors.transparent,
+              borderRadius: 24.0,
+              borderWidth: 1.0,
+              buttonSize: 44.0,
+              icon: Icon(
+                FFIcons.kcalendar,
+                color: FlutterFlowTheme.of(context).primaryText,
+                size: 24.0,
+              ),
+              onPressed: () async {
+                await showDialog(
+                  barrierColor: FlutterFlowTheme.of(context).barrier,
+                  context: context,
+                  builder: (dialogContext) {
+                    return Dialog(
+                      elevation: 0,
+                      insetPadding: EdgeInsets.zero,
+                      backgroundColor: Colors.transparent,
+                      alignment: AlignmentDirectional(0.0, 0.0)
+                          .resolve(Directionality.of(context)),
+                      child: GestureDetector(
+                        onTap: () {
+                          FocusScope.of(dialogContext).unfocus();
+                          FocusManager.instance.primaryFocus?.unfocus();
+                        },
+                        child: ZCalendarWidget(),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+            Padding(
+              padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 6.0, 0.0),
+              child: FlutterFlowIconButton(
+                borderColor: Colors.transparent,
+                borderRadius: 24.0,
+                borderWidth: 1.0,
+                buttonSize: 44.0,
+                icon: Icon(
+                  FFIcons.kbell01,
+                  color: FlutterFlowTheme.of(context).primaryText,
+                  size: 24.0,
+                ),
+                onPressed: () async {
+                  context.pushNamed(NotificationWidget.routeName);
+                },
+              ),
+            ),
+          ],
           centerTitle: false,
           elevation: 0.0,
         ),
@@ -125,20 +172,20 @@ class _HomePageWidgetState extends State<HomePageWidget>
                     children: [
                       Padding(
                         padding:
-                            EdgeInsetsDirectional.fromSTEB(0.0, 16.0, 0.0, 0.0),
-                        child: wrapWithModel(
-                          model: _model.zHomeCalendarModel,
-                          updateCallback: () => safeSetState(() {}),
-                          child: ZHomeCalendarWidget(),
-                        ),
-                      ),
-                      Padding(
-                        padding:
                             EdgeInsetsDirectional.fromSTEB(0.0, 12.0, 0.0, 0.0),
                         child: wrapWithModel(
                           model: _model.zStatisticsModel,
                           updateCallback: () => safeSetState(() {}),
                           child: ZStatisticsWidget(),
+                        ),
+                      ),
+                      Padding(
+                        padding:
+                            EdgeInsetsDirectional.fromSTEB(0.0, 16.0, 0.0, 0.0),
+                        child: wrapWithModel(
+                          model: _model.zActivitiesModel,
+                          updateCallback: () => safeSetState(() {}),
+                          child: ZActivitiesWidget(),
                         ),
                       ),
                       Padding(
@@ -180,9 +227,9 @@ class _HomePageWidgetState extends State<HomePageWidget>
                         padding:
                             EdgeInsetsDirectional.fromSTEB(0.0, 16.0, 0.0, 0.0),
                         child: wrapWithModel(
-                          model: _model.zActivitiesModel,
+                          model: _model.zHomeCalendarModel,
                           updateCallback: () => safeSetState(() {}),
-                          child: ZActivitiesWidget(),
+                          child: ZHomeCalendarWidget(),
                         ),
                       ),
                     ].addToEnd(SizedBox(height: 24.0)),

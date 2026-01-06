@@ -131,23 +131,24 @@ class _AppAppearanceWidgetState extends State<AppAppearanceWidget> {
                           ),
                         ),
                       ),
-                      InkWell(
-                        splashColor: Colors.transparent,
-                        focusColor: Colors.transparent,
-                        hoverColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap: () async {
-                          context.pushNamed(AppLanguageWidget.routeName);
-                        },
-                        child: wrapWithModel(
-                          model: _model.textTextRightModel2,
-                          updateCallback: () => safeSetState(() {}),
-                          child: TextTextRightWidget(
-                            text: 'App Language',
-                            value: FFAppState().selectedLang.language,
-                          ),
-                        ),
-                      ),
+                      // NOTE: App Language navigation has been hidden - backend functionality will not be implemented
+                      // InkWell(
+                      //   splashColor: Colors.transparent,
+                      //   focusColor: Colors.transparent,
+                      //   hoverColor: Colors.transparent,
+                      //   highlightColor: Colors.transparent,
+                      //   onTap: () async {
+                      //     context.pushNamed(AppLanguageWidget.routeName);
+                      //   },
+                      //   child: wrapWithModel(
+                      //     model: _model.textTextRightModel2,
+                      //     updateCallback: () => safeSetState(() {}),
+                      //     child: TextTextRightWidget(
+                      //       text: 'App Language',
+                      //       value: FFAppState().selectedLang.language,
+                      //     ),
+                      //   ),
+                      // ),
                     ],
                   ),
                 ),

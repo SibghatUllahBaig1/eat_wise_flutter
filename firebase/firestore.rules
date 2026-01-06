@@ -1,0 +1,105 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidTimestamp(timestamp) {
+      return timestamp is timestamp;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+      
+      // User profile subcollection
+      match /profile/{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      // User settings subcollection
+      match /settings/{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      // Meals subcollection
+      match /meals/{mealId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && 
+                       request.resource.data.keys().hasAll(['date', 'type', 'foods', 'totalCalories']) &&
+                       isValidTimestamp(request.resource.data.date);
+        allow update: if isOwner(userId);
+        allow delete: if isOwner(userId);
+      }
+      
+      // Water tracker subcollection
+      match /water_tracker/{trackerId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && 
+                       request.resource.data.keys().hasAll(['date', 'intake', 'goal']) &&
+                       isValidTimestamp(request.resource.data.date);
+        allow update: if isOwner(userId);
+        allow delete: if isOwner(userId);
+      }
+      
+      // Weight tracker subcollection
+      match /weight_tracker/{trackerId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && 
+                       request.resource.data.keys().hasAll(['date', 'weight', 'unit']) &&
+                       isValidTimestamp(request.resource.data.date);
+        allow update: if isOwner(userId);
+        allow delete: if isOwner(userId);
+      }
+      
+      // Step tracker subcollection
+      match /step_tracker/{trackerId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && 
+                       request.resource.data.keys().hasAll(['date', 'steps', 'goal']) &&
+                       isValidTimestamp(request.resource.data.date);
+        allow update: if isOwner(userId);
+        allow delete: if isOwner(userId);
+      }
+      
+      // Goals subcollection
+      match /goals/{goalId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId);
+        allow delete: if isOwner(userId);
+      }
+      
+      // Nutrition history subcollection
+      match /nutrition_history/{historyId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId);
+        allow delete: if isOwner(userId);
+      }
+    }
+    
+    // Recipes collection (public read, admin write)
+    match /recipes/{recipeId} {
+      allow read: if true;
+      allow write: if false; // Only through admin SDK or Cloud Functions
+    }
+    
+    // Food database collection (public read, admin write)
+    match /foods/{foodId} {
+      allow read: if true;
+      allow write: if false; // Only through admin SDK or Cloud Functions
+    }
+  }
+}
+

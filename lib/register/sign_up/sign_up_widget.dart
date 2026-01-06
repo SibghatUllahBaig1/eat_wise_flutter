@@ -1,4 +1,5 @@
 import '/auth/firebase_auth/auth_util.dart';
+import '/backend/auth/auth_handler.dart';
 import '/flutter_flow/flutter_flow_animations.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -813,18 +814,44 @@ class _SignUpWidgetState extends State<SignUpWidget>
                         !_model.formKey.currentState!.validate()) {
                       return;
                     }
-                    if (_model.termPolicy) {
-                      GoRouter.of(context).prepareAuthEvent();
 
-                      final user = await authManager.signInWithEmail(
-                        context,
-                        _model.emailTextController.text,
-                        _model.passwordTextController.text,
+                    // Check if passwords match
+                    if (_model.passwordTextController.text !=
+                        _model.confirmPasswordTextController.text) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Passwords do not match'),
+                          backgroundColor: FlutterFlowTheme.of(context).error,
+                        ),
                       );
+                      return;
+                    }
+
+                    if (_model.termPolicy) {
+                      // Use new AuthHandler
+                      final authHandler = AuthHandler();
+                      final user = await authHandler.signUpWithEmailPassword(
+                        email: _model.emailTextController.text,
+                        password: _model.passwordTextController.text,
+                      );
+
+                      if (!context.mounted) return;
+
                       if (user == null) {
+                        // Show error message
+                        if (authHandler.error != null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(authHandler.error!),
+                              backgroundColor:
+                                  FlutterFlowTheme.of(context).error,
+                            ),
+                          );
+                        }
                         return;
                       }
 
+                      // Navigate to onboarding
                       context.goNamedAuth(
                           OnboardingWidget.routeName, context.mounted);
                     } else {

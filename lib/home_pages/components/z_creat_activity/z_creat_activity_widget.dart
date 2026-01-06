@@ -12,6 +12,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'z_creat_activity_model.dart';
 export 'z_creat_activity_model.dart';
+import '/backend/backend_manager.dart';
 
 class ZCreatActivityWidget extends StatefulWidget {
   const ZCreatActivityWidget({super.key});
@@ -546,7 +547,72 @@ class _ZCreatActivityWidgetState extends State<ZCreatActivityWidget> {
             padding: EdgeInsets.all(16.0),
             child: FFButtonWidget(
               onPressed: () async {
-                Navigator.pop(context);
+                // Get the backend manager
+                final backend = BackendManager();
+
+                // Validate required fields
+                if (_model.textController1.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Please enter an activity name'),
+                      backgroundColor: FlutterFlowTheme.of(context).error,
+                    ),
+                  );
+                  return;
+                }
+
+                // Parse calories (optional)
+                int? calories;
+                if (_model.textController2.text.isNotEmpty) {
+                  calories = int.tryParse(_model.textController2.text);
+                }
+
+                // Parse duration from app state (optional)
+                int? duration;
+                if (FFAppState().activityMinuts.isNotEmpty &&
+                    FFAppState().activityMinuts != 'Duration') {
+                  // Extract number from string like "30 min"
+                  final durationStr = FFAppState()
+                      .activityMinuts
+                      .replaceAll(RegExp(r'[^0-9]'), '');
+                  duration = int.tryParse(durationStr);
+                }
+
+                try {
+                  // Save activity to Firestore
+                  await backend.activityService.addActivity(
+                    userId: backend.currentUserId!,
+                    date: DateTime.now(),
+                    activityType: 'custom', // Could be enhanced to select type
+                    activityName: _model.textController1.text,
+                    duration: duration,
+                    caloriesBurned: calories,
+                  );
+
+                  // Check if widget is still mounted before using context
+                  if (!context.mounted) return;
+
+                  // Show success message
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Activity added successfully!'),
+                      backgroundColor: FlutterFlowTheme.of(context).success,
+                    ),
+                  );
+
+                  Navigator.pop(context);
+                } catch (e) {
+                  // Check if widget is still mounted before using context
+                  if (!context.mounted) return;
+
+                  // Show error message
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to add activity: $e'),
+                      backgroundColor: FlutterFlowTheme.of(context).error,
+                    ),
+                  );
+                }
               },
               text: 'Add',
               icon: Icon(

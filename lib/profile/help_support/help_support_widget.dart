@@ -114,38 +114,40 @@ class _HelpSupportWidgetState extends State<HelpSupportWidget> {
                   child: Column(
                     mainAxisSize: MainAxisSize.max,
                     children: [
-                      InkWell(
-                        splashColor: Colors.transparent,
-                        focusColor: Colors.transparent,
-                        hoverColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap: () async {
-                          context.pushNamed(FaqWidget.routeName);
-                        },
-                        child: wrapWithModel(
-                          model: _model.textRightModel1,
-                          updateCallback: () => safeSetState(() {}),
-                          child: TextRightWidget(
-                            text: 'FAQ',
-                          ),
-                        ),
-                      ),
-                      InkWell(
-                        splashColor: Colors.transparent,
-                        focusColor: Colors.transparent,
-                        hoverColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap: () async {
-                          context.pushNamed(SupportWidget.routeName);
-                        },
-                        child: wrapWithModel(
-                          model: _model.textRightModel2,
-                          updateCallback: () => safeSetState(() {}),
-                          child: TextRightWidget(
-                            text: 'Contact Support',
-                          ),
-                        ),
-                      ),
+                      // NOTE: FAQ navigation has been removed - backend functionality will not be implemented
+                      // InkWell(
+                      //   splashColor: Colors.transparent,
+                      //   focusColor: Colors.transparent,
+                      //   hoverColor: Colors.transparent,
+                      //   highlightColor: Colors.transparent,
+                      //   onTap: () async {
+                      //     context.pushNamed(FaqWidget.routeName);
+                      //   },
+                      //   child: wrapWithModel(
+                      //     model: _model.textRightModel1,
+                      //     updateCallback: () => safeSetState(() {}),
+                      //     child: TextRightWidget(
+                      //       text: 'FAQ',
+                      //     ),
+                      //   ),
+                      // ),
+                      // NOTE: Contact Support navigation has been removed - backend functionality will not be implemented
+                      // InkWell(
+                      //   splashColor: Colors.transparent,
+                      //   focusColor: Colors.transparent,
+                      //   hoverColor: Colors.transparent,
+                      //   highlightColor: Colors.transparent,
+                      //   onTap: () async {
+                      //     context.pushNamed(SupportWidget.routeName);
+                      //   },
+                      //   child: wrapWithModel(
+                      //     model: _model.textRightModel2,
+                      //     updateCallback: () => safeSetState(() {}),
+                      //     child: TextRightWidget(
+                      //       text: 'Contact Support',
+                      //     ),
+                      //   ),
+                      // ),
                       InkWell(
                         splashColor: Colors.transparent,
                         focusColor: Colors.transparent,
@@ -284,22 +286,23 @@ class _HelpSupportWidgetState extends State<HelpSupportWidget> {
                           text: 'Visit Our Website',
                         ),
                       ),
-                      InkWell(
-                        splashColor: Colors.transparent,
-                        focusColor: Colors.transparent,
-                        hoverColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap: () async {
-                          context.pushNamed(SocilaMediaWidget.routeName);
-                        },
-                        child: wrapWithModel(
-                          model: _model.textRightModel12,
-                          updateCallback: () => safeSetState(() {}),
-                          child: TextRightWidget(
-                            text: 'Follow us on Social Media',
-                          ),
-                        ),
-                      ),
+                      // NOTE: Social Media navigation has been removed - backend functionality will not be implemented
+                      // InkWell(
+                      //   splashColor: Colors.transparent,
+                      //   focusColor: Colors.transparent,
+                      //   hoverColor: Colors.transparent,
+                      //   highlightColor: Colors.transparent,
+                      //   onTap: () async {
+                      //     context.pushNamed(SocilaMediaWidget.routeName);
+                      //   },
+                      //   child: wrapWithModel(
+                      //     model: _model.textRightModel12,
+                      //     updateCallback: () => safeSetState(() {}),
+                      //     child: TextRightWidget(
+                      //       text: 'Follow us on Social Media',
+                      //     ),
+                      //   ),
+                      // ),
                     ],
                   ),
                 ),

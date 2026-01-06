@@ -57,9 +57,10 @@ mixin PhoneSignInManager on AuthManager {
   });
 }
 
-mixin FacebookSignInManager on AuthManager {
-  Future<BaseAuthUser?> signInWithFacebook(BuildContext context);
-}
+// NOTE: Facebook login has been removed and will not be implemented
+// mixin FacebookSignInManager on AuthManager {
+//   Future<BaseAuthUser?> signInWithFacebook(BuildContext context);
+// }
 
 mixin MicrosoftSignInManager on AuthManager {
   Future<BaseAuthUser?> signInWithMicrosoft(
