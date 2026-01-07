@@ -30,11 +30,10 @@ class _NewPasswordWidgetState extends State<NewPasswordWidget> {
     super.initState();
     _model = createModel(context, () => NewPasswordModel());
 
-    _model.passwordTextController ??= TextEditingController(text: '11111111');
+    _model.passwordTextController ??= TextEditingController();
     _model.passwordFocusNode ??= FocusNode();
 
-    _model.confirmPasswordTextController ??=
-        TextEditingController(text: '11111111');
+    _model.confirmPasswordTextController ??= TextEditingController();
     _model.confirmPasswordFocusNode ??= FocusNode();
   }
 

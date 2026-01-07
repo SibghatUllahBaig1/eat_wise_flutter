@@ -2,6 +2,7 @@ import '/backend/auth/auth_handler.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
+import 'dart:io' show Platform;
 import 'dart:ui';
 import '/index.dart';
 import 'package:flutter/material.dart';
@@ -185,62 +186,76 @@ class _GetStartedWidgetState extends State<GetStartedWidget> {
                   ),
                 ),
               ),
-              Padding(
-                padding: EdgeInsetsDirectional.fromSTEB(16.0, 12.0, 16.0, 0.0),
-                child: InkWell(
-                  onTap: () async {
-                    // Apple Sign In
-                    final authHandler = AuthHandler();
-                    final user = await authHandler.signInWithApple();
+              // Hide Apple Sign-In on Android
+              if (!Platform.isAndroid)
+                Padding(
+                  padding:
+                      EdgeInsetsDirectional.fromSTEB(16.0, 12.0, 16.0, 0.0),
+                  child: InkWell(
+                    onTap: () async {
+                      // Apple Sign In
+                      final authHandler = AuthHandler();
+                      final user = await authHandler.signInWithApple();
 
-                    if (!context.mounted) return;
+                      if (!context.mounted) return;
 
-                    if (user == null) {
-                      // Show error message
-                      if (authHandler.error != null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(authHandler.error!),
-                            backgroundColor: FlutterFlowTheme.of(context).error,
-                          ),
-                        );
+                      if (user == null) {
+                        // Show error message
+                        if (authHandler.error != null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(authHandler.error!),
+                              backgroundColor:
+                                  FlutterFlowTheme.of(context).error,
+                            ),
+                          );
+                        }
+                        return;
                       }
-                      return;
-                    }
 
-                    // Navigate to onboarding
-                    context.goNamedAuth(
-                        OnboardingWidget.routeName, context.mounted);
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    height: 50.0,
-                    decoration: BoxDecoration(
-                      color: FlutterFlowTheme.of(context).secondaryBackground,
-                      borderRadius: BorderRadius.circular(12.0),
-                    ),
-                    child: Padding(
-                      padding:
-                          EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 6.0, 0.0),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.max,
-                        children: [
-                          Icon(
-                            FFIcons.kfruit,
-                            color: FlutterFlowTheme.of(context).primaryText,
-                            size: 24.0,
-                          ),
-                          Expanded(
-                            child: Padding(
-                              padding: EdgeInsetsDirectional.fromSTEB(
-                                  0.0, 0.0, 24.0, 0.0),
-                              child: Text(
-                                'Continue with Apple',
-                                textAlign: TextAlign.center,
-                                style: FlutterFlowTheme.of(context)
-                                    .titleSmall
-                                    .override(
-                                      font: GoogleFonts.inter(
+                      // Navigate to onboarding
+                      context.goNamedAuth(
+                          OnboardingWidget.routeName, context.mounted);
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      height: 50.0,
+                      decoration: BoxDecoration(
+                        color: FlutterFlowTheme.of(context).secondaryBackground,
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      child: Padding(
+                        padding:
+                            EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 6.0, 0.0),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.max,
+                          children: [
+                            Icon(
+                              FFIcons.kfruit,
+                              color: FlutterFlowTheme.of(context).primaryText,
+                              size: 24.0,
+                            ),
+                            Expanded(
+                              child: Padding(
+                                padding: EdgeInsetsDirectional.fromSTEB(
+                                    0.0, 0.0, 24.0, 0.0),
+                                child: Text(
+                                  'Continue with Apple',
+                                  textAlign: TextAlign.center,
+                                  style: FlutterFlowTheme.of(context)
+                                      .titleSmall
+                                      .override(
+                                        font: GoogleFonts.inter(
+                                          fontWeight:
+                                              FlutterFlowTheme.of(context)
+                                                  .titleSmall
+                                                  .fontWeight,
+                                          fontStyle:
+                                              FlutterFlowTheme.of(context)
+                                                  .titleSmall
+                                                  .fontStyle,
+                                        ),
+                                        letterSpacing: 0.0,
                                         fontWeight: FlutterFlowTheme.of(context)
                                             .titleSmall
                                             .fontWeight,
@@ -248,23 +263,15 @@ class _GetStartedWidgetState extends State<GetStartedWidget> {
                                             .titleSmall
                                             .fontStyle,
                                       ),
-                                      letterSpacing: 0.0,
-                                      fontWeight: FlutterFlowTheme.of(context)
-                                          .titleSmall
-                                          .fontWeight,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .titleSmall
-                                          .fontStyle,
-                                    ),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
               Padding(
                 padding: EdgeInsetsDirectional.fromSTEB(16.0, 32.0, 16.0, 0.0),
                 child: FFButtonWidget(

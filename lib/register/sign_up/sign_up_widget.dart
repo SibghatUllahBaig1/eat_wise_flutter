@@ -5,6 +5,7 @@ import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
+import 'dart:io' show Platform;
 import 'dart:math';
 import 'dart:ui';
 import '/index.dart';
@@ -40,15 +41,13 @@ class _SignUpWidgetState extends State<SignUpWidget>
     super.initState();
     _model = createModel(context, () => SignUpModel());
 
-    _model.emailTextController ??=
-        TextEditingController(text: 'test@gmail.com');
+    _model.emailTextController ??= TextEditingController();
     _model.emailFocusNode ??= FocusNode();
 
-    _model.passwordTextController ??= TextEditingController(text: '11111111');
+    _model.passwordTextController ??= TextEditingController();
     _model.passwordFocusNode ??= FocusNode();
 
-    _model.confirmPasswordTextController ??=
-        TextEditingController(text: '11111111');
+    _model.confirmPasswordTextController ??= TextEditingController();
     _model.confirmPasswordFocusNode ??= FocusNode();
 
     animationsMap.addAll({
@@ -965,29 +964,31 @@ class _SignUpWidgetState extends State<SignUpWidget>
                         ),
                       ),
                     ),
-                    Expanded(
-                      child: Container(
-                        width: 100.0,
-                        height: 50.0,
-                        decoration: BoxDecoration(
-                          color:
-                              FlutterFlowTheme.of(context).secondaryBackground,
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
-                        child: Align(
-                          alignment: AlignmentDirectional(0.0, 0.0),
-                          child: Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(
-                                0.0, 0.0, 1.0, 1.0),
-                            child: Icon(
-                              FFIcons.kfruit,
-                              color: FlutterFlowTheme.of(context).primaryText,
-                              size: 24.0,
+                    // Hide Apple Sign-In on Android
+                    if (!Platform.isAndroid)
+                      Expanded(
+                        child: Container(
+                          width: 100.0,
+                          height: 50.0,
+                          decoration: BoxDecoration(
+                            color: FlutterFlowTheme.of(context)
+                                .secondaryBackground,
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          child: Align(
+                            alignment: AlignmentDirectional(0.0, 0.0),
+                            child: Padding(
+                              padding: EdgeInsetsDirectional.fromSTEB(
+                                  0.0, 0.0, 1.0, 1.0),
+                              child: Icon(
+                                FFIcons.kfruit,
+                                color: FlutterFlowTheme.of(context).primaryText,
+                                size: 24.0,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
                   ].divide(SizedBox(width: 12.0)),
                 ),
               ),

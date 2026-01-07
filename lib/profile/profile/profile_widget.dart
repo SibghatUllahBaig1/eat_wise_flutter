@@ -1,3 +1,4 @@
+import '/auth/firebase_auth/auth_util.dart';
 import '/buttons/icon_text_right/icon_text_right_widget.dart';
 import '/flutter_flow/flutter_flow_animations.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -321,7 +322,10 @@ class _ProfileWidgetState extends State<ProfileWidget>
                                                 CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                'Alex Johnson',
+                                                currentUserDisplayName
+                                                        .isNotEmpty
+                                                    ? currentUserDisplayName
+                                                    : 'User',
                                                 style:
                                                     FlutterFlowTheme.of(context)
                                                         .titleSmall
@@ -358,7 +362,7 @@ class _ProfileWidgetState extends State<ProfileWidget>
                                                     .fromSTEB(
                                                         0.0, 12.0, 0.0, 0.0),
                                                 child: Text(
-                                                  'test@gmail.com',
+                                                  currentUserEmail,
                                                   style: FlutterFlowTheme.of(
                                                           context)
                                                       .labelMedium

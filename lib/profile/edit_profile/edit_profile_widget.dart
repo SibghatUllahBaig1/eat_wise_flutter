@@ -1,3 +1,4 @@
+import '/auth/firebase_auth/auth_util.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -34,16 +35,18 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
     super.initState();
     _model = createModel(context, () => EditProfileModel());
 
+    // Use actual user display name or empty string
     _model.emailTextController1 ??=
-        TextEditingController(text: 'test@gmail.com');
+        TextEditingController(text: currentUserDisplayName);
     _model.emailFocusNode1 ??= FocusNode();
 
+    // Use actual user email
     _model.emailTextController2 ??=
-        TextEditingController(text: 'test@gmail.com');
+        TextEditingController(text: currentUserEmail);
     _model.emailFocusNode2 ??= FocusNode();
 
-    _model.emailTextController3 ??=
-        TextEditingController(text: '+1 (234) 567-8900');
+    // Phone number - empty by default (would need to be stored in Firestore)
+    _model.emailTextController3 ??= TextEditingController();
     _model.emailFocusNode3 ??= FocusNode();
 
     _model.emailMask3 = MaskTextInputFormatter(mask: '+1 (###) ###-####');

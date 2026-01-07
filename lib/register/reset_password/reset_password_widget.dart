@@ -1,3 +1,4 @@
+import '/backend/auth/auth_handler.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -30,8 +31,7 @@ class _ResetPasswordWidgetState extends State<ResetPasswordWidget> {
     super.initState();
     _model = createModel(context, () => ResetPasswordModel());
 
-    _model.emailTextController ??=
-        TextEditingController(text: 'test@gmail.com');
+    _model.emailTextController ??= TextEditingController();
     _model.emailFocusNode ??= FocusNode();
   }
 
@@ -311,15 +311,48 @@ class _ResetPasswordWidgetState extends State<ResetPasswordWidget> {
                     return;
                   }
 
-                  context.pushNamed(
-                    VerifyCodeWidget.routeName,
-                    queryParameters: {
-                      'email': serializeParam(
-                        _model.emailTextController.text,
-                        ParamType.String,
-                      ),
-                    }.withoutNulls,
+                  // Get the auth handler
+                  final authHandler =
+                      Provider.of<AuthHandler>(context, listen: false);
+
+                  // Send password reset email
+                  final success = await authHandler.sendPasswordResetEmail(
+                    _model.emailTextController.text.trim(),
                   );
+
+                  if (success) {
+                    // Show success message
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Password reset email sent! Please check your inbox.',
+                          style: TextStyle(
+                            color: FlutterFlowTheme.of(context).info,
+                          ),
+                        ),
+                        backgroundColor: FlutterFlowTheme.of(context).success,
+                        duration: Duration(seconds: 4),
+                      ),
+                    );
+
+                    // Navigate back to login
+                    context.goNamed(LogInWidget.routeName);
+                  } else {
+                    // Show error message
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          authHandler.error ??
+                              'Failed to send password reset email',
+                          style: TextStyle(
+                            color: FlutterFlowTheme.of(context).info,
+                          ),
+                        ),
+                        backgroundColor: FlutterFlowTheme.of(context).error,
+                        duration: Duration(seconds: 4),
+                      ),
+                    );
+                  }
                 },
                 text: 'Continue',
                 options: FFButtonOptions(
