@@ -3,17 +3,17 @@ import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
-import '/home_pages/components/z_activity_log_content/z_activity_log_content_widget.dart';
+import '/home_pages/components/z_activity_templates_content/z_activity_templates_content_widget.dart';
 import '/home_pages/components/z_creat_activity/z_creat_activity_widget.dart';
-import '/home_pages/components/z_quick_log_activity/z_quick_log_activity_widget.dart';
 import 'dart:ui';
-import 'z_activity_log_widget.dart' show ZActivityLogWidget;
+import 'z_activity_templates_widget.dart' show ZActivityTemplatesWidget;
 import 'package:easy_debounce/easy_debounce.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
-class ZActivityLogModel extends FlutterFlowModel<ZActivityLogWidget> {
+class ZActivityTemplatesModel
+    extends FlutterFlowModel<ZActivityTemplatesWidget> {
   ///  Local state fields for this component.
 
   int? filter = 0;
@@ -31,8 +31,8 @@ class ZActivityLogModel extends FlutterFlowModel<ZActivityLogWidget> {
   FocusNode? textFieldFocusNode;
   TextEditingController? textController;
   String? Function(BuildContext, String?)? textControllerValidator;
-  // Model for zActivityLogContent component.
-  late ZActivityLogContentModel zActivityLogContentModel1;
+  // Model for zActivityTemplatesContent component.
+  late ZActivityTemplatesContentModel zActivityTemplatesContentModel1;
   // State field(s) for PageView widget.
   PageController? pageViewController;
 
@@ -41,23 +41,19 @@ class ZActivityLogModel extends FlutterFlowModel<ZActivityLogWidget> {
           pageViewController!.page != null
       ? pageViewController!.page!.round()
       : 0;
-  // Model for zActivityLogContent component.
-  late ZActivityLogContentModel zActivityLogContentModel2;
-  // Model for zActivityLogContent component.
-  late ZActivityLogContentModel zActivityLogContentModel3;
-  // Model for zActivityLogContent component.
-  late ZActivityLogContentModel zActivityLogContentModel4;
+  // Model for zActivityTemplatesContent component.
+  late ZActivityTemplatesContentModel zActivityTemplatesContentModel3;
+  // Model for zActivityTemplatesContent component.
+  late ZActivityTemplatesContentModel zActivityTemplatesContentModel4;
 
   @override
   void initState(BuildContext context) {
-    zActivityLogContentModel1 =
-        createModel(context, () => ZActivityLogContentModel());
-    zActivityLogContentModel2 =
-        createModel(context, () => ZActivityLogContentModel());
-    zActivityLogContentModel3 =
-        createModel(context, () => ZActivityLogContentModel());
-    zActivityLogContentModel4 =
-        createModel(context, () => ZActivityLogContentModel());
+    zActivityTemplatesContentModel1 =
+        createModel(context, () => ZActivityTemplatesContentModel());
+    zActivityTemplatesContentModel3 =
+        createModel(context, () => ZActivityTemplatesContentModel());
+    zActivityTemplatesContentModel4 =
+        createModel(context, () => ZActivityTemplatesContentModel());
   }
 
   @override
@@ -65,9 +61,8 @@ class ZActivityLogModel extends FlutterFlowModel<ZActivityLogWidget> {
     textFieldFocusNode?.dispose();
     textController?.dispose();
 
-    zActivityLogContentModel1.dispose();
-    zActivityLogContentModel2.dispose();
-    zActivityLogContentModel3.dispose();
-    zActivityLogContentModel4.dispose();
+    zActivityTemplatesContentModel1.dispose();
+    zActivityTemplatesContentModel3.dispose();
+    zActivityTemplatesContentModel4.dispose();
   }
 }

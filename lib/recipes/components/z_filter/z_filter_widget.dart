@@ -1294,7 +1294,7 @@ class _ZFilterWidgetState extends State<ZFilterWidget> {
                             ..updateCategories(
                               (e) => e.add(CategoryStruct(
                                 title:
-                                    '${_model.start?.toString()}-${_model.end?.toString()} kcal',
+                                    '${_model.start?.toString()}-${_model.end?.toString()} cal',
                                 image: () {
                                   if (_model.start == 100.0) {
                                     return 'https://storage.googleapis.com/flutterflow-io-6f20.appspot.com/projects/kalorik-2mhem5/assets/plc4905l1e8q/energy1.png';

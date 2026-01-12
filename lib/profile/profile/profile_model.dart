@@ -25,18 +25,19 @@ class ProfileModel extends FlutterFlowModel<ProfileWidget> {
 
   bool checkBox = false;
 
-  int? pageItem = 0;
+  // PageView removed - no longer needed
+  // int? pageItem = 0;
 
   ///  State fields for stateful widgets in this page.
 
   // State field(s) for PageView widget.
-  PageController? pageViewController;
+  // PageController? pageViewController;
 
-  int get pageViewCurrentIndex => pageViewController != null &&
-          pageViewController!.hasClients &&
-          pageViewController!.page != null
-      ? pageViewController!.page!.round()
-      : 0;
+  // int get pageViewCurrentIndex => pageViewController != null &&
+  //         pageViewController!.hasClients &&
+  //         pageViewController!.page != null
+  //     ? pageViewController!.page!.round()
+  //     : 0;
   // Model for IconTextRight component.
   late IconTextRightModel iconTextRightModel1;
   // Model for IconTextRight component.

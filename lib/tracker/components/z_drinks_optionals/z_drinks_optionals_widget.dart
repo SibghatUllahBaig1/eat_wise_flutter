@@ -15,9 +15,22 @@ class ZDrinksOptionalsWidget extends StatefulWidget {
   const ZDrinksOptionalsWidget({
     super.key,
     required this.trackerType,
+    this.drinkId,
+    this.onDelete,
+    this.onEdit,
+    this.amount,
+    this.drinkType,
+    this.drinkIcon,
   });
 
   final int? trackerType;
+  final String? drinkId;
+  final Function(String)? onDelete;
+  final Function(
+      String drinkId, int amount, String drinkType, String drinkIcon)? onEdit;
+  final int? amount;
+  final String? drinkType;
+  final String? drinkIcon;
 
   @override
   State<ZDrinksOptionalsWidget> createState() => _ZDrinksOptionalsWidgetState();
@@ -75,7 +88,7 @@ class _ZDrinksOptionalsWidgetState extends State<ZDrinksOptionalsWidget> {
               highlightColor: Colors.transparent,
               onTap: () async {
                 Navigator.pop(context);
-                if (widget!.trackerType == 0) {
+                if (widget.trackerType == 0) {
                   await showModalBottomSheet(
                     isScrollControlled: true,
                     backgroundColor: Colors.transparent,
@@ -83,11 +96,17 @@ class _ZDrinksOptionalsWidgetState extends State<ZDrinksOptionalsWidget> {
                     builder: (context) {
                       return Padding(
                         padding: MediaQuery.viewInsetsOf(context),
-                        child: ZWaterTrackerEditWidget(),
+                        child: ZWaterTrackerEditWidget(
+                          drinkId: widget.drinkId,
+                          amount: widget.amount,
+                          drinkType: widget.drinkType,
+                          drinkIcon: widget.drinkIcon,
+                          onEdit: widget.onEdit,
+                        ),
                       );
                     },
                   ).then((value) => safeSetState(() {}));
-                } else if (widget!.trackerType == 2) {
+                } else if (widget.trackerType == 2) {
                   await showModalBottomSheet(
                     isScrollControlled: true,
                     backgroundColor: Colors.transparent,
@@ -129,6 +148,10 @@ class _ZDrinksOptionalsWidgetState extends State<ZDrinksOptionalsWidget> {
             highlightColor: Colors.transparent,
             onTap: () async {
               Navigator.pop(context);
+              // Call the onDelete callback if provided
+              if (widget.onDelete != null && widget.drinkId != null) {
+                widget.onDelete!(widget.drinkId!);
+              }
             },
             child: wrapWithModel(
               model: _model.zOptionalsButtonsModel2,
@@ -139,7 +162,7 @@ class _ZDrinksOptionalsWidgetState extends State<ZDrinksOptionalsWidget> {
                   color: FlutterFlowTheme.of(context).error,
                   size: 24.0,
                 ),
-                text: 'Edit',
+                text: 'Delete',
                 color: FlutterFlowTheme.of(context).error,
               ),
             ),

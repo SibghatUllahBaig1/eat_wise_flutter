@@ -36,6 +36,14 @@ class _TrackerWaterWidgetState extends State<TrackerWaterWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => TrackerWaterModel());
+
+    // Subscribe to water data for selected date
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _model.subscribeToWaterData(
+        FFAppState().tracker.selectedDate ?? DateTime.now(),
+        () => safeSetState(() {}),
+      );
+    });
   }
 
   @override
@@ -48,6 +56,13 @@ class _TrackerWaterWidgetState extends State<TrackerWaterWidget> {
   @override
   Widget build(BuildContext context) {
     context.watch<FFAppState>();
+
+    // Ensure we are always subscribed to the currently selected date.
+    final selectedDate = FFAppState().tracker.selectedDate ?? DateTime.now();
+    _model.subscribeToWaterData(
+      selectedDate,
+      () => safeSetState(() {}),
+    );
 
     return GestureDetector(
       onTap: () {
@@ -177,17 +192,8 @@ class _TrackerWaterWidgetState extends State<TrackerWaterWidget> {
                                         width: 200.0,
                                         height: 200.0,
                                         progress: valueOrDefault<double>(
-                                          FFAppState()
-                                              .tracker
-                                              .water
-                                              .where((e) =>
-                                                  e.date ==
-                                                  FFAppState()
-                                                      .tracker
-                                                      .selectedDate)
-                                              .toList()
-                                              .firstOrNull
-                                              ?.progress,
+                                          _model.waterIntakeData?['progress']
+                                              as double?,
                                           0.0,
                                         ),
                                         waveAmplitude: 12.0,
@@ -218,17 +224,10 @@ class _TrackerWaterWidgetState extends State<TrackerWaterWidget> {
                                         children: [
                                           TextSpan(
                                             text: valueOrDefault<String>(
-                                              FFAppState()
-                                                  .tracker
-                                                  .water
-                                                  .where((e) =>
-                                                      e.date ==
-                                                      FFAppState()
-                                                          .tracker
-                                                          .selectedDate)
-                                                  .toList()
-                                                  .firstOrNull
-                                                  ?.value
+                                              (_model.waterIntakeData?[
+                                                          'totalIntake'] ??
+                                                      _model.waterIntakeData?[
+                                                          'totalAmount'])
                                                   ?.toString(),
                                               '0',
                                             ),
@@ -432,93 +431,34 @@ class _TrackerWaterWidgetState extends State<TrackerWaterWidget> {
                         Padding(
                           padding: EdgeInsetsDirectional.fromSTEB(
                               16.0, 24.0, 16.0, 0.0),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.max,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  'History',
-                                  style: FlutterFlowTheme.of(context)
+                          child: Text(
+                            'History',
+                            style: FlutterFlowTheme.of(context)
+                                .titleLarge
+                                .override(
+                                  font: GoogleFonts.inter(
+                                    fontWeight: FlutterFlowTheme.of(context)
+                                        .titleLarge
+                                        .fontWeight,
+                                    fontStyle: FlutterFlowTheme.of(context)
+                                        .titleLarge
+                                        .fontStyle,
+                                  ),
+                                  letterSpacing: 0.0,
+                                  fontWeight: FlutterFlowTheme.of(context)
                                       .titleLarge
-                                      .override(
-                                        font: GoogleFonts.inter(
-                                          fontWeight:
-                                              FlutterFlowTheme.of(context)
-                                                  .titleLarge
-                                                  .fontWeight,
-                                          fontStyle:
-                                              FlutterFlowTheme.of(context)
-                                                  .titleLarge
-                                                  .fontStyle,
-                                        ),
-                                        letterSpacing: 0.0,
-                                        fontWeight: FlutterFlowTheme.of(context)
-                                            .titleLarge
-                                            .fontWeight,
-                                        fontStyle: FlutterFlowTheme.of(context)
-                                            .titleLarge
-                                            .fontStyle,
-                                      ),
+                                      .fontWeight,
+                                  fontStyle: FlutterFlowTheme.of(context)
+                                      .titleLarge
+                                      .fontStyle,
                                 ),
-                              ),
-                              InkWell(
-                                splashColor: Colors.transparent,
-                                focusColor: Colors.transparent,
-                                hoverColor: Colors.transparent,
-                                highlightColor: Colors.transparent,
-                                onTap: () async {
-                                  context.pushNamed(
-                                      WaterIntakeHistoryWidget.routeName);
-                                },
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsetsDirectional.fromSTEB(
-                                          0.0, 0.0, 6.0, 0.0),
-                                      child: Text(
-                                        'View All',
-                                        style: FlutterFlowTheme.of(context)
-                                            .titleSmall
-                                            .override(
-                                              font: GoogleFonts.inter(
-                                                fontWeight: FontWeight.normal,
-                                                fontStyle:
-                                                    FlutterFlowTheme.of(context)
-                                                        .titleSmall
-                                                        .fontStyle,
-                                              ),
-                                              color:
-                                                  FlutterFlowTheme.of(context)
-                                                      .waterColor,
-                                              fontSize: 14.0,
-                                              letterSpacing: 0.0,
-                                              fontWeight: FontWeight.normal,
-                                              fontStyle:
-                                                  FlutterFlowTheme.of(context)
-                                                      .titleSmall
-                                                      .fontStyle,
-                                            ),
-                                      ),
-                                    ),
-                                    Icon(
-                                      FFIcons.karrowRight,
-                                      color: FlutterFlowTheme.of(context)
-                                          .waterColor,
-                                      size: 20.0,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
                           ),
                         ),
                         Padding(
                           padding: EdgeInsetsDirectional.fromSTEB(
                               16.0, 24.0, 16.0, 0.0),
                           child: Text(
-                            dateTimeFormat(
-                                "yMMMd", FFAppState().tracker.selectedDate!),
+                            dateTimeFormat("yMMMd", selectedDate),
                             style: FlutterFlowTheme.of(context)
                                 .labelMedium
                                 .override(
@@ -547,7 +487,31 @@ class _TrackerWaterWidgetState extends State<TrackerWaterWidget> {
                           child: wrapWithModel(
                             model: _model.zHistoryListModel,
                             updateCallback: () => safeSetState(() {}),
-                            child: ZHistoryListWidget(),
+                            child: ZHistoryListWidget(
+                              drinksList: _model.drinksList,
+                              onDelete: (drinkId) async {
+                                final selectedDate =
+                                    FFAppState().tracker.selectedDate ??
+                                        DateTime.now();
+                                await _model.deleteDrink(
+                                  drinkId,
+                                  selectedDate,
+                                );
+                              },
+                              onEdit: (drinkId, amount, drinkType,
+                                  drinkIcon) async {
+                                final selectedDate =
+                                    FFAppState().tracker.selectedDate ??
+                                        DateTime.now();
+                                await _model.editDrink(
+                                  drinkId,
+                                  amount,
+                                  drinkType,
+                                  drinkIcon,
+                                  selectedDate,
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ],
@@ -578,48 +542,6 @@ class _TrackerWaterWidgetState extends State<TrackerWaterWidget> {
                 child: Row(
                   mainAxisSize: MainAxisSize.max,
                   children: [
-                    InkWell(
-                      splashColor: Colors.transparent,
-                      focusColor: Colors.transparent,
-                      hoverColor: Colors.transparent,
-                      highlightColor: Colors.transparent,
-                      onTap: () async {
-                        await showModalBottomSheet(
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          context: context,
-                          builder: (context) {
-                            return GestureDetector(
-                              onTap: () {
-                                FocusScope.of(context).unfocus();
-                                FocusManager.instance.primaryFocus?.unfocus();
-                              },
-                              child: Padding(
-                                padding: MediaQuery.viewInsetsOf(context),
-                                child: ZSwitchCupSizeWidget(),
-                              ),
-                            );
-                          },
-                        ).then((value) => safeSetState(() {}));
-                      },
-                      child: Container(
-                        width: 50.0,
-                        height: 50.0,
-                        decoration: BoxDecoration(
-                          color: FlutterFlowTheme.of(context).waterColor,
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsetsDirectional.fromSTEB(
-                              2.0, 3.0, 0.0, 0.0),
-                          child: Icon(
-                            FFIcons.kcup2,
-                            color: FlutterFlowTheme.of(context).info,
-                            size: 26.0,
-                          ),
-                        ),
-                      ),
-                    ),
                     Expanded(
                       child: FFButtonWidget(
                         onPressed: () async {
@@ -641,7 +563,7 @@ class _TrackerWaterWidgetState extends State<TrackerWaterWidget> {
                             },
                           ).then((value) => safeSetState(() {}));
                         },
-                        text: 'Drink (200 mL)',
+                        text: 'Add drink',
                         options: FFButtonOptions(
                           height: 50.0,
                           padding: EdgeInsetsDirectional.fromSTEB(
@@ -673,7 +595,7 @@ class _TrackerWaterWidgetState extends State<TrackerWaterWidget> {
                         ),
                       ),
                     ),
-                  ].divide(SizedBox(width: 12.0)),
+                  ],
                 ),
               ),
             ),

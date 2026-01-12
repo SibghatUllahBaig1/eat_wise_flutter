@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:percent_indicator/percent_indicator.dart';
 import 'z_home_calendar_model.dart';
 export 'z_home_calendar_model.dart';
 
@@ -151,136 +152,123 @@ class _ZHomeCalendarWidgetState extends State<ZHomeCalendarWidget> {
                       children: List.generate(days.length, (daysIndex) {
                         final daysItem = days[daysIndex];
                         return Expanded(
-                          child: InkWell(
-                            splashColor: Colors.transparent,
-                            focusColor: Colors.transparent,
-                            hoverColor: Colors.transparent,
-                            highlightColor: Colors.transparent,
-                            onTap: () async {
-                              if (daysItem <=
-                                  FFAppState().tracker.currentDate!) {
-                                FFAppState().updateTrackerStruct(
-                                  (e) => e..selectedDate = daysItem,
-                                );
-                                FFAppState().update(() {});
-                              }
-                            },
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: daysItem ==
-                                        FFAppState().tracker.selectedDate
-                                    ? FlutterFlowTheme.of(context).accent1
-                                    : FlutterFlowTheme.of(context).transparent,
-                                borderRadius: BorderRadius.circular(12.0),
-                                border: Border.all(
-                                  color: daysItem ==
-                                          FFAppState().tracker.selectedDate
-                                      ? FlutterFlowTheme.of(context).primary
-                                      : FlutterFlowTheme.of(context)
-                                          .transparent,
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: Padding(
-                                padding: EdgeInsetsDirectional.fromSTEB(
-                                    0.0, 8.0, 0.0, 8.0),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      dateTimeFormat("E", daysItem),
-                                      style: FlutterFlowTheme.of(context)
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                dateTimeFormat("E", daysItem),
+                                style: FlutterFlowTheme.of(context)
+                                    .bodyMedium
+                                    .override(
+                                      font: GoogleFonts.inter(
+                                        fontWeight: FlutterFlowTheme.of(context)
+                                            .bodyMedium
+                                            .fontWeight,
+                                        fontStyle: FlutterFlowTheme.of(context)
+                                            .bodyMedium
+                                            .fontStyle,
+                                      ),
+                                      color: () {
+                                        if (daysItem ==
+                                            FFAppState().tracker.selectedDate) {
+                                          return FlutterFlowTheme.of(context)
+                                              .primary;
+                                        } else if (daysItem <=
+                                            FFAppState().tracker.currentDate!) {
+                                          return FlutterFlowTheme.of(context)
+                                              .primaryText;
+                                        } else {
+                                          return FlutterFlowTheme.of(context)
+                                              .secondaryText;
+                                        }
+                                      }(),
+                                      fontSize: 12.0,
+                                      letterSpacing: 0.0,
+                                      fontWeight: FlutterFlowTheme.of(context)
                                           .bodyMedium
-                                          .override(
-                                            font: GoogleFonts.inter(
-                                              fontWeight:
-                                                  FlutterFlowTheme.of(context)
-                                                      .bodyMedium
-                                                      .fontWeight,
-                                              fontStyle:
-                                                  FlutterFlowTheme.of(context)
-                                                      .bodyMedium
-                                                      .fontStyle,
-                                            ),
-                                            color: () {
-                                              if (daysItem ==
-                                                  FFAppState()
-                                                      .tracker
-                                                      .selectedDate) {
-                                                return FlutterFlowTheme.of(
-                                                        context)
-                                                    .primary;
-                                              } else if (daysItem <=
-                                                  FFAppState()
-                                                      .tracker
-                                                      .currentDate!) {
-                                                return FlutterFlowTheme.of(
-                                                        context)
-                                                    .primaryText;
-                                              } else {
-                                                return FlutterFlowTheme.of(
-                                                        context)
-                                                    .secondaryText;
-                                              }
-                                            }(),
-                                            fontSize: 12.0,
-                                            letterSpacing: 0.0,
-                                            fontWeight:
-                                                FlutterFlowTheme.of(context)
-                                                    .bodyMedium
-                                                    .fontWeight,
-                                            fontStyle:
-                                                FlutterFlowTheme.of(context)
-                                                    .bodyMedium
-                                                    .fontStyle,
-                                          ),
+                                          .fontWeight,
+                                      fontStyle: FlutterFlowTheme.of(context)
+                                          .bodyMedium
+                                          .fontStyle,
                                     ),
-                                    Text(
-                                      dateTimeFormat("d", daysItem),
-                                      style: FlutterFlowTheme.of(context)
-                                          .bodyMedium
-                                          .override(
-                                            font: GoogleFonts.inter(
+                              ),
+                              FutureBuilder<double>(
+                                future: _model.getNutritionProgress(daysItem),
+                                builder: (context, snapshot) {
+                                  // Show loading or default state
+                                  final progress = snapshot.data ?? 0.0;
+
+                                  return InkWell(
+                                    splashColor: Colors.transparent,
+                                    focusColor: Colors.transparent,
+                                    hoverColor: Colors.transparent,
+                                    highlightColor: Colors.transparent,
+                                    onTap: () async {
+                                      if (daysItem <=
+                                          FFAppState().tracker.currentDate!) {
+                                        FFAppState().updateTrackerStruct(
+                                          (e) => e..selectedDate = daysItem,
+                                        );
+                                        FFAppState().update(() {});
+                                      }
+                                    },
+                                    child: CircularPercentIndicator(
+                                      percent: progress,
+                                      radius: 18.0,
+                                      lineWidth: 3.0,
+                                      animation: true,
+                                      animateFromLastPercent: true,
+                                      progressColor:
+                                          FlutterFlowTheme.of(context).primary,
+                                      backgroundColor:
+                                          FlutterFlowTheme.of(context).accent1,
+                                      center: Text(
+                                        dateTimeFormat("d", daysItem),
+                                        style: FlutterFlowTheme.of(context)
+                                            .bodyMedium
+                                            .override(
+                                              font: GoogleFonts.inter(
+                                                fontWeight: FontWeight.w500,
+                                                fontStyle:
+                                                    FlutterFlowTheme.of(context)
+                                                        .bodyMedium
+                                                        .fontStyle,
+                                              ),
+                                              color: () {
+                                                if (daysItem ==
+                                                    FFAppState()
+                                                        .tracker
+                                                        .selectedDate) {
+                                                  return FlutterFlowTheme.of(
+                                                          context)
+                                                      .primary;
+                                                } else if (daysItem <=
+                                                    FFAppState()
+                                                        .tracker
+                                                        .currentDate!) {
+                                                  return FlutterFlowTheme.of(
+                                                          context)
+                                                      .primaryText;
+                                                } else {
+                                                  return FlutterFlowTheme.of(
+                                                          context)
+                                                      .secondaryText;
+                                                }
+                                              }(),
+                                              fontSize: 14.0,
+                                              letterSpacing: 0.0,
                                               fontWeight: FontWeight.w500,
                                               fontStyle:
                                                   FlutterFlowTheme.of(context)
                                                       .bodyMedium
                                                       .fontStyle,
                                             ),
-                                            color: () {
-                                              if (daysItem ==
-                                                  FFAppState()
-                                                      .tracker
-                                                      .selectedDate) {
-                                                return FlutterFlowTheme.of(
-                                                        context)
-                                                    .primary;
-                                              } else if (daysItem <=
-                                                  FFAppState()
-                                                      .tracker
-                                                      .currentDate!) {
-                                                return FlutterFlowTheme.of(
-                                                        context)
-                                                    .primaryText;
-                                              } else {
-                                                return FlutterFlowTheme.of(
-                                                        context)
-                                                    .secondaryText;
-                                              }
-                                            }(),
-                                            fontSize: 14.0,
-                                            letterSpacing: 0.0,
-                                            fontWeight: FontWeight.w500,
-                                            fontStyle:
-                                                FlutterFlowTheme.of(context)
-                                                    .bodyMedium
-                                                    .fontStyle,
-                                          ),
+                                      ),
                                     ),
-                                  ].divide(SizedBox(height: 16.0)),
-                                ),
+                                  );
+                                },
                               ),
-                            ),
+                            ].divide(SizedBox(height: 8.0)),
                           ),
                         );
                       }).divide(SizedBox(width: 3.0)),

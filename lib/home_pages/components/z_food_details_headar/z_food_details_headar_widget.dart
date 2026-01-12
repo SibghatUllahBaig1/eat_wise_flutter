@@ -3,6 +3,7 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/home_pages/components/z_delete_food/z_delete_food_widget.dart';
+import '/backend/schema/structs/index.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -14,9 +15,11 @@ class ZFoodDetailsHeadarWidget extends StatefulWidget {
   const ZFoodDetailsHeadarWidget({
     super.key,
     required this.fromHistory,
+    this.nutritionData,
   });
 
   final bool? fromHistory;
+  final FoodNutritionStruct? nutritionData;
 
   @override
   State<ZFoodDetailsHeadarWidget> createState() =>
@@ -57,17 +60,53 @@ class _ZFoodDetailsHeadarWidgetState extends State<ZFoodDetailsHeadarWidget> {
         height: double.infinity,
         child: Stack(
           children: [
-            Align(
-              alignment: AlignmentDirectional(0.0, 1.0),
-              child: Padding(
-                padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 16.0),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(0.0),
-                  child: Image.asset(
-                    'assets/images/food1.png',
-                    width: 150.0,
-                    height: 150.0,
-                    fit: BoxFit.cover,
+            // Full-width background image
+            Positioned.fill(
+              child: Builder(
+                builder: (context) {
+                  // Show actual image if available, otherwise show placeholder
+                  if (widget.nutritionData?.imageUrl != null &&
+                      widget.nutritionData!.imageUrl.isNotEmpty) {
+                    return Image.network(
+                      widget.nutritionData!.imageUrl,
+                      width: double.infinity,
+                      height: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        // Fallback to placeholder if network image fails
+                        return Image.asset(
+                          'assets/images/food1.png',
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
+                        );
+                      },
+                    );
+                  } else {
+                    // Show placeholder for text search
+                    return Image.asset(
+                      'assets/images/food1.png',
+                      width: double.infinity,
+                      height: double.infinity,
+                      fit: BoxFit.cover,
+                    );
+                  }
+                },
+              ),
+            ),
+            // Gradient overlay for better text visibility
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.3),
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.5),
+                    ],
+                    stops: [0.0, 0.5, 1.0],
                   ),
                 ),
               ),
@@ -96,48 +135,6 @@ class _ZFoodDetailsHeadarWidgetState extends State<ZFoodDetailsHeadarWidget> {
                     mainAxisSize: MainAxisSize.max,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Padding(
-                        padding:
-                            EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 6.0, 0.0),
-                        child: Builder(
-                          builder: (context) {
-                            if (_model.favorite) {
-                              return FlutterFlowIconButton(
-                                borderColor: Colors.transparent,
-                                borderRadius: 22.0,
-                                borderWidth: 1.0,
-                                buttonSize: 44.0,
-                                icon: Icon(
-                                  FFIcons.kheartFilled,
-                                  color: FlutterFlowTheme.of(context).error,
-                                  size: 24.0,
-                                ),
-                                onPressed: () async {
-                                  _model.favorite = false;
-                                  safeSetState(() {});
-                                },
-                              );
-                            } else {
-                              return FlutterFlowIconButton(
-                                borderColor: Colors.transparent,
-                                borderRadius: 22.0,
-                                borderWidth: 1.0,
-                                buttonSize: 44.0,
-                                icon: Icon(
-                                  FFIcons.kheart,
-                                  color:
-                                      FlutterFlowTheme.of(context).primaryText,
-                                  size: 24.0,
-                                ),
-                                onPressed: () async {
-                                  _model.favorite = true;
-                                  safeSetState(() {});
-                                },
-                              );
-                            }
-                          },
-                        ),
-                      ),
                       if (widget!.fromHistory ?? true)
                         Builder(
                           builder: (context) => Padding(
@@ -165,7 +162,9 @@ class _ZFoodDetailsHeadarWidgetState extends State<ZFoodDetailsHeadarWidget> {
                                       backgroundColor: Colors.transparent,
                                       alignment: AlignmentDirectional(0.0, 0.0)
                                           .resolve(Directionality.of(context)),
-                                      child: ZDeleteFoodWidget(),
+                                      child: ZDeleteFoodWidget(
+                                        mealId: widget.nutritionData?.mealId,
+                                      ),
                                     );
                                   },
                                 );

@@ -11,10 +11,6 @@ import 'package:provider/provider.dart';
 
 class ZFoodDetailsHeadarModel
     extends FlutterFlowModel<ZFoodDetailsHeadarWidget> {
-  ///  Local state fields for this component.
-
-  bool favorite = false;
-
   @override
   void initState(BuildContext context) {}
 

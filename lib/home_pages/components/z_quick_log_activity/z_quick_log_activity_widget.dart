@@ -5,6 +5,7 @@ import '/flutter_flow/flutter_flow_widgets.dart';
 import '/home_pages/components/z_activity_icons/z_activity_icons_widget.dart';
 import 'dart:ui';
 import '/custom_code/widgets/index.dart' as custom_widgets;
+import '/backend/backend_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -308,7 +309,7 @@ class _ZQuickLogActivityWidgetState extends State<ZQuickLogActivityWidget> {
                     padding:
                         EdgeInsetsDirectional.fromSTEB(16.0, 24.0, 16.0, 0.0),
                     child: Text(
-                      'Calorie (kcal)',
+                      'Calorie (cal)',
                       textAlign: TextAlign.start,
                       style: FlutterFlowTheme.of(context).bodyMedium.override(
                             font: GoogleFonts.inter(
@@ -443,7 +444,92 @@ class _ZQuickLogActivityWidgetState extends State<ZQuickLogActivityWidget> {
               padding: EdgeInsets.all(16.0),
               child: FFButtonWidget(
                 onPressed: () async {
-                  Navigator.pop(context);
+                  // Validate inputs
+                  final activityName = _model.textController1.text.trim();
+                  final durationText = _model.textController2.text.trim();
+
+                  if (activityName.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Please enter activity name'),
+                        backgroundColor: FlutterFlowTheme.of(context).error,
+                      ),
+                    );
+                    return;
+                  }
+
+                  if (durationText.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Please enter duration'),
+                        backgroundColor: FlutterFlowTheme.of(context).error,
+                      ),
+                    );
+                    return;
+                  }
+
+                  final duration = int.tryParse(durationText);
+                  if (duration == null || duration <= 0) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content:
+                            Text('Please enter a valid duration in minutes'),
+                        backgroundColor: FlutterFlowTheme.of(context).error,
+                      ),
+                    );
+                    return;
+                  }
+
+                  // Calculate estimated calories (rough estimate: 8 cal per minute)
+                  final calories = (duration * 8).round();
+
+                  try {
+                    final backend = BackendManager();
+
+                    if (backend.currentUserId == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Please sign in to add activities'),
+                          backgroundColor: FlutterFlowTheme.of(context).error,
+                        ),
+                      );
+                      return;
+                    }
+
+                    // Save activity to Firestore
+                    await backend.activityService.addActivity(
+                      userId: backend.currentUserId!,
+                      date: DateTime.now(),
+                      activityType: 'quick_log',
+                      activityName: activityName,
+                      duration: duration,
+                      caloriesBurned: calories,
+                    );
+
+                    // Check if widget is still mounted before using context
+                    if (!context.mounted) return;
+
+                    // Show success message
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Activity added successfully!'),
+                        backgroundColor: FlutterFlowTheme.of(context).success,
+                      ),
+                    );
+
+                    // Close the modal
+                    Navigator.pop(context);
+                  } catch (e) {
+                    if (!context.mounted) return;
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content:
+                            Text('Failed to add activity: ${e.toString()}'),
+                        backgroundColor: FlutterFlowTheme.of(context).error,
+                      ),
+                    );
+                  }
                 },
                 text: 'Add',
                 icon: Icon(

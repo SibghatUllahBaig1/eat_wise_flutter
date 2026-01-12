@@ -9,10 +9,14 @@ import 'auth/firebase_auth/firebase_user_provider.dart';
 import 'auth/firebase_auth/auth_util.dart';
 
 import 'backend/firebase/firebase_config.dart';
+import 'backend/api_requests/api_config.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import 'flutter_flow/flutter_flow_util.dart';
 import 'flutter_flow/nav/nav.dart';
 import 'index.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,6 +24,10 @@ void main() async {
   usePathUrlStrategy();
 
   await initFirebase();
+
+
+  // Load API keys from Firestore
+  await ApiConfig.loadApiKeys();
 
   await FlutterFlowTheme.initialize();
 

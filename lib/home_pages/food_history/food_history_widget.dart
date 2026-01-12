@@ -148,7 +148,7 @@ class _FoodHistoryWidgetState extends State<FoodHistoryWidget> {
                                 ),
                               ),
                               Text(
-                                '1376 kcal',
+                                '1376 cal',
                                 style: FlutterFlowTheme.of(context)
                                     .titleSmall
                                     .override(
@@ -258,7 +258,7 @@ class _FoodHistoryWidgetState extends State<FoodHistoryWidget> {
                                               ),
                                         ),
                                         Text(
-                                          '250 kcal, 180 gram',
+                                          '250 cal, 180 gram',
                                           style: FlutterFlowTheme.of(context)
                                               .bodyMedium
                                               .override(
@@ -390,7 +390,7 @@ class _FoodHistoryWidgetState extends State<FoodHistoryWidget> {
                                               ),
                                         ),
                                         Text(
-                                          '240 kcal, 150 gram',
+                                          '240 cal, 150 gram',
                                           style: FlutterFlowTheme.of(context)
                                               .bodyMedium
                                               .override(
@@ -522,7 +522,7 @@ class _FoodHistoryWidgetState extends State<FoodHistoryWidget> {
                                               ),
                                         ),
                                         Text(
-                                          '303 kcal, 150 gram',
+                                          '303 cal, 150 gram',
                                           style: FlutterFlowTheme.of(context)
                                               .bodyMedium
                                               .override(
@@ -654,7 +654,7 @@ class _FoodHistoryWidgetState extends State<FoodHistoryWidget> {
                                               ),
                                         ),
                                         Text(
-                                          '150 kcal, 57 gram',
+                                          '150 cal, 57 gram',
                                           style: FlutterFlowTheme.of(context)
                                               .bodyMedium
                                               .override(
@@ -786,7 +786,7 @@ class _FoodHistoryWidgetState extends State<FoodHistoryWidget> {
                                               ),
                                         ),
                                         Text(
-                                          '72 kcal, 125 gram',
+                                          '72 cal, 125 gram',
                                           style: FlutterFlowTheme.of(context)
                                               .bodyMedium
                                               .override(
@@ -918,7 +918,7 @@ class _FoodHistoryWidgetState extends State<FoodHistoryWidget> {
                                               ),
                                         ),
                                         Text(
-                                          '260 kcal, 57 gram',
+                                          '260 cal, 57 gram',
                                           style: FlutterFlowTheme.of(context)
                                               .bodyMedium
                                               .override(

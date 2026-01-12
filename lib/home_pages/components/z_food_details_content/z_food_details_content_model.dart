@@ -2,6 +2,7 @@ import '/flutter_flow/flutter_flow_charts.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
+import '/backend/schema/structs/index.dart';
 import 'dart:ui';
 import 'z_food_details_content_widget.dart' show ZFoodDetailsContentWidget;
 import 'package:flutter/material.dart';
@@ -11,6 +12,16 @@ import 'package:provider/provider.dart';
 class ZFoodDetailsContentModel
     extends FlutterFlowModel<ZFoodDetailsContentWidget> {
   ///  Local state fields for this component.
+
+  // Editable grams field
+  double? currentGrams;
+
+  // Text controller for grams input
+  FocusNode? gramsFocusNode;
+  TextEditingController? gramsController;
+
+  // Calculated nutrition based on current grams
+  FoodNutritionStruct? calculatedNutrition;
 
   List<double> peiLegand = [8.2, 3.2, 4.8];
   void addToPeiLegand(double item) => peiLegand.add(item);
@@ -34,5 +45,8 @@ class ZFoodDetailsContentModel
   void initState(BuildContext context) {}
 
   @override
-  void dispose() {}
+  void dispose() {
+    gramsFocusNode?.dispose();
+    gramsController?.dispose();
+  }
 }

@@ -2,15 +2,24 @@ import '/flutter_flow/flutter_flow_charts.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
+import '/backend/schema/structs/index.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'z_food_details_content_model.dart';
 export 'z_food_details_content_model.dart';
 
 class ZFoodDetailsContentWidget extends StatefulWidget {
-  const ZFoodDetailsContentWidget({super.key});
+  const ZFoodDetailsContentWidget({
+    super.key,
+    this.nutritionData,
+    this.onNutritionDataChanged,
+  });
+
+  final FoodNutritionStruct? nutritionData;
+  final Function(FoodNutritionStruct?)? onNutritionDataChanged;
 
   @override
   State<ZFoodDetailsContentWidget> createState() =>
@@ -30,6 +39,60 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => ZFoodDetailsContentModel());
+
+    print('\n📋 ZFoodDetailsContentWidget - initState');
+    print(
+        '📊 Nutrition Data: ${widget.nutritionData != null ? "Present" : "NULL"}');
+
+    // Initialize with nutrition data if provided
+    if (widget.nutritionData != null) {
+      print('✅ Initializing with nutrition data:');
+      print('   - Food Name: ${widget.nutritionData!.foodName}');
+      print('   - Grams: ${widget.nutritionData!.grams}');
+      print('   - Calories: ${widget.nutritionData!.calories}');
+      print(
+          '   - Carbs: ${widget.nutritionData!.macros.carbs.grams}g (${widget.nutritionData!.macros.carbs.percentage}%)');
+      print(
+          '   - Protein: ${widget.nutritionData!.macros.protein.grams}g (${widget.nutritionData!.macros.protein.percentage}%)');
+      print(
+          '   - Fat: ${widget.nutritionData!.macros.fat.grams}g (${widget.nutritionData!.macros.fat.percentage}%)');
+
+      _model.currentGrams = widget.nutritionData!.grams;
+      _model.calculatedNutrition = widget.nutritionData;
+      _model.gramsController = TextEditingController(
+        text: widget.nutritionData!.grams.toStringAsFixed(0),
+      );
+
+      // Update pie chart values with actual macro percentages
+      _model.peiValue = [
+        widget.nutritionData!.macros.carbs.percentage,
+        widget.nutritionData!.macros.protein.percentage,
+        widget.nutritionData!.macros.fat.percentage,
+      ];
+      _model.peiLegand = [
+        widget.nutritionData!.macros.carbs.grams,
+        widget.nutritionData!.macros.protein.grams,
+        widget.nutritionData!.macros.fat.grams,
+      ];
+
+      print('📊 Model initialized:');
+      print('   - currentGrams: ${_model.currentGrams}');
+      print(
+          '   - calculatedNutrition.calories: ${_model.calculatedNutrition?.calories}');
+      print('   - peiValue: ${_model.peiValue}');
+      print('   - peiLegand: ${_model.peiLegand}');
+
+      // Notify parent of initial nutrition data
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        widget.onNutritionDataChanged?.call(_model.calculatedNutrition);
+      });
+    } else {
+      print('⚠️ No nutrition data provided, using defaults');
+      _model.gramsController = TextEditingController(text: '100');
+      _model.currentGrams = 100;
+    }
+
+    _model.gramsFocusNode = FocusNode();
   }
 
   @override
@@ -37,6 +100,98 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
     _model.maybeDispose();
 
     super.dispose();
+  }
+
+  // Helper function to recalculate nutrition based on new grams
+  void _recalculateNutrition(double newGrams) {
+    if (widget.nutritionData == null) return;
+
+    final originalGrams = widget.nutritionData!.grams;
+    if (originalGrams == 0) return;
+
+    final scale = newGrams / originalGrams;
+
+    setState(() {
+      _model.currentGrams = newGrams;
+
+      // Recalculate all nutrition values
+      _model.calculatedNutrition = FoodNutritionStruct(
+        foodName: widget.nutritionData!.foodName,
+        grams: newGrams,
+        calories: widget.nutritionData!.calories * scale,
+        macros: MacrosStruct(
+          carbs: MacroDetailStruct(
+            grams: widget.nutritionData!.macros.carbs.grams * scale,
+            percentage: widget.nutritionData!.macros.carbs
+                .percentage, // Percentage stays same
+          ),
+          protein: MacroDetailStruct(
+            grams: widget.nutritionData!.macros.protein.grams * scale,
+            percentage: widget.nutritionData!.macros.protein.percentage,
+          ),
+          fat: MacroDetailStruct(
+            grams: widget.nutritionData!.macros.fat.grams * scale,
+            percentage: widget.nutritionData!.macros.fat.percentage,
+          ),
+        ),
+        cholesterol: NutrientStruct(
+          mg: widget.nutritionData!.cholesterol.mg * scale,
+          percentage: widget.nutritionData!.cholesterol.percentage,
+        ),
+        sodium: NutrientStruct(
+          mg: widget.nutritionData!.sodium.mg * scale,
+          percentage: widget.nutritionData!.sodium.percentage,
+        ),
+        minerals: MineralsStruct(
+          calcium: NutrientStruct(
+            mg: widget.nutritionData!.minerals.calcium.mg * scale,
+            percentage: widget.nutritionData!.minerals.calcium.percentage,
+          ),
+          iron: NutrientStruct(
+            mg: widget.nutritionData!.minerals.iron.mg * scale,
+            percentage: widget.nutritionData!.minerals.iron.percentage,
+          ),
+          potassium: NutrientStruct(
+            mg: widget.nutritionData!.minerals.potassium.mg * scale,
+            percentage: widget.nutritionData!.minerals.potassium.percentage,
+          ),
+          magnesium: NutrientStruct(
+            mg: widget.nutritionData!.minerals.magnesium.mg * scale,
+            percentage: widget.nutritionData!.minerals.magnesium.percentage,
+          ),
+          phosphorus: NutrientStruct(
+            mg: widget.nutritionData!.minerals.phosphorus.mg * scale,
+            percentage: widget.nutritionData!.minerals.phosphorus.percentage,
+          ),
+          zinc: NutrientStruct(
+            mg: widget.nutritionData!.minerals.zinc.mg * scale,
+            percentage: widget.nutritionData!.minerals.zinc.percentage,
+          ),
+          copper: NutrientStruct(
+            mg: widget.nutritionData!.minerals.copper.mg * scale,
+            percentage: widget.nutritionData!.minerals.copper.percentage,
+          ),
+          selenium: NutrientStruct(
+            mg: widget.nutritionData!.minerals.selenium.mg * scale,
+            percentage: widget.nutritionData!.minerals.selenium.percentage,
+          ),
+        ),
+        imageUrl: widget.nutritionData!.imageUrl,
+        timestamp: widget.nutritionData!.timestamp,
+        confidence: widget.nutritionData!.confidence,
+        mealId: widget.nutritionData!.mealId, // Preserve mealId
+      );
+
+      // Update pie chart legend values
+      _model.peiLegand = [
+        _model.calculatedNutrition!.macros.carbs.grams,
+        _model.calculatedNutrition!.macros.protein.grams,
+        _model.calculatedNutrition!.macros.fat.grams,
+      ];
+
+      // Notify parent widget of the change
+      widget.onNutritionDataChanged?.call(_model.calculatedNutrition);
+    });
   }
 
   @override
@@ -64,7 +219,7 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
             Padding(
               padding: EdgeInsetsDirectional.fromSTEB(16.0, 24.0, 16.0, 0.0),
               child: Text(
-                'Fried Shrimp',
+                _model.calculatedNutrition?.foodName ?? 'Food Details',
                 style: FlutterFlowTheme.of(context).titleLarge.override(
                       font: GoogleFonts.inter(
                         fontWeight:
@@ -80,6 +235,104 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
                     ),
               ),
             ),
+            // Grams Input Field
+            if (widget.nutritionData != null)
+              Padding(
+                padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 0.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: FlutterFlowTheme.of(context).primaryBackground,
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.max,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Portion Size (grams):',
+                            style:
+                                FlutterFlowTheme.of(context).bodyLarge.override(
+                                      font: GoogleFonts.inter(
+                                        fontWeight: FlutterFlowTheme.of(context)
+                                            .bodyLarge
+                                            .fontWeight,
+                                        fontStyle: FlutterFlowTheme.of(context)
+                                            .bodyLarge
+                                            .fontStyle,
+                                      ),
+                                      letterSpacing: 0.0,
+                                      fontWeight: FlutterFlowTheme.of(context)
+                                          .bodyLarge
+                                          .fontWeight,
+                                      fontStyle: FlutterFlowTheme.of(context)
+                                          .bodyLarge
+                                          .fontStyle,
+                                    ),
+                          ),
+                        ),
+                        SizedBox(width: 16.0),
+                        Container(
+                          width: 100.0,
+                          child: TextFormField(
+                            controller: _model.gramsController,
+                            focusNode: _model.gramsFocusNode,
+                            onChanged: (value) {
+                              final newGrams = double.tryParse(value);
+                              if (newGrams != null && newGrams > 0) {
+                                _recalculateNutrition(newGrams);
+                              }
+                            },
+                            autofocus: false,
+                            textAlign: TextAlign.center,
+                            obscureText: false,
+                            decoration: InputDecoration(
+                              hintText: 'Grams',
+                              hintStyle:
+                                  FlutterFlowTheme.of(context).bodyMedium,
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: FlutterFlowTheme.of(context).alternate,
+                                  width: 1.0,
+                                ),
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: FlutterFlowTheme.of(context).primary,
+                                  width: 1.0,
+                                ),
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: FlutterFlowTheme.of(context).error,
+                                  width: 1.0,
+                                ),
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: FlutterFlowTheme.of(context).error,
+                                  width: 1.0,
+                                ),
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12.0,
+                                vertical: 12.0,
+                              ),
+                            ),
+                            style: FlutterFlowTheme.of(context).bodyLarge,
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             Padding(
               padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 0.0),
               child: Container(
@@ -147,7 +400,9 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
-                                      '240',
+                                      (_model.calculatedNutrition?.calories ??
+                                              0)
+                                          .toStringAsFixed(0),
                                       style: FlutterFlowTheme.of(context)
                                           .titleLarge
                                           .override(
@@ -260,7 +515,7 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
                                         ),
                                       ),
                                       Text(
-                                        '48 (20%)',
+                                        '${(_model.calculatedNutrition?.macros.carbs.grams ?? 0).toStringAsFixed(1)}g (${(_model.calculatedNutrition?.macros.carbs.percentage ?? 0).toStringAsFixed(0)}%)',
                                         style: FlutterFlowTheme.of(context)
                                             .titleSmall
                                             .override(
@@ -338,7 +593,7 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
                                         ),
                                       ),
                                       Text(
-                                        '84 (35%)',
+                                        '${(_model.calculatedNutrition?.macros.protein.grams ?? 0).toStringAsFixed(1)}g (${(_model.calculatedNutrition?.macros.protein.percentage ?? 0).toStringAsFixed(0)}%)',
                                         style: FlutterFlowTheme.of(context)
                                             .titleSmall
                                             .override(
@@ -416,7 +671,7 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
                                         ),
                                       ),
                                       Text(
-                                        '108 (45%)',
+                                        '${(_model.calculatedNutrition?.macros.fat.grams ?? 0).toStringAsFixed(1)}g (${(_model.calculatedNutrition?.macros.fat.percentage ?? 0).toStringAsFixed(0)}%)',
                                         style: FlutterFlowTheme.of(context)
                                             .titleSmall
                                             .override(
@@ -481,7 +736,7 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
                               ),
                             ),
                             Text(
-                              '189 mg (63%)',
+                              '${(_model.calculatedNutrition?.cholesterol.mg ?? 0).toStringAsFixed(1)} mg (${(_model.calculatedNutrition?.cholesterol.percentage ?? 0).toStringAsFixed(0)}%)',
                               style: FlutterFlowTheme.of(context)
                                   .titleSmall
                                   .override(
@@ -537,7 +792,7 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
                               ),
                             ),
                             Text(
-                              '231 mg (10%)',
+                              '${(_model.calculatedNutrition?.sodium.mg ?? 0).toStringAsFixed(1)} mg (${(_model.calculatedNutrition?.sodium.percentage ?? 0).toStringAsFixed(0)}%)',
                               style: FlutterFlowTheme.of(context)
                                   .titleSmall
                                   .override(
@@ -629,7 +884,7 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
                             ),
                           ),
                           Text(
-                            '54 mg (5%)',
+                            '${(_model.calculatedNutrition?.minerals.calcium.mg ?? 0).toStringAsFixed(1)} mg (${(_model.calculatedNutrition?.minerals.calcium.percentage ?? 0).toStringAsFixed(0)}%)',
                             style: FlutterFlowTheme.of(context)
                                 .titleSmall
                                 .override(
@@ -684,7 +939,7 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
                               ),
                             ),
                             Text(
-                              '1.4 mg (8%)',
+                              '${(_model.calculatedNutrition?.minerals.iron.mg ?? 0).toStringAsFixed(1)} mg (${(_model.calculatedNutrition?.minerals.iron.percentage ?? 0).toStringAsFixed(0)}%)',
                               style: FlutterFlowTheme.of(context)
                                   .titleSmall
                                   .override(
@@ -740,7 +995,7 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
                               ),
                             ),
                             Text(
-                              '182 mg (5%)',
+                              '${(_model.calculatedNutrition?.minerals.potassium.mg ?? 0).toStringAsFixed(1)} mg (${(_model.calculatedNutrition?.minerals.potassium.percentage ?? 0).toStringAsFixed(0)}%)',
                               style: FlutterFlowTheme.of(context)
                                   .titleSmall
                                   .override(
@@ -852,7 +1107,7 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
                               ),
                             ),
                             Text(
-                              '65 mg (8%)',
+                              '${(_model.calculatedNutrition?.minerals.magnesium.mg ?? 0).toStringAsFixed(1)} mg (${(_model.calculatedNutrition?.minerals.magnesium.percentage ?? 0).toStringAsFixed(0)}%)',
                               style: FlutterFlowTheme.of(context)
                                   .titleSmall
                                   .override(
@@ -908,7 +1163,7 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
                               ),
                             ),
                             Text(
-                              '220 mg (18%)',
+                              '${(_model.calculatedNutrition?.minerals.phosphorus.mg ?? 0).toStringAsFixed(1)} mg (${(_model.calculatedNutrition?.minerals.phosphorus.percentage ?? 0).toStringAsFixed(0)}%)',
                               style: FlutterFlowTheme.of(context)
                                   .titleSmall
                                   .override(
@@ -964,7 +1219,7 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
                               ),
                             ),
                             Text(
-                              '1,3 mg (12%)',
+                              '${(_model.calculatedNutrition?.minerals.zinc.mg ?? 0).toStringAsFixed(1)} mg (${(_model.calculatedNutrition?.minerals.zinc.percentage ?? 0).toStringAsFixed(0)}%)',
                               style: FlutterFlowTheme.of(context)
                                   .titleSmall
                                   .override(
@@ -1020,7 +1275,7 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
                               ),
                             ),
                             Text(
-                              '0,2 mg (22%)',
+                              '${(_model.calculatedNutrition?.minerals.copper.mg ?? 0).toStringAsFixed(1)} mg (${(_model.calculatedNutrition?.minerals.copper.percentage ?? 0).toStringAsFixed(0)}%)',
                               style: FlutterFlowTheme.of(context)
                                   .titleSmall
                                   .override(
@@ -1076,7 +1331,7 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
                               ),
                             ),
                             Text(
-                              '40 mg (73%)',
+                              '${(_model.calculatedNutrition?.minerals.selenium.mg ?? 0).toStringAsFixed(1)} mg (${(_model.calculatedNutrition?.minerals.selenium.percentage ?? 0).toStringAsFixed(0)}%)',
                               style: FlutterFlowTheme.of(context)
                                   .titleSmall
                                   .override(

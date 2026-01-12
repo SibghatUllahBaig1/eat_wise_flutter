@@ -17,6 +17,7 @@ class ActivityService extends FirestoreService {
     String? intensity, // low, moderate, high
     String? notes,
     String? iconName,
+    bool isFavorite = false,
   }) async {
     try {
       final activitiesCollection =
@@ -34,6 +35,7 @@ class ActivityService extends FirestoreService {
         'intensity': intensity,
         'notes': notes,
         'iconName': iconName,
+        'isFavorite': isFavorite,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       };
@@ -233,6 +235,58 @@ class ActivityService extends FirestoreService {
         data['createdAt'] = timestampToDateTime(data['createdAt']);
         return data;
       }).toList();
+    } catch (e) {
+      throw Exception(handleFirestoreError(e));
+    }
+  }
+
+  /// Toggle favorite status for an activity
+  Future<void> toggleFavorite({
+    required String userId,
+    required String activityId,
+    required bool isFavorite,
+  }) async {
+    try {
+      final activityDoc =
+          usersCollection.doc(userId).collection('activities').doc(activityId);
+
+      await activityDoc.update({
+        'isFavorite': isFavorite,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw Exception(handleFirestoreError(e));
+    }
+  }
+
+  /// Get a single activity by ID
+  Future<Map<String, dynamic>?> getActivity({
+    required String userId,
+    required String activityId,
+  }) async {
+    try {
+      final doc = await usersCollection
+          .doc(userId)
+          .collection('activities')
+          .doc(activityId)
+          .get();
+
+      if (!doc.exists) {
+        return null;
+      }
+
+      final data = doc.data()!;
+      data['id'] = doc.id;
+      if (data['date'] != null) {
+        data['date'] = timestampToDateTime(data['date']);
+      }
+      if (data['createdAt'] != null) {
+        data['createdAt'] = timestampToDateTime(data['createdAt']);
+      }
+      if (data['updatedAt'] != null) {
+        data['updatedAt'] = timestampToDateTime(data['updatedAt']);
+      }
+      return data;
     } catch (e) {
       throw Exception(handleFirestoreError(e));
     }

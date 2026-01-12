@@ -7,7 +7,6 @@ import '/home_pages/components/z_home_calendar/z_home_calendar_widget.dart';
 import '/home_pages/components/z_naw_bar/z_naw_bar_widget.dart';
 import '/home_pages/components/z_nutrition/z_nutrition_widget.dart';
 import '/home_pages/components/z_statistics/z_statistics_widget.dart';
-import '/tracker/components/z_calendar/z_calendar_widget.dart';
 import '/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -105,39 +104,6 @@ class _HomePageWidgetState extends State<HomePageWidget>
             ),
           ),
           actions: [
-            FlutterFlowIconButton(
-              borderColor: Colors.transparent,
-              borderRadius: 24.0,
-              borderWidth: 1.0,
-              buttonSize: 44.0,
-              icon: Icon(
-                FFIcons.kcalendar,
-                color: FlutterFlowTheme.of(context).primaryText,
-                size: 24.0,
-              ),
-              onPressed: () async {
-                await showDialog(
-                  barrierColor: FlutterFlowTheme.of(context).barrier,
-                  context: context,
-                  builder: (dialogContext) {
-                    return Dialog(
-                      elevation: 0,
-                      insetPadding: EdgeInsets.zero,
-                      backgroundColor: Colors.transparent,
-                      alignment: AlignmentDirectional(0.0, 0.0)
-                          .resolve(Directionality.of(context)),
-                      child: GestureDetector(
-                        onTap: () {
-                          FocusScope.of(dialogContext).unfocus();
-                          FocusManager.instance.primaryFocus?.unfocus();
-                        },
-                        child: ZCalendarWidget(),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
             Padding(
               padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 6.0, 0.0),
               child: FlutterFlowIconButton(
@@ -173,6 +139,15 @@ class _HomePageWidgetState extends State<HomePageWidget>
                       Padding(
                         padding:
                             EdgeInsetsDirectional.fromSTEB(0.0, 12.0, 0.0, 0.0),
+                        child: wrapWithModel(
+                          model: _model.zHomeCalendarModel,
+                          updateCallback: () => safeSetState(() {}),
+                          child: ZHomeCalendarWidget(),
+                        ),
+                      ),
+                      Padding(
+                        padding:
+                            EdgeInsetsDirectional.fromSTEB(0.0, 16.0, 0.0, 0.0),
                         child: wrapWithModel(
                           model: _model.zStatisticsModel,
                           updateCallback: () => safeSetState(() {}),
@@ -221,15 +196,6 @@ class _HomePageWidgetState extends State<HomePageWidget>
                           model: _model.zNutritionModel,
                           updateCallback: () => safeSetState(() {}),
                           child: ZNutritionWidget(),
-                        ),
-                      ),
-                      Padding(
-                        padding:
-                            EdgeInsetsDirectional.fromSTEB(0.0, 16.0, 0.0, 0.0),
-                        child: wrapWithModel(
-                          model: _model.zHomeCalendarModel,
-                          updateCallback: () => safeSetState(() {}),
-                          child: ZHomeCalendarWidget(),
                         ),
                       ),
                     ].addToEnd(SizedBox(height: 24.0)),

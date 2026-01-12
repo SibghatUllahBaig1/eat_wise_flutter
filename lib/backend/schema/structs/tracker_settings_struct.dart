@@ -11,10 +11,12 @@ class TrackerSettingsStruct extends BaseStruct {
     SettingsStruct? water,
     SettingsStruct? step,
     WeightSettingsStruct? weight,
+    SettingsStruct? activity,
   })  : _calorie = calorie,
         _water = water,
         _step = step,
-        _weight = weight;
+        _weight = weight,
+        _activity = activity;
 
   // "calorie" field.
   SettingsStruct? _calorie;
@@ -60,6 +62,17 @@ class TrackerSettingsStruct extends BaseStruct {
 
   bool hasWeight() => _weight != null;
 
+  // "activity" field.
+  SettingsStruct? _activity;
+  SettingsStruct get activity => _activity ?? SettingsStruct();
+  set activity(SettingsStruct? val) => _activity = val;
+
+  void updateActivity(Function(SettingsStruct) updateFn) {
+    updateFn(_activity ??= SettingsStruct());
+  }
+
+  bool hasActivity() => _activity != null;
+
   static TrackerSettingsStruct fromMap(Map<String, dynamic> data) =>
       TrackerSettingsStruct(
         calorie: data['calorie'] is SettingsStruct
@@ -74,6 +87,9 @@ class TrackerSettingsStruct extends BaseStruct {
         weight: data['weight'] is WeightSettingsStruct
             ? data['weight']
             : WeightSettingsStruct.maybeFromMap(data['weight']),
+        activity: data['activity'] is SettingsStruct
+            ? data['activity']
+            : SettingsStruct.maybeFromMap(data['activity']),
       );
 
   static TrackerSettingsStruct? maybeFromMap(dynamic data) => data is Map
@@ -85,6 +101,7 @@ class TrackerSettingsStruct extends BaseStruct {
         'water': _water?.toMap(),
         'step': _step?.toMap(),
         'weight': _weight?.toMap(),
+        'activity': _activity?.toMap(),
       }.withoutNulls;
 
   @override
@@ -103,6 +120,10 @@ class TrackerSettingsStruct extends BaseStruct {
         ),
         'weight': serializeParam(
           _weight,
+          ParamType.DataStruct,
+        ),
+        'activity': serializeParam(
+          _activity,
           ParamType.DataStruct,
         ),
       }.withoutNulls;
@@ -133,6 +154,12 @@ class TrackerSettingsStruct extends BaseStruct {
           false,
           structBuilder: WeightSettingsStruct.fromSerializableMap,
         ),
+        activity: deserializeStructParam(
+          data['activity'],
+          ParamType.DataStruct,
+          false,
+          structBuilder: SettingsStruct.fromSerializableMap,
+        ),
       );
 
   @override
@@ -144,11 +171,13 @@ class TrackerSettingsStruct extends BaseStruct {
         calorie == other.calorie &&
         water == other.water &&
         step == other.step &&
-        weight == other.weight;
+        weight == other.weight &&
+        activity == other.activity;
   }
 
   @override
-  int get hashCode => const ListEquality().hash([calorie, water, step, weight]);
+  int get hashCode =>
+      const ListEquality().hash([calorie, water, step, weight, activity]);
 }
 
 TrackerSettingsStruct createTrackerSettingsStruct({
@@ -156,10 +185,12 @@ TrackerSettingsStruct createTrackerSettingsStruct({
   SettingsStruct? water,
   SettingsStruct? step,
   WeightSettingsStruct? weight,
+  SettingsStruct? activity,
 }) =>
     TrackerSettingsStruct(
       calorie: calorie ?? SettingsStruct(),
       water: water ?? SettingsStruct(),
       step: step ?? SettingsStruct(),
       weight: weight ?? WeightSettingsStruct(),
+      activity: activity ?? SettingsStruct(),
     );

@@ -181,7 +181,7 @@ class _EnergyValueWidgetState extends State<EnergyValueWidget> {
                                   Text(
                                     valueOrDefault<String>(
                                       energyListItem.title,
-                                      '200-300 kcal',
+                                      '200-300 cal',
                                     ),
                                     style: FlutterFlowTheme.of(context)
                                         .bodyMedium

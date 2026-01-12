@@ -25,6 +25,7 @@ class BackendManager {
   final FeedbackService _feedbackService = FeedbackService();
   final SupportService _supportService = SupportService();
   final NotificationService _notificationService = NotificationService();
+  final ApiKeysService _apiKeysService = ApiKeysService();
 
   // Getters for services
   UserService get userService => _userService;
@@ -40,6 +41,7 @@ class BackendManager {
   FeedbackService get feedbackService => _feedbackService;
   SupportService get supportService => _supportService;
   NotificationService get notificationService => _notificationService;
+  ApiKeysService get apiKeysService => _apiKeysService;
 
   // Current user helpers
   String? get currentUserId => FirebaseAuth.instance.currentUser?.uid;

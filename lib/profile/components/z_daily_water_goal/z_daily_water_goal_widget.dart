@@ -1,4 +1,6 @@
 import '/backend/schema/structs/index.dart';
+import '/backend/firestore/water_tracker_service.dart';
+import '/auth/firebase_auth/auth_util.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -224,6 +226,7 @@ class _ZDailyWaterGoalWidgetState extends State<ZDailyWaterGoalWidget> {
                     ),
                     FFButtonWidget(
                       onPressed: () async {
+                        // Update local app state
                         FFAppState().updateTrackerSettingsStruct(
                           (e) => e
                             ..updateWater(
@@ -231,7 +234,22 @@ class _ZDailyWaterGoalWidgetState extends State<ZDailyWaterGoalWidget> {
                             ),
                         );
                         FFAppState().update(() {});
-                        Navigator.pop(context);
+
+                        // Update Firestore and recalculate progress
+                        if (currentUserUid.isNotEmpty && _model.value != null) {
+                          final selectedDate =
+                              FFAppState().tracker.selectedDate ??
+                                  DateTime.now();
+                          await WaterTrackerService().updateWaterGoal(
+                            userId: currentUserUid,
+                            goal: _model.value!,
+                            date: selectedDate,
+                          );
+                        }
+
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                        }
                       },
                       text: 'Save',
                       options: FFButtonOptions(

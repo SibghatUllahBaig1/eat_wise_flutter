@@ -208,7 +208,7 @@ class _CalorieCounterWidgetState extends State<CalorieCounterWidget> {
                             model: _model.textTextRightModel2,
                             updateCallback: () => safeSetState(() {}),
                             child: TextTextRightWidget(
-                              text: 'Units',
+                              text: 'Calorie Units',
                               value: FFAppState().trackerSettings.calorie.unit,
                             ),
                           ),

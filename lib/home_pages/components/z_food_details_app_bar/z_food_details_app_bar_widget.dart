@@ -3,6 +3,7 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/home_pages/components/z_delete_food/z_delete_food_widget.dart';
+import '/backend/schema/structs/index.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -14,9 +15,11 @@ class ZFoodDetailsAppBarWidget extends StatefulWidget {
   const ZFoodDetailsAppBarWidget({
     super.key,
     required this.fromHistory,
+    this.nutritionData,
   });
 
   final bool? fromHistory;
+  final FoodNutritionStruct? nutritionData;
 
   @override
   State<ZFoodDetailsAppBarWidget> createState() =>
@@ -84,7 +87,7 @@ class _ZFoodDetailsAppBarWidgetState extends State<ZFoodDetailsAppBarWidget> {
                     padding:
                         EdgeInsetsDirectional.fromSTEB(12.0, 0.0, 0.0, 0.0),
                     child: Text(
-                      'Fried Shrimp',
+                      widget.nutritionData?.foodName ?? 'Food Details',
                       textAlign: TextAlign.start,
                       style: FlutterFlowTheme.of(context).titleLarge.override(
                             font: GoogleFonts.inter(
@@ -110,47 +113,6 @@ class _ZFoodDetailsAppBarWidgetState extends State<ZFoodDetailsAppBarWidget> {
                   mainAxisSize: MainAxisSize.max,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Padding(
-                      padding:
-                          EdgeInsetsDirectional.fromSTEB(0.0, 6.0, 6.0, 6.0),
-                      child: Builder(
-                        builder: (context) {
-                          if (_model.favorite) {
-                            return FlutterFlowIconButton(
-                              borderColor: Colors.transparent,
-                              borderRadius: 22.0,
-                              borderWidth: 1.0,
-                              buttonSize: 44.0,
-                              icon: Icon(
-                                FFIcons.kheartFilled,
-                                color: FlutterFlowTheme.of(context).error,
-                                size: 24.0,
-                              ),
-                              onPressed: () async {
-                                _model.favorite = false;
-                                safeSetState(() {});
-                              },
-                            );
-                          } else {
-                            return FlutterFlowIconButton(
-                              borderColor: Colors.transparent,
-                              borderRadius: 22.0,
-                              borderWidth: 1.0,
-                              buttonSize: 44.0,
-                              icon: Icon(
-                                FFIcons.kheart,
-                                color: FlutterFlowTheme.of(context).primaryText,
-                                size: 24.0,
-                              ),
-                              onPressed: () async {
-                                _model.favorite = true;
-                                safeSetState(() {});
-                              },
-                            );
-                          }
-                        },
-                      ),
-                    ),
                     if (widget!.fromHistory ?? true)
                       Builder(
                         builder: (context) => Padding(
@@ -178,7 +140,9 @@ class _ZFoodDetailsAppBarWidgetState extends State<ZFoodDetailsAppBarWidget> {
                                     backgroundColor: Colors.transparent,
                                     alignment: AlignmentDirectional(0.0, 0.0)
                                         .resolve(Directionality.of(context)),
-                                    child: ZDeleteFoodWidget(),
+                                    child: ZDeleteFoodWidget(
+                                      mealId: widget.nutritionData?.mealId,
+                                    ),
                                   );
                                 },
                               );

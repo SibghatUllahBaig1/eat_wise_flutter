@@ -1,18 +1,25 @@
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
 import '/tracker/components/z_drinks_optionals/z_drinks_optionals_widget.dart';
-import 'dart:ui';
 import 'package:aligned_dialog/aligned_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 import 'z_history_list_model.dart';
 export 'z_history_list_model.dart';
 
 class ZHistoryListWidget extends StatefulWidget {
-  const ZHistoryListWidget({super.key});
+  const ZHistoryListWidget({
+    super.key,
+    this.drinksList = const [],
+    this.onDelete,
+    this.onEdit,
+  });
+
+  final List<Map<String, dynamic>> drinksList;
+  final Function(String)? onDelete;
+  final Function(
+      String drinkId, int amount, String drinkType, String drinkIcon)? onEdit;
 
   @override
   State<ZHistoryListWidget> createState() => _ZHistoryListWidgetState();
@@ -40,14 +47,99 @@ class _ZHistoryListWidgetState extends State<ZHistoryListWidget> {
     super.dispose();
   }
 
+  Widget _buildDrinkIcon(String iconName) {
+    // Map icon names to FFIcons
+    final iconMap = {
+      'cup8': FFIcons.kcup8,
+      'cup4': FFIcons.kcup4,
+      'cup9': FFIcons.kcup9,
+      'cup1': FFIcons.kcup1,
+      'cup2': FFIcons.kcup2,
+      'cup3': FFIcons.kcup3,
+      'cup5': FFIcons.kcup5,
+      'cup6': FFIcons.kcup6,
+      'cup7': FFIcons.kcup7,
+      'cup10': FFIcons.kcup10,
+    };
+
+    // Check if it's an asset image
+    if (iconName.startsWith('assets/') || iconName.startsWith('drinks')) {
+      final assetPath =
+          iconName.startsWith('assets/') ? iconName : 'assets/images/$iconName';
+      return Padding(
+        padding: EdgeInsets.all(12.0),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12.0),
+          child: Image.asset(
+            assetPath,
+            width: 64.0,
+            height: 64.0,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Icon(
+                FFIcons.kcup8,
+                color: FlutterFlowTheme.of(context).waterColor,
+                size: 32.0,
+              );
+            },
+          ),
+        ),
+      );
+    }
+
+    // Otherwise use icon
+    return Icon(
+      iconMap[iconName] ?? FFIcons.kcup8,
+      color: FlutterFlowTheme.of(context).waterColor,
+      size: 32.0,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (widget.drinksList.isEmpty) {
+      return Padding(
+        padding: EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
+        child: Container(
+          decoration: BoxDecoration(
+            color: FlutterFlowTheme.of(context).secondaryBackground,
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(32.0),
+            child: Center(
+              child: Text(
+                'No drinks recorded yet',
+                style: FlutterFlowTheme.of(context).bodyMedium.override(
+                      font: GoogleFonts.inter(),
+                      color: FlutterFlowTheme.of(context).secondaryText,
+                      letterSpacing: 0.0,
+                    ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
+      child: ListView.separated(
+        shrinkWrap: true,
+        physics: NeverScrollableScrollPhysics(),
+        itemCount: widget.drinksList.length,
+        separatorBuilder: (context, index) => SizedBox(height: 12.0),
+        itemBuilder: (context, index) {
+          final drink = widget.drinksList[index];
+          final drinkId = drink['id'] as String? ?? '';
+          final amount = drink['amount'] as int? ?? 0;
+          final drinkType = drink['drinkType'] as String? ?? 'Water';
+          final drinkIcon = drink['drinkIcon'] as String? ?? 'cup8';
+          final timestamp = drink['timestamp'] as DateTime?;
+          final timeString =
+              timestamp != null ? dateTimeFormat("jm", timestamp) : '';
+
+          return Container(
             decoration: BoxDecoration(
               color: FlutterFlowTheme.of(context).secondaryBackground,
               borderRadius: BorderRadius.circular(12.0),
@@ -65,18 +157,7 @@ class _ZHistoryListWidgetState extends State<ZHistoryListWidget> {
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                     alignment: AlignmentDirectional(0.0, 0.0),
-                    child: Padding(
-                      padding: EdgeInsets.all(12.0),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12.0),
-                        child: Image.asset(
-                          'assets/images/drinks2.png',
-                          width: 64.0,
-                          height: 64.0,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
+                    child: _buildDrinkIcon(drinkIcon),
                   ),
                   Expanded(
                     child: Padding(
@@ -87,7 +168,7 @@ class _ZHistoryListWidgetState extends State<ZHistoryListWidget> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Juice',
+                            drinkType,
                             style: FlutterFlowTheme.of(context)
                                 .titleSmall
                                 .override(
@@ -109,7 +190,7 @@ class _ZHistoryListWidgetState extends State<ZHistoryListWidget> {
                                 ),
                           ),
                           Text(
-                            '08:20 AM',
+                            timeString,
                             style: FlutterFlowTheme.of(context)
                                 .labelSmall
                                 .override(
@@ -137,7 +218,7 @@ class _ZHistoryListWidgetState extends State<ZHistoryListWidget> {
                   Padding(
                     padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 6.0, 0.0),
                     child: Text(
-                      '200 mL',
+                      '$amount mL',
                       style: FlutterFlowTheme.of(context).titleSmall.override(
                             font: GoogleFonts.inter(
                               fontWeight: FlutterFlowTheme.of(context)
@@ -186,6 +267,12 @@ class _ZHistoryListWidgetState extends State<ZHistoryListWidget> {
                                 color: Colors.transparent,
                                 child: ZDrinksOptionalsWidget(
                                   trackerType: 0,
+                                  drinkId: drinkId,
+                                  onDelete: widget.onDelete,
+                                  onEdit: widget.onEdit,
+                                  amount: amount,
+                                  drinkType: drinkType,
+                                  drinkIcon: drinkIcon,
                                 ),
                               );
                             },
@@ -197,897 +284,8 @@ class _ZHistoryListWidgetState extends State<ZHistoryListWidget> {
                 ],
               ),
             ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: FlutterFlowTheme.of(context).secondaryBackground,
-              borderRadius: BorderRadius.circular(12.0),
-            ),
-            child: Padding(
-              padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 0.0, 16.0),
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  Container(
-                    width: 64.0,
-                    height: 64.0,
-                    decoration: BoxDecoration(
-                      color: FlutterFlowTheme.of(context).primaryBackground,
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    alignment: AlignmentDirectional(0.0, 0.0),
-                    child: Padding(
-                      padding: EdgeInsets.all(12.0),
-                      child: Icon(
-                        FFIcons.kcup8,
-                        color: FlutterFlowTheme.of(context).waterColor,
-                        size: 32.0,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding:
-                          EdgeInsetsDirectional.fromSTEB(12.0, 0.0, 12.0, 0.0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Water',
-                            style: FlutterFlowTheme.of(context)
-                                .titleSmall
-                                .override(
-                                  font: GoogleFonts.inter(
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .fontStyle,
-                                  ),
-                                  letterSpacing: 0.0,
-                                  fontWeight: FlutterFlowTheme.of(context)
-                                      .titleSmall
-                                      .fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .titleSmall
-                                      .fontStyle,
-                                ),
-                          ),
-                          Text(
-                            '10:00 AM',
-                            style: FlutterFlowTheme.of(context)
-                                .labelSmall
-                                .override(
-                                  font: GoogleFonts.inter(
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .labelSmall
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .labelSmall
-                                        .fontStyle,
-                                  ),
-                                  letterSpacing: 0.0,
-                                  fontWeight: FlutterFlowTheme.of(context)
-                                      .labelSmall
-                                      .fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .labelSmall
-                                      .fontStyle,
-                                ),
-                          ),
-                        ].divide(SizedBox(height: 8.0)),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 6.0, 0.0),
-                    child: Text(
-                      '300 mL',
-                      style: FlutterFlowTheme.of(context).titleSmall.override(
-                            font: GoogleFonts.inter(
-                              fontWeight: FlutterFlowTheme.of(context)
-                                  .titleSmall
-                                  .fontWeight,
-                              fontStyle: FlutterFlowTheme.of(context)
-                                  .titleSmall
-                                  .fontStyle,
-                            ),
-                            letterSpacing: 0.0,
-                            fontWeight: FlutterFlowTheme.of(context)
-                                .titleSmall
-                                .fontWeight,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .titleSmall
-                                .fontStyle,
-                          ),
-                    ),
-                  ),
-                  Builder(
-                    builder: (context) => Padding(
-                      padding:
-                          EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 6.0, 0.0),
-                      child: FlutterFlowIconButton(
-                        borderRadius: 22.0,
-                        buttonSize: 44.0,
-                        fillColor: FlutterFlowTheme.of(context).transparent,
-                        icon: Icon(
-                          FFIcons.kdotsVertical,
-                          color: FlutterFlowTheme.of(context).primaryText,
-                          size: 24.0,
-                        ),
-                        onPressed: () async {
-                          await showAlignedDialog(
-                            barrierColor:
-                                FlutterFlowTheme.of(context).transparent,
-                            context: context,
-                            isGlobal: false,
-                            avoidOverflow: false,
-                            targetAnchor: AlignmentDirectional(1.0, -1.0)
-                                .resolve(Directionality.of(context)),
-                            followerAnchor: AlignmentDirectional(1.0, -1.0)
-                                .resolve(Directionality.of(context)),
-                            builder: (dialogContext) {
-                              return Material(
-                                color: Colors.transparent,
-                                child: ZDrinksOptionalsWidget(
-                                  trackerType: 0,
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: FlutterFlowTheme.of(context).secondaryBackground,
-              borderRadius: BorderRadius.circular(12.0),
-            ),
-            child: Padding(
-              padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 0.0, 16.0),
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  Container(
-                    width: 64.0,
-                    height: 64.0,
-                    decoration: BoxDecoration(
-                      color: FlutterFlowTheme.of(context).primaryBackground,
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    child: Align(
-                      alignment: AlignmentDirectional(0.0, 0.0),
-                      child: Icon(
-                        FFIcons.kcup4,
-                        color: FlutterFlowTheme.of(context).waterColor,
-                        size: 32.0,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding:
-                          EdgeInsetsDirectional.fromSTEB(12.0, 0.0, 12.0, 0.0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Water',
-                            style: FlutterFlowTheme.of(context)
-                                .titleSmall
-                                .override(
-                                  font: GoogleFonts.inter(
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .fontStyle,
-                                  ),
-                                  letterSpacing: 0.0,
-                                  fontWeight: FlutterFlowTheme.of(context)
-                                      .titleSmall
-                                      .fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .titleSmall
-                                      .fontStyle,
-                                ),
-                          ),
-                          Text(
-                            '04:10 PM',
-                            style: FlutterFlowTheme.of(context)
-                                .labelSmall
-                                .override(
-                                  font: GoogleFonts.inter(
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .labelSmall
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .labelSmall
-                                        .fontStyle,
-                                  ),
-                                  letterSpacing: 0.0,
-                                  fontWeight: FlutterFlowTheme.of(context)
-                                      .labelSmall
-                                      .fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .labelSmall
-                                      .fontStyle,
-                                ),
-                          ),
-                        ].divide(SizedBox(height: 8.0)),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 6.0, 0.0),
-                    child: Text(
-                      '200 mL',
-                      style: FlutterFlowTheme.of(context).titleSmall.override(
-                            font: GoogleFonts.inter(
-                              fontWeight: FlutterFlowTheme.of(context)
-                                  .titleSmall
-                                  .fontWeight,
-                              fontStyle: FlutterFlowTheme.of(context)
-                                  .titleSmall
-                                  .fontStyle,
-                            ),
-                            letterSpacing: 0.0,
-                            fontWeight: FlutterFlowTheme.of(context)
-                                .titleSmall
-                                .fontWeight,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .titleSmall
-                                .fontStyle,
-                          ),
-                    ),
-                  ),
-                  Builder(
-                    builder: (context) => Padding(
-                      padding:
-                          EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 6.0, 0.0),
-                      child: FlutterFlowIconButton(
-                        borderRadius: 22.0,
-                        buttonSize: 44.0,
-                        fillColor: FlutterFlowTheme.of(context).transparent,
-                        icon: Icon(
-                          FFIcons.kdotsVertical,
-                          color: FlutterFlowTheme.of(context).primaryText,
-                          size: 24.0,
-                        ),
-                        onPressed: () async {
-                          await showAlignedDialog(
-                            barrierColor:
-                                FlutterFlowTheme.of(context).transparent,
-                            context: context,
-                            isGlobal: false,
-                            avoidOverflow: false,
-                            targetAnchor: AlignmentDirectional(1.0, -1.0)
-                                .resolve(Directionality.of(context)),
-                            followerAnchor: AlignmentDirectional(1.0, -1.0)
-                                .resolve(Directionality.of(context)),
-                            builder: (dialogContext) {
-                              return Material(
-                                color: Colors.transparent,
-                                child: ZDrinksOptionalsWidget(
-                                  trackerType: 0,
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: FlutterFlowTheme.of(context).secondaryBackground,
-              borderRadius: BorderRadius.circular(12.0),
-            ),
-            child: Padding(
-              padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 0.0, 16.0),
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  Container(
-                    width: 64.0,
-                    height: 64.0,
-                    decoration: BoxDecoration(
-                      color: FlutterFlowTheme.of(context).primaryBackground,
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    alignment: AlignmentDirectional(0.0, 0.0),
-                    child: Padding(
-                      padding: EdgeInsets.all(12.0),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8.0),
-                        child: Image.asset(
-                          'assets/images/drinks3.png',
-                          width: 64.0,
-                          height: 64.0,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding:
-                          EdgeInsetsDirectional.fromSTEB(12.0, 0.0, 12.0, 0.0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Tea',
-                            style: FlutterFlowTheme.of(context)
-                                .titleSmall
-                                .override(
-                                  font: GoogleFonts.inter(
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .fontStyle,
-                                  ),
-                                  letterSpacing: 0.0,
-                                  fontWeight: FlutterFlowTheme.of(context)
-                                      .titleSmall
-                                      .fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .titleSmall
-                                      .fontStyle,
-                                ),
-                          ),
-                          Text(
-                            '06:00 PM',
-                            style: FlutterFlowTheme.of(context)
-                                .labelSmall
-                                .override(
-                                  font: GoogleFonts.inter(
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .labelSmall
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .labelSmall
-                                        .fontStyle,
-                                  ),
-                                  letterSpacing: 0.0,
-                                  fontWeight: FlutterFlowTheme.of(context)
-                                      .labelSmall
-                                      .fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .labelSmall
-                                      .fontStyle,
-                                ),
-                          ),
-                        ].divide(SizedBox(height: 8.0)),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 4.0, 0.0),
-                    child: Text(
-                      '150 mL',
-                      style: FlutterFlowTheme.of(context).titleSmall.override(
-                            font: GoogleFonts.inter(
-                              fontWeight: FlutterFlowTheme.of(context)
-                                  .titleSmall
-                                  .fontWeight,
-                              fontStyle: FlutterFlowTheme.of(context)
-                                  .titleSmall
-                                  .fontStyle,
-                            ),
-                            letterSpacing: 0.0,
-                            fontWeight: FlutterFlowTheme.of(context)
-                                .titleSmall
-                                .fontWeight,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .titleSmall
-                                .fontStyle,
-                          ),
-                    ),
-                  ),
-                  Builder(
-                    builder: (context) => Padding(
-                      padding:
-                          EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 6.0, 0.0),
-                      child: FlutterFlowIconButton(
-                        borderRadius: 22.0,
-                        buttonSize: 44.0,
-                        fillColor: FlutterFlowTheme.of(context).transparent,
-                        icon: Icon(
-                          FFIcons.kdotsVertical,
-                          color: FlutterFlowTheme.of(context).primaryText,
-                          size: 24.0,
-                        ),
-                        onPressed: () async {
-                          await showAlignedDialog(
-                            barrierColor:
-                                FlutterFlowTheme.of(context).transparent,
-                            context: context,
-                            isGlobal: false,
-                            avoidOverflow: false,
-                            targetAnchor: AlignmentDirectional(1.0, -1.0)
-                                .resolve(Directionality.of(context)),
-                            followerAnchor: AlignmentDirectional(1.0, -1.0)
-                                .resolve(Directionality.of(context)),
-                            builder: (dialogContext) {
-                              return Material(
-                                color: Colors.transparent,
-                                child: ZDrinksOptionalsWidget(
-                                  trackerType: 0,
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: FlutterFlowTheme.of(context).secondaryBackground,
-              borderRadius: BorderRadius.circular(12.0),
-            ),
-            child: Padding(
-              padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 0.0, 16.0),
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  Container(
-                    width: 64.0,
-                    height: 64.0,
-                    decoration: BoxDecoration(
-                      color: FlutterFlowTheme.of(context).primaryBackground,
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    child: Icon(
-                      FFIcons.kcup9,
-                      color: FlutterFlowTheme.of(context).waterColor,
-                      size: 32.0,
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding:
-                          EdgeInsetsDirectional.fromSTEB(12.0, 0.0, 12.0, 0.0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Water',
-                            style: FlutterFlowTheme.of(context)
-                                .titleSmall
-                                .override(
-                                  font: GoogleFonts.inter(
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .fontStyle,
-                                  ),
-                                  letterSpacing: 0.0,
-                                  fontWeight: FlutterFlowTheme.of(context)
-                                      .titleSmall
-                                      .fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .titleSmall
-                                      .fontStyle,
-                                ),
-                          ),
-                          Text(
-                            '08:30 PM',
-                            style: FlutterFlowTheme.of(context)
-                                .labelSmall
-                                .override(
-                                  font: GoogleFonts.inter(
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .labelSmall
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .labelSmall
-                                        .fontStyle,
-                                  ),
-                                  letterSpacing: 0.0,
-                                  fontWeight: FlutterFlowTheme.of(context)
-                                      .labelSmall
-                                      .fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .labelSmall
-                                      .fontStyle,
-                                ),
-                          ),
-                        ].divide(SizedBox(height: 8.0)),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 4.0, 0.0),
-                    child: Text(
-                      '350 mL',
-                      style: FlutterFlowTheme.of(context).titleSmall.override(
-                            font: GoogleFonts.inter(
-                              fontWeight: FlutterFlowTheme.of(context)
-                                  .titleSmall
-                                  .fontWeight,
-                              fontStyle: FlutterFlowTheme.of(context)
-                                  .titleSmall
-                                  .fontStyle,
-                            ),
-                            letterSpacing: 0.0,
-                            fontWeight: FlutterFlowTheme.of(context)
-                                .titleSmall
-                                .fontWeight,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .titleSmall
-                                .fontStyle,
-                          ),
-                    ),
-                  ),
-                  Builder(
-                    builder: (context) => Padding(
-                      padding:
-                          EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 6.0, 0.0),
-                      child: FlutterFlowIconButton(
-                        borderRadius: 22.0,
-                        buttonSize: 44.0,
-                        fillColor: FlutterFlowTheme.of(context).transparent,
-                        icon: Icon(
-                          FFIcons.kdotsVertical,
-                          color: FlutterFlowTheme.of(context).primaryText,
-                          size: 24.0,
-                        ),
-                        onPressed: () async {
-                          await showAlignedDialog(
-                            barrierColor:
-                                FlutterFlowTheme.of(context).transparent,
-                            context: context,
-                            isGlobal: false,
-                            avoidOverflow: false,
-                            targetAnchor: AlignmentDirectional(1.0, -1.0)
-                                .resolve(Directionality.of(context)),
-                            followerAnchor: AlignmentDirectional(1.0, -1.0)
-                                .resolve(Directionality.of(context)),
-                            builder: (dialogContext) {
-                              return Material(
-                                color: Colors.transparent,
-                                child: ZDrinksOptionalsWidget(
-                                  trackerType: 0,
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: FlutterFlowTheme.of(context).secondaryBackground,
-              borderRadius: BorderRadius.circular(12.0),
-            ),
-            child: Padding(
-              padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 0.0, 16.0),
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  Container(
-                    width: 64.0,
-                    height: 64.0,
-                    decoration: BoxDecoration(
-                      color: FlutterFlowTheme.of(context).primaryBackground,
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    alignment: AlignmentDirectional(0.0, 0.0),
-                    child: Padding(
-                      padding: EdgeInsets.all(12.0),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8.0),
-                        child: Image.asset(
-                          'assets/images/drinks3.png',
-                          width: 64.0,
-                          height: 64.0,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding:
-                          EdgeInsetsDirectional.fromSTEB(12.0, 0.0, 12.0, 0.0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Tea',
-                            style: FlutterFlowTheme.of(context)
-                                .titleSmall
-                                .override(
-                                  font: GoogleFonts.inter(
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .fontStyle,
-                                  ),
-                                  letterSpacing: 0.0,
-                                  fontWeight: FlutterFlowTheme.of(context)
-                                      .titleSmall
-                                      .fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .titleSmall
-                                      .fontStyle,
-                                ),
-                          ),
-                          Text(
-                            '09:25 PM',
-                            style: FlutterFlowTheme.of(context)
-                                .labelSmall
-                                .override(
-                                  font: GoogleFonts.inter(
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .labelSmall
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .labelSmall
-                                        .fontStyle,
-                                  ),
-                                  letterSpacing: 0.0,
-                                  fontWeight: FlutterFlowTheme.of(context)
-                                      .labelSmall
-                                      .fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .labelSmall
-                                      .fontStyle,
-                                ),
-                          ),
-                        ].divide(SizedBox(height: 8.0)),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 4.0, 0.0),
-                    child: Text(
-                      '150 mL',
-                      style: FlutterFlowTheme.of(context).titleSmall.override(
-                            font: GoogleFonts.inter(
-                              fontWeight: FlutterFlowTheme.of(context)
-                                  .titleSmall
-                                  .fontWeight,
-                              fontStyle: FlutterFlowTheme.of(context)
-                                  .titleSmall
-                                  .fontStyle,
-                            ),
-                            letterSpacing: 0.0,
-                            fontWeight: FlutterFlowTheme.of(context)
-                                .titleSmall
-                                .fontWeight,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .titleSmall
-                                .fontStyle,
-                          ),
-                    ),
-                  ),
-                  Builder(
-                    builder: (context) => Padding(
-                      padding:
-                          EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 6.0, 0.0),
-                      child: FlutterFlowIconButton(
-                        borderRadius: 22.0,
-                        buttonSize: 44.0,
-                        fillColor: FlutterFlowTheme.of(context).transparent,
-                        icon: Icon(
-                          FFIcons.kdotsVertical,
-                          color: FlutterFlowTheme.of(context).primaryText,
-                          size: 24.0,
-                        ),
-                        onPressed: () async {
-                          await showAlignedDialog(
-                            barrierColor:
-                                FlutterFlowTheme.of(context).transparent,
-                            context: context,
-                            isGlobal: false,
-                            avoidOverflow: false,
-                            targetAnchor: AlignmentDirectional(1.0, -1.0)
-                                .resolve(Directionality.of(context)),
-                            followerAnchor: AlignmentDirectional(1.0, -1.0)
-                                .resolve(Directionality.of(context)),
-                            builder: (dialogContext) {
-                              return Material(
-                                color: Colors.transparent,
-                                child: ZDrinksOptionalsWidget(
-                                  trackerType: 0,
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: FlutterFlowTheme.of(context).secondaryBackground,
-              borderRadius: BorderRadius.circular(12.0),
-            ),
-            child: Padding(
-              padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 0.0, 16.0),
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  Container(
-                    width: 64.0,
-                    height: 64.0,
-                    decoration: BoxDecoration(
-                      color: FlutterFlowTheme.of(context).primaryBackground,
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    alignment: AlignmentDirectional(0.0, 0.0),
-                    child: Padding(
-                      padding: EdgeInsets.all(12.0),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8.0),
-                        child: Image.asset(
-                          'assets/images/drinks9.png',
-                          width: 54.0,
-                          height: 54.0,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding:
-                          EdgeInsetsDirectional.fromSTEB(12.0, 0.0, 12.0, 0.0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Wine',
-                            style: FlutterFlowTheme.of(context)
-                                .titleSmall
-                                .override(
-                                  font: GoogleFonts.inter(
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .fontStyle,
-                                  ),
-                                  letterSpacing: 0.0,
-                                  fontWeight: FlutterFlowTheme.of(context)
-                                      .titleSmall
-                                      .fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .titleSmall
-                                      .fontStyle,
-                                ),
-                          ),
-                          Text(
-                            '10:00 PM',
-                            style: FlutterFlowTheme.of(context)
-                                .labelSmall
-                                .override(
-                                  font: GoogleFonts.inter(
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .labelSmall
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .labelSmall
-                                        .fontStyle,
-                                  ),
-                                  letterSpacing: 0.0,
-                                  fontWeight: FlutterFlowTheme.of(context)
-                                      .labelSmall
-                                      .fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .labelSmall
-                                      .fontStyle,
-                                ),
-                          ),
-                        ].divide(SizedBox(height: 8.0)),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 4.0, 0.0),
-                    child: Text(
-                      '50 mL',
-                      style: FlutterFlowTheme.of(context).titleSmall.override(
-                            font: GoogleFonts.inter(
-                              fontWeight: FlutterFlowTheme.of(context)
-                                  .titleSmall
-                                  .fontWeight,
-                              fontStyle: FlutterFlowTheme.of(context)
-                                  .titleSmall
-                                  .fontStyle,
-                            ),
-                            letterSpacing: 0.0,
-                            fontWeight: FlutterFlowTheme.of(context)
-                                .titleSmall
-                                .fontWeight,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .titleSmall
-                                .fontStyle,
-                          ),
-                    ),
-                  ),
-                  Builder(
-                    builder: (context) => Padding(
-                      padding:
-                          EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 6.0, 0.0),
-                      child: FlutterFlowIconButton(
-                        borderRadius: 22.0,
-                        buttonSize: 44.0,
-                        fillColor: FlutterFlowTheme.of(context).transparent,
-                        icon: Icon(
-                          FFIcons.kdotsVertical,
-                          color: FlutterFlowTheme.of(context).primaryText,
-                          size: 24.0,
-                        ),
-                        onPressed: () async {
-                          await showAlignedDialog(
-                            barrierColor:
-                                FlutterFlowTheme.of(context).transparent,
-                            context: context,
-                            isGlobal: false,
-                            avoidOverflow: false,
-                            targetAnchor: AlignmentDirectional(1.0, -1.0)
-                                .resolve(Directionality.of(context)),
-                            followerAnchor: AlignmentDirectional(1.0, -1.0)
-                                .resolve(Directionality.of(context)),
-                            builder: (dialogContext) {
-                              return Material(
-                                color: Colors.transparent,
-                                child: ZDrinksOptionalsWidget(
-                                  trackerType: 0,
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ].divide(SizedBox(height: 12.0)),
+          );
+        },
       ),
     );
   }

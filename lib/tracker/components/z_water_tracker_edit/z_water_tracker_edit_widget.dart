@@ -9,7 +9,21 @@ import 'z_water_tracker_edit_model.dart';
 export 'z_water_tracker_edit_model.dart';
 
 class ZWaterTrackerEditWidget extends StatefulWidget {
-  const ZWaterTrackerEditWidget({super.key});
+  const ZWaterTrackerEditWidget({
+    super.key,
+    this.drinkId,
+    this.amount,
+    this.drinkType,
+    this.drinkIcon,
+    this.onEdit,
+  });
+
+  final String? drinkId;
+  final int? amount;
+  final String? drinkType;
+  final String? drinkIcon;
+  final Function(
+      String drinkId, int amount, String drinkType, String drinkIcon)? onEdit;
 
   @override
   State<ZWaterTrackerEditWidget> createState() =>
@@ -30,7 +44,9 @@ class _ZWaterTrackerEditWidgetState extends State<ZWaterTrackerEditWidget> {
     super.initState();
     _model = createModel(context, () => ZWaterTrackerEditModel());
 
-    _model.textController ??= TextEditingController(text: '300');
+    // Use the widget's amount if provided, otherwise default to 300
+    final initialAmount = widget.amount?.toString() ?? '300';
+    _model.textController ??= TextEditingController(text: initialAmount);
     _model.textFieldFocusNode ??= FocusNode();
   }
 
@@ -280,6 +296,17 @@ class _ZWaterTrackerEditWidgetState extends State<ZWaterTrackerEditWidget> {
                   Expanded(
                     child: FFButtonWidget(
                       onPressed: () async {
+                        // Call onEdit callback if provided
+                        if (widget.onEdit != null && widget.drinkId != null) {
+                          final newAmount =
+                              int.tryParse(_model.textController.text) ?? 0;
+                          widget.onEdit!(
+                            widget.drinkId!,
+                            newAmount,
+                            widget.drinkType ?? 'Water',
+                            widget.drinkIcon ?? 'cup8',
+                          );
+                        }
                         Navigator.pop(context);
                       },
                       text: 'Save',

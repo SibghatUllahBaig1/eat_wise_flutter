@@ -5,7 +5,6 @@ import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
-import '/profile/components/z_cup_unit/z_cup_unit_widget.dart';
 import '/profile/components/z_daily_water_goal/z_daily_water_goal_widget.dart';
 import '/profile/components/z_reminder_time/z_reminder_time_widget.dart';
 import '/profile/components/z_repeat/z_repeat_widget.dart';
@@ -197,7 +196,8 @@ class _WaterTrackerWidgetState extends State<WaterTrackerWidget> {
                           ),
                         ),
                       ),
-                      Builder(
+                      // Cup Units field removed - not needed for this version
+                      /* Builder(
                         builder: (context) => InkWell(
                           splashColor: Colors.transparent,
                           focusColor: Colors.transparent,
@@ -239,7 +239,7 @@ class _WaterTrackerWidgetState extends State<WaterTrackerWidget> {
                             ),
                           ),
                         ),
-                      ),
+                      ), */
                     ],
                   ),
                 ),

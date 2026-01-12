@@ -100,6 +100,14 @@ service cloud.firestore {
       allow read: if true;
       allow write: if false; // Only through admin SDK or Cloud Functions
     }
+
+    // API keys collection (authenticated read, admin write)
+    // Users can read API keys to use external services
+    // Only admins can write/update keys through Cloud Functions or admin SDK
+    match /api_keys/{keyId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only through admin SDK or Cloud Functions
+    }
   }
 }
 

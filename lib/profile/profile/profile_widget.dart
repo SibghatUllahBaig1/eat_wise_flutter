@@ -125,7 +125,8 @@ class _ProfileWidgetState extends State<ProfileWidget>
         body: Column(
           mainAxisSize: MainAxisSize.max,
           children: [
-            Padding(
+            // Me/My Friends tab bar removed - only showing Me view
+            /* Padding(
               padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 6.0, 12.0),
               child: Container(
                 width: double.infinity,
@@ -248,850 +249,815 @@ class _ProfileWidgetState extends State<ProfileWidget>
                   ),
                 ),
               ),
-            ),
+            ), */
             Expanded(
-              child: Container(
-                width: double.infinity,
-                height: 500.0,
-                child: PageView(
-                  controller: _model.pageViewController ??=
-                      PageController(initialPage: 0),
-                  onPageChanged: (_) async {
-                    _model.pageItem = _model.pageViewCurrentIndex;
-                    safeSetState(() {});
-                  },
-                  scrollDirection: Axis.horizontal,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.max,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.max,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(
-                                16.0, 0.0, 16.0, 0.0),
-                            child: InkWell(
+                    Padding(
+                      padding:
+                          EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
+                      child: InkWell(
+                        splashColor: Colors.transparent,
+                        focusColor: Colors.transparent,
+                        hoverColor: Colors.transparent,
+                        highlightColor: Colors.transparent,
+                        onTap: () async {
+                          context.pushNamed(EditProfileWidget.routeName);
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: FlutterFlowTheme.of(context)
+                                .secondaryBackground,
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.max,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 50.0,
+                                  height: 50.0,
+                                  decoration: BoxDecoration(
+                                    color: FlutterFlowTheme.of(context).divider,
+                                    image: DecorationImage(
+                                      fit: BoxFit.cover,
+                                      image: Image.network(
+                                        FFAppConstants.user,
+                                      ).image,
+                                    ),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  alignment: AlignmentDirectional(0.0, 0.0),
+                                ),
+                                Expanded(
+                                  child: Padding(
+                                    padding: EdgeInsetsDirectional.fromSTEB(
+                                        16.0, 0.0, 0.0, 0.0),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.max,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          currentUserDisplayName.isNotEmpty
+                                              ? currentUserDisplayName
+                                              : 'User',
+                                          style: FlutterFlowTheme.of(context)
+                                              .titleSmall
+                                              .override(
+                                                font: GoogleFonts.inter(
+                                                  fontWeight:
+                                                      FlutterFlowTheme.of(
+                                                              context)
+                                                          .titleSmall
+                                                          .fontWeight,
+                                                  fontStyle:
+                                                      FlutterFlowTheme.of(
+                                                              context)
+                                                          .titleSmall
+                                                          .fontStyle,
+                                                ),
+                                                letterSpacing: 0.0,
+                                                fontWeight:
+                                                    FlutterFlowTheme.of(context)
+                                                        .titleSmall
+                                                        .fontWeight,
+                                                fontStyle:
+                                                    FlutterFlowTheme.of(context)
+                                                        .titleSmall
+                                                        .fontStyle,
+                                                lineHeight: 1.0,
+                                              ),
+                                        ),
+                                        Padding(
+                                          padding:
+                                              EdgeInsetsDirectional.fromSTEB(
+                                                  0.0, 12.0, 0.0, 0.0),
+                                          child: Text(
+                                            currentUserEmail,
+                                            style: FlutterFlowTheme.of(context)
+                                                .labelMedium
+                                                .override(
+                                                  font: GoogleFonts.inter(
+                                                    fontWeight:
+                                                        FlutterFlowTheme.of(
+                                                                context)
+                                                            .labelMedium
+                                                            .fontWeight,
+                                                    fontStyle:
+                                                        FlutterFlowTheme.of(
+                                                                context)
+                                                            .labelMedium
+                                                            .fontStyle,
+                                                  ),
+                                                  letterSpacing: 0.0,
+                                                  fontWeight:
+                                                      FlutterFlowTheme.of(
+                                                              context)
+                                                          .labelMedium
+                                                          .fontWeight,
+                                                  fontStyle:
+                                                      FlutterFlowTheme.of(
+                                                              context)
+                                                          .labelMedium
+                                                          .fontStyle,
+                                                  lineHeight: 1.0,
+                                                ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // NOTE: Upgrade Plan Card has been hidden - backend functionality will not be implemented
+                    // Padding(
+                    //   padding: EdgeInsetsDirectional.fromSTEB(
+                    //       16.0, 16.0, 16.0, 0.0),
+                    //   child: InkWell(
+                    //     splashColor: Colors.transparent,
+                    //     focusColor: Colors.transparent,
+                    //     hoverColor: Colors.transparent,
+                    //     highlightColor: Colors.transparent,
+                    //     onTap: () async {
+                    //       await showModalBottomSheet(
+                    //         isScrollControlled: true,
+                    //         backgroundColor: Colors.transparent,
+                    //         enableDrag: false,
+                    //         context: context,
+                    //         builder: (context) {
+                    //           return GestureDetector(
+                    //             onTap: () {
+                    //               FocusScope.of(context).unfocus();
+                    //               FocusManager.instance.primaryFocus
+                    //                   ?.unfocus();
+                    //             },
+                    //             child: Padding(
+                    //               padding:
+                    //                   MediaQuery.viewInsetsOf(context),
+                    //               child: UpgradePlanWidget(),
+                    //             ),
+                    //           );
+                    //         },
+                    //       ).then((value) => safeSetState(() {}));
+                    //     },
+                    //     child: Container(
+                    //       width: double.infinity,
+                    //       decoration: BoxDecoration(
+                    //         gradient: LinearGradient(
+                    //           colors: [
+                    //             Color(0xFF68DA57),
+                    //             FlutterFlowTheme.of(context).primary
+                    //           ],
+                    //           stops: [0.0, 1.0],
+                    //           begin: AlignmentDirectional(0.0, -1.0),
+                    //           end: AlignmentDirectional(0, 1.0),
+                    //         ),
+                    //         borderRadius: BorderRadius.circular(12.0),
+                    //       ),
+                    //       child: Padding(
+                    //         padding: EdgeInsets.all(12.0),
+                    //         child: Row(
+                    //           mainAxisSize: MainAxisSize.max,
+                    //           children: [
+                    //             Expanded(
+                    //               child: Column(
+                    //                 mainAxisSize: MainAxisSize.max,
+                    //                 crossAxisAlignment:
+                    //                     CrossAxisAlignment.start,
+                    //                 children: [
+                    //                   Row(
+                    //                     mainAxisSize: MainAxisSize.max,
+                    //                     children: [
+                    //                       Icon(
+                    //                         FFIcons.kframe,
+                    //                         color: FlutterFlowTheme.of(
+                    //                                 context)
+                    //                             .info,
+                    //                         size: 30.0,
+                    //                       ),
+                    //                       Expanded(
+                    //                         child: Padding(
+                    //                           padding:
+                    //                               EdgeInsetsDirectional
+                    //                                   .fromSTEB(6.0, 0.0,
+                    //                                       0.0, 0.0),
+                    //                           child: Text(
+                    //                             'Upgrade Plan!',
+                    //                             style:
+                    //                                 FlutterFlowTheme.of(
+                    //                                         context)
+                    //                                     .headlineSmall
+                    //                                     .override(
+                    //                                       font:
+                    //                                           GoogleFonts
+                    //                                               .inter(
+                    //                                         fontWeight: FlutterFlowTheme.of(
+                    //                                                 context)
+                    //                                             .headlineSmall
+                    //                                             .fontWeight,
+                    //                                         fontStyle: FlutterFlowTheme.of(
+                    //                                                 context)
+                    //                                             .headlineSmall
+                    //                                             .fontStyle,
+                    //                                       ),
+                    //                                       color: FlutterFlowTheme.of(
+                    //                                               context)
+                    //                                           .info,
+                    //                                       fontSize: 23.0,
+                    //                                       letterSpacing:
+                    //                                           0.0,
+                    //                                       fontWeight: FlutterFlowTheme.of(
+                    //                                               context)
+                    //                                           .headlineSmall
+                    //                                           .fontWeight,
+                    //                                       fontStyle: FlutterFlowTheme.of(
+                    //                                               context)
+                    //                                           .headlineSmall
+                    //                                           .fontStyle,
+                    //                                       lineHeight: 1.0,
+                    //                                     ),
+                    //                           ),
+                    //                         ),
+                    //                       ),
+                    //                     ],
+                    //                   ),
+                    //                   Padding(
+                    //                     padding: EdgeInsetsDirectional
+                    //                         .fromSTEB(0.0, 6.0, 0.0, 0.0),
+                    //                     child: Text(
+                    //                       'Enjoy all the benefits and explore more possibilities.',
+                    //                       style: FlutterFlowTheme.of(
+                    //                               context)
+                    //                           .labelSmall
+                    //                           .override(
+                    //                             font: GoogleFonts.inter(
+                    //                               fontWeight:
+                    //                                   FlutterFlowTheme.of(
+                    //                                           context)
+                    //                                       .labelSmall
+                    //                                       .fontWeight,
+                    //                               fontStyle:
+                    //                                   FlutterFlowTheme.of(
+                    //                                           context)
+                    //                                       .labelSmall
+                    //                                       .fontStyle,
+                    //                             ),
+                    //                             color:
+                    //                                 FlutterFlowTheme.of(
+                    //                                         context)
+                    //                                     .info,
+                    //                             letterSpacing: 0.0,
+                    //                             fontWeight:
+                    //                                 FlutterFlowTheme.of(
+                    //                                         context)
+                    //                                     .labelSmall
+                    //                                     .fontWeight,
+                    //                             fontStyle:
+                    //                                 FlutterFlowTheme.of(
+                    //                                         context)
+                    //                                     .labelSmall
+                    //                                     .fontStyle,
+                    //                             lineHeight: 1.5,
+                    //                           ),
+                    //                     ),
+                    //                   ),
+                    //                 ],
+                    //               ),
+                    //             ),
+                    //             Padding(
+                    //               padding: EdgeInsetsDirectional.fromSTEB(
+                    //                   6.0, 0.0, 0.0, 0.0),
+                    //               child: FFButtonWidget(
+                    //                 onPressed: () async {
+                    //                   await showModalBottomSheet(
+                    //                     isScrollControlled: true,
+                    //                     backgroundColor:
+                    //                         Colors.transparent,
+                    //                     enableDrag: false,
+                    //                     context: context,
+                    //                     builder: (context) {
+                    //                       return GestureDetector(
+                    //                         onTap: () {
+                    //                           FocusScope.of(context)
+                    //                               .unfocus();
+                    //                           FocusManager
+                    //                               .instance.primaryFocus
+                    //                               ?.unfocus();
+                    //                         },
+                    //                         child: Padding(
+                    //                           padding:
+                    //                               MediaQuery.viewInsetsOf(
+                    //                                   context),
+                    //                           child: UpgradePlanWidget(),
+                    //                         ),
+                    //                       );
+                    //                     },
+                    //                   ).then(
+                    //                       (value) => safeSetState(() {}));
+                    //                 },
+                    //                 text: 'Upgrade',
+                    //                 icon: Icon(
+                    //                   FFIcons.kcircleArrowUpFilled,
+                    //                   size: 16.0,
+                    //                 ),
+                    //                 options: FFButtonOptions(
+                    //                   height: 32.0,
+                    //                   padding:
+                    //                       EdgeInsetsDirectional.fromSTEB(
+                    //                           8.0, 0.0, 10.0, 0.0),
+                    //                   iconPadding:
+                    //                       EdgeInsetsDirectional.fromSTEB(
+                    //                           0.0, 0.0, 0.0, 0.0),
+                    //                   iconColor:
+                    //                       FlutterFlowTheme.of(context)
+                    //                           .info,
+                    //                   color: Color(0x26FFFFFF),
+                    //                   textStyle: FlutterFlowTheme.of(
+                    //                           context)
+                    //                       .bodySmall
+                    //                       .override(
+                    //                         font: GoogleFonts.inter(
+                    //                           fontWeight: FontWeight.w600,
+                    //                           fontStyle:
+                    //                               FlutterFlowTheme.of(
+                    //                                       context)
+                    //                                   .bodySmall
+                    //                                   .fontStyle,
+                    //                         ),
+                    //                         color: FlutterFlowTheme.of(
+                    //                                 context)
+                    //                             .info,
+                    //                         letterSpacing: 0.0,
+                    //                         fontWeight: FontWeight.w600,
+                    //                         fontStyle:
+                    //                             FlutterFlowTheme.of(
+                    //                                     context)
+                    //                                 .bodySmall
+                    //                                 .fontStyle,
+                    //                       ),
+                    //                   elevation: 0.0,
+                    //                   borderSide: BorderSide(
+                    //                     color: Color(0x65FFFFFF),
+                    //                     width: 1.3,
+                    //                   ),
+                    //                   borderRadius:
+                    //                       BorderRadius.circular(16.0),
+                    //                 ),
+                    //                 showLoadingIndicator: false,
+                    //               ),
+                    //             ),
+                    //           ],
+                    //         ),
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
+                    Padding(
+                      padding:
+                          EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 0.0),
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color:
+                              FlutterFlowTheme.of(context).secondaryBackground,
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.max,
+                          children: [
+                            InkWell(
                               splashColor: Colors.transparent,
                               focusColor: Colors.transparent,
                               hoverColor: Colors.transparent,
                               highlightColor: Colors.transparent,
                               onTap: () async {
-                                context.pushNamed(EditProfileWidget.routeName);
+                                context
+                                    .pushNamed(CalorieCounterWidget.routeName);
                               },
-                              child: Container(
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: FlutterFlowTheme.of(context)
-                                      .secondaryBackground,
-                                  borderRadius: BorderRadius.circular(12.0),
-                                ),
-                                child: Padding(
-                                  padding: EdgeInsets.all(16.0),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.max,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      Container(
-                                        width: 50.0,
-                                        height: 50.0,
-                                        decoration: BoxDecoration(
-                                          color: FlutterFlowTheme.of(context)
-                                              .divider,
-                                          image: DecorationImage(
-                                            fit: BoxFit.cover,
-                                            image: Image.network(
-                                              FFAppConstants.user,
-                                            ).image,
-                                          ),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        alignment:
-                                            AlignmentDirectional(0.0, 0.0),
-                                      ),
-                                      Expanded(
-                                        child: Padding(
-                                          padding:
-                                              EdgeInsetsDirectional.fromSTEB(
-                                                  16.0, 0.0, 0.0, 0.0),
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.max,
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                currentUserDisplayName
-                                                        .isNotEmpty
-                                                    ? currentUserDisplayName
-                                                    : 'User',
-                                                style:
-                                                    FlutterFlowTheme.of(context)
-                                                        .titleSmall
-                                                        .override(
-                                                          font:
-                                                              GoogleFonts.inter(
-                                                            fontWeight:
-                                                                FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .titleSmall
-                                                                    .fontWeight,
-                                                            fontStyle:
-                                                                FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .titleSmall
-                                                                    .fontStyle,
-                                                          ),
-                                                          letterSpacing: 0.0,
-                                                          fontWeight:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .titleSmall
-                                                                  .fontWeight,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .titleSmall
-                                                                  .fontStyle,
-                                                          lineHeight: 1.0,
-                                                        ),
-                                              ),
-                                              Padding(
-                                                padding: EdgeInsetsDirectional
-                                                    .fromSTEB(
-                                                        0.0, 12.0, 0.0, 0.0),
-                                                child: Text(
-                                                  currentUserEmail,
-                                                  style: FlutterFlowTheme.of(
-                                                          context)
-                                                      .labelMedium
-                                                      .override(
-                                                        font: GoogleFonts.inter(
-                                                          fontWeight:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .labelMedium
-                                                                  .fontWeight,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .labelMedium
-                                                                  .fontStyle,
-                                                        ),
-                                                        letterSpacing: 0.0,
-                                                        fontWeight:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .labelMedium
-                                                                .fontWeight,
-                                                        fontStyle:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .labelMedium
-                                                                .fontStyle,
-                                                        lineHeight: 1.0,
-                                                      ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                              child: wrapWithModel(
+                                model: _model.iconTextRightModel1,
+                                updateCallback: () => safeSetState(() {}),
+                                child: IconTextRightWidget(
+                                  icon: Icon(
+                                    FFIcons.kfireIcon2,
+                                    color: FlutterFlowTheme.of(context)
+                                        .primaryText,
+                                    size: 25.0,
                                   ),
+                                  text: 'Calorie Counter',
+                                  textColor:
+                                      FlutterFlowTheme.of(context).primaryText,
                                 ),
                               ),
                             ),
-                          ),
-                          // NOTE: Upgrade Plan Card has been hidden - backend functionality will not be implemented
-                          // Padding(
-                          //   padding: EdgeInsetsDirectional.fromSTEB(
-                          //       16.0, 16.0, 16.0, 0.0),
-                          //   child: InkWell(
-                          //     splashColor: Colors.transparent,
-                          //     focusColor: Colors.transparent,
-                          //     hoverColor: Colors.transparent,
-                          //     highlightColor: Colors.transparent,
-                          //     onTap: () async {
-                          //       await showModalBottomSheet(
-                          //         isScrollControlled: true,
-                          //         backgroundColor: Colors.transparent,
-                          //         enableDrag: false,
-                          //         context: context,
-                          //         builder: (context) {
-                          //           return GestureDetector(
-                          //             onTap: () {
-                          //               FocusScope.of(context).unfocus();
-                          //               FocusManager.instance.primaryFocus
-                          //                   ?.unfocus();
-                          //             },
-                          //             child: Padding(
-                          //               padding:
-                          //                   MediaQuery.viewInsetsOf(context),
-                          //               child: UpgradePlanWidget(),
-                          //             ),
-                          //           );
-                          //         },
-                          //       ).then((value) => safeSetState(() {}));
-                          //     },
-                          //     child: Container(
-                          //       width: double.infinity,
-                          //       decoration: BoxDecoration(
-                          //         gradient: LinearGradient(
-                          //           colors: [
-                          //             Color(0xFF68DA57),
-                          //             FlutterFlowTheme.of(context).primary
-                          //           ],
-                          //           stops: [0.0, 1.0],
-                          //           begin: AlignmentDirectional(0.0, -1.0),
-                          //           end: AlignmentDirectional(0, 1.0),
-                          //         ),
-                          //         borderRadius: BorderRadius.circular(12.0),
-                          //       ),
-                          //       child: Padding(
-                          //         padding: EdgeInsets.all(12.0),
-                          //         child: Row(
-                          //           mainAxisSize: MainAxisSize.max,
-                          //           children: [
-                          //             Expanded(
-                          //               child: Column(
-                          //                 mainAxisSize: MainAxisSize.max,
-                          //                 crossAxisAlignment:
-                          //                     CrossAxisAlignment.start,
-                          //                 children: [
-                          //                   Row(
-                          //                     mainAxisSize: MainAxisSize.max,
-                          //                     children: [
-                          //                       Icon(
-                          //                         FFIcons.kframe,
-                          //                         color: FlutterFlowTheme.of(
-                          //                                 context)
-                          //                             .info,
-                          //                         size: 30.0,
-                          //                       ),
-                          //                       Expanded(
-                          //                         child: Padding(
-                          //                           padding:
-                          //                               EdgeInsetsDirectional
-                          //                                   .fromSTEB(6.0, 0.0,
-                          //                                       0.0, 0.0),
-                          //                           child: Text(
-                          //                             'Upgrade Plan!',
-                          //                             style:
-                          //                                 FlutterFlowTheme.of(
-                          //                                         context)
-                          //                                     .headlineSmall
-                          //                                     .override(
-                          //                                       font:
-                          //                                           GoogleFonts
-                          //                                               .inter(
-                          //                                         fontWeight: FlutterFlowTheme.of(
-                          //                                                 context)
-                          //                                             .headlineSmall
-                          //                                             .fontWeight,
-                          //                                         fontStyle: FlutterFlowTheme.of(
-                          //                                                 context)
-                          //                                             .headlineSmall
-                          //                                             .fontStyle,
-                          //                                       ),
-                          //                                       color: FlutterFlowTheme.of(
-                          //                                               context)
-                          //                                           .info,
-                          //                                       fontSize: 23.0,
-                          //                                       letterSpacing:
-                          //                                           0.0,
-                          //                                       fontWeight: FlutterFlowTheme.of(
-                          //                                               context)
-                          //                                           .headlineSmall
-                          //                                           .fontWeight,
-                          //                                       fontStyle: FlutterFlowTheme.of(
-                          //                                               context)
-                          //                                           .headlineSmall
-                          //                                           .fontStyle,
-                          //                                       lineHeight: 1.0,
-                          //                                     ),
-                          //                           ),
-                          //                         ),
-                          //                       ),
-                          //                     ],
-                          //                   ),
-                          //                   Padding(
-                          //                     padding: EdgeInsetsDirectional
-                          //                         .fromSTEB(0.0, 6.0, 0.0, 0.0),
-                          //                     child: Text(
-                          //                       'Enjoy all the benefits and explore more possibilities.',
-                          //                       style: FlutterFlowTheme.of(
-                          //                               context)
-                          //                           .labelSmall
-                          //                           .override(
-                          //                             font: GoogleFonts.inter(
-                          //                               fontWeight:
-                          //                                   FlutterFlowTheme.of(
-                          //                                           context)
-                          //                                       .labelSmall
-                          //                                       .fontWeight,
-                          //                               fontStyle:
-                          //                                   FlutterFlowTheme.of(
-                          //                                           context)
-                          //                                       .labelSmall
-                          //                                       .fontStyle,
-                          //                             ),
-                          //                             color:
-                          //                                 FlutterFlowTheme.of(
-                          //                                         context)
-                          //                                     .info,
-                          //                             letterSpacing: 0.0,
-                          //                             fontWeight:
-                          //                                 FlutterFlowTheme.of(
-                          //                                         context)
-                          //                                     .labelSmall
-                          //                                     .fontWeight,
-                          //                             fontStyle:
-                          //                                 FlutterFlowTheme.of(
-                          //                                         context)
-                          //                                     .labelSmall
-                          //                                     .fontStyle,
-                          //                             lineHeight: 1.5,
-                          //                           ),
-                          //                     ),
-                          //                   ),
-                          //                 ],
-                          //               ),
-                          //             ),
-                          //             Padding(
-                          //               padding: EdgeInsetsDirectional.fromSTEB(
-                          //                   6.0, 0.0, 0.0, 0.0),
-                          //               child: FFButtonWidget(
-                          //                 onPressed: () async {
-                          //                   await showModalBottomSheet(
-                          //                     isScrollControlled: true,
-                          //                     backgroundColor:
-                          //                         Colors.transparent,
-                          //                     enableDrag: false,
-                          //                     context: context,
-                          //                     builder: (context) {
-                          //                       return GestureDetector(
-                          //                         onTap: () {
-                          //                           FocusScope.of(context)
-                          //                               .unfocus();
-                          //                           FocusManager
-                          //                               .instance.primaryFocus
-                          //                               ?.unfocus();
-                          //                         },
-                          //                         child: Padding(
-                          //                           padding:
-                          //                               MediaQuery.viewInsetsOf(
-                          //                                   context),
-                          //                           child: UpgradePlanWidget(),
-                          //                         ),
-                          //                       );
-                          //                     },
-                          //                   ).then(
-                          //                       (value) => safeSetState(() {}));
-                          //                 },
-                          //                 text: 'Upgrade',
-                          //                 icon: Icon(
-                          //                   FFIcons.kcircleArrowUpFilled,
-                          //                   size: 16.0,
-                          //                 ),
-                          //                 options: FFButtonOptions(
-                          //                   height: 32.0,
-                          //                   padding:
-                          //                       EdgeInsetsDirectional.fromSTEB(
-                          //                           8.0, 0.0, 10.0, 0.0),
-                          //                   iconPadding:
-                          //                       EdgeInsetsDirectional.fromSTEB(
-                          //                           0.0, 0.0, 0.0, 0.0),
-                          //                   iconColor:
-                          //                       FlutterFlowTheme.of(context)
-                          //                           .info,
-                          //                   color: Color(0x26FFFFFF),
-                          //                   textStyle: FlutterFlowTheme.of(
-                          //                           context)
-                          //                       .bodySmall
-                          //                       .override(
-                          //                         font: GoogleFonts.inter(
-                          //                           fontWeight: FontWeight.w600,
-                          //                           fontStyle:
-                          //                               FlutterFlowTheme.of(
-                          //                                       context)
-                          //                                   .bodySmall
-                          //                                   .fontStyle,
-                          //                         ),
-                          //                         color: FlutterFlowTheme.of(
-                          //                                 context)
-                          //                             .info,
-                          //                         letterSpacing: 0.0,
-                          //                         fontWeight: FontWeight.w600,
-                          //                         fontStyle:
-                          //                             FlutterFlowTheme.of(
-                          //                                     context)
-                          //                                 .bodySmall
-                          //                                 .fontStyle,
-                          //                       ),
-                          //                   elevation: 0.0,
-                          //                   borderSide: BorderSide(
-                          //                     color: Color(0x65FFFFFF),
-                          //                     width: 1.3,
-                          //                   ),
-                          //                   borderRadius:
-                          //                       BorderRadius.circular(16.0),
-                          //                 ),
-                          //                 showLoadingIndicator: false,
-                          //               ),
-                          //             ),
-                          //           ],
-                          //         ),
-                          //       ),
-                          //     ),
-                          //   ),
-                          // ),
-                          Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(
-                                16.0, 16.0, 16.0, 0.0),
-                            child: Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: FlutterFlowTheme.of(context)
-                                    .secondaryBackground,
-                                borderRadius: BorderRadius.circular(12.0),
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.max,
-                                children: [
-                                  InkWell(
-                                    splashColor: Colors.transparent,
-                                    focusColor: Colors.transparent,
-                                    hoverColor: Colors.transparent,
-                                    highlightColor: Colors.transparent,
-                                    onTap: () async {
-                                      context.pushNamed(
-                                          CalorieCounterWidget.routeName);
-                                    },
-                                    child: wrapWithModel(
-                                      model: _model.iconTextRightModel1,
-                                      updateCallback: () => safeSetState(() {}),
-                                      child: IconTextRightWidget(
-                                        icon: Icon(
-                                          FFIcons.kfireIcon2,
-                                          color: FlutterFlowTheme.of(context)
-                                              .primaryText,
-                                          size: 25.0,
-                                        ),
-                                        text: 'Calorie Counter',
-                                        textColor: FlutterFlowTheme.of(context)
-                                            .primaryText,
-                                      ),
-                                    ),
+                            InkWell(
+                              splashColor: Colors.transparent,
+                              focusColor: Colors.transparent,
+                              hoverColor: Colors.transparent,
+                              highlightColor: Colors.transparent,
+                              onTap: () async {
+                                context.pushNamed(WaterTrackerWidget.routeName);
+                              },
+                              child: wrapWithModel(
+                                model: _model.iconTextRightModel2,
+                                updateCallback: () => safeSetState(() {}),
+                                child: IconTextRightWidget(
+                                  icon: Icon(
+                                    FFIcons.kdrop,
+                                    color: FlutterFlowTheme.of(context)
+                                        .primaryText,
+                                    size: 24.0,
                                   ),
-                                  InkWell(
-                                    splashColor: Colors.transparent,
-                                    focusColor: Colors.transparent,
-                                    hoverColor: Colors.transparent,
-                                    highlightColor: Colors.transparent,
-                                    onTap: () async {
-                                      context.pushNamed(
-                                          WaterTrackerWidget.routeName);
-                                    },
-                                    child: wrapWithModel(
-                                      model: _model.iconTextRightModel2,
-                                      updateCallback: () => safeSetState(() {}),
-                                      child: IconTextRightWidget(
-                                        icon: Icon(
-                                          FFIcons.kdrop,
-                                          color: FlutterFlowTheme.of(context)
-                                              .primaryText,
-                                          size: 24.0,
-                                        ),
-                                        text: 'Water Tracker',
-                                        textColor: FlutterFlowTheme.of(context)
-                                            .primaryText,
-                                      ),
-                                    ),
-                                  ),
-                                  InkWell(
-                                    splashColor: Colors.transparent,
-                                    focusColor: Colors.transparent,
-                                    hoverColor: Colors.transparent,
-                                    highlightColor: Colors.transparent,
-                                    onTap: () async {
-                                      context.pushNamed(
-                                          StepCounterWidget.routeName);
-                                    },
-                                    child: wrapWithModel(
-                                      model: _model.iconTextRightModel3,
-                                      updateCallback: () => safeSetState(() {}),
-                                      child: IconTextRightWidget(
-                                        icon: Icon(
-                                          FFIcons.kstepIcon,
-                                          color: FlutterFlowTheme.of(context)
-                                              .primaryText,
-                                          size: 26.0,
-                                        ),
-                                        text: 'Step Counter',
-                                        textColor: FlutterFlowTheme.of(context)
-                                            .primaryText,
-                                      ),
-                                    ),
-                                  ),
-                                  InkWell(
-                                    splashColor: Colors.transparent,
-                                    focusColor: Colors.transparent,
-                                    hoverColor: Colors.transparent,
-                                    highlightColor: Colors.transparent,
-                                    onTap: () async {
-                                      context.pushNamed(
-                                          WeightTrackerWidget.routeName);
-                                    },
-                                    child: wrapWithModel(
-                                      model: _model.iconTextRightModel4,
-                                      updateCallback: () => safeSetState(() {}),
-                                      child: IconTextRightWidget(
-                                        icon: Icon(
-                                          FFIcons.khuman,
-                                          color: FlutterFlowTheme.of(context)
-                                              .primaryText,
-                                          size: 24.0,
-                                        ),
-                                        text: 'Weight Tracker',
-                                        textColor: FlutterFlowTheme.of(context)
-                                            .primaryText,
-                                      ),
-                                    ),
-                                  ),
-                                  // NOTE: Preferences navigation has been hidden - backend functionality will not be implemented
-                                  // Expanded(
-                                  //   child: InkWell(
-                                  //     splashColor: Colors.transparent,
-                                  //     focusColor: Colors.transparent,
-                                  //     hoverColor: Colors.transparent,
-                                  //     highlightColor: Colors.transparent,
-                                  //     onTap: () async {
-                                  //       context.pushNamed(
-                                  //           PreferencesWidget.routeName);
-                                  //     },
-                                  //     child: wrapWithModel(
-                                  //       model: _model.iconTextRightModel5,
-                                  //       updateCallback: () =>
-                                  //           safeSetState(() {}),
-                                  //       child: IconTextRightWidget(
-                                  //         icon: Icon(
-                                  //           FFIcons.ksettings,
-                                  //           color: FlutterFlowTheme.of(context)
-                                  //               .primaryText,
-                                  //           size: 24.0,
-                                  //         ),
-                                  //         text: 'Preferences',
-                                  //         textColor:
-                                  //             FlutterFlowTheme.of(context)
-                                  //                 .primaryText,
-                                  //       ),
-                                  //     ),
-                                  //   ),
-                                  // ),
-                                ],
+                                  text: 'Water Tracker',
+                                  textColor:
+                                      FlutterFlowTheme.of(context).primaryText,
+                                ),
                               ),
                             ),
-                          ),
-                          Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(
-                                16.0, 16.0, 16.0, 0.0),
-                            child: Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: FlutterFlowTheme.of(context)
-                                    .secondaryBackground,
-                                borderRadius: BorderRadius.circular(12.0),
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.max,
-                                children: [
-                                  // NOTE: Notifications Settings navigation has been hidden - backend functionality will not be implemented
-                                  // InkWell(
-                                  //   splashColor: Colors.transparent,
-                                  //   focusColor: Colors.transparent,
-                                  //   hoverColor: Colors.transparent,
-                                  //   highlightColor: Colors.transparent,
-                                  //   onTap: () async {
-                                  //     context.pushNamed(
-                                  //         NotificationsSettingsWidget
-                                  //             .routeName);
-                                  //   },
-                                  //   child: wrapWithModel(
-                                  //     model: _model.iconTextRightModel6,
-                                  //     updateCallback: () => safeSetState(() {}),
-                                  //     child: IconTextRightWidget(
-                                  //       icon: Icon(
-                                  //         FFIcons.kbell,
-                                  //         color: FlutterFlowTheme.of(context)
-                                  //             .primaryText,
-                                  //         size: 24.0,
-                                  //       ),
-                                  //       text: 'Notification',
-                                  //       textColor: FlutterFlowTheme.of(context)
-                                  //           .primaryText,
-                                  //     ),
-                                  //   ),
-                                  // ),
-                                  // NOTE: Payment Methods navigation has been hidden - backend functionality will not be implemented
-                                  // InkWell(
-                                  //   splashColor: Colors.transparent,
-                                  //   focusColor: Colors.transparent,
-                                  //   hoverColor: Colors.transparent,
-                                  //   highlightColor: Colors.transparent,
-                                  //   onTap: () async {
-                                  //     context.pushNamed(
-                                  //         PaymentMethodsWidget.routeName);
-                                  //   },
-                                  //   child: wrapWithModel(
-                                  //     model: _model.iconTextRightModel7,
-                                  //     updateCallback: () => safeSetState(() {}),
-                                  //     child: IconTextRightWidget(
-                                  //       icon: Icon(
-                                  //         FFIcons.kcreditCard,
-                                  //         color: FlutterFlowTheme.of(context)
-                                  //             .primaryText,
-                                  //         size: 24.0,
-                                  //       ),
-                                  //       text: 'Payment Methods',
-                                  //       textColor: FlutterFlowTheme.of(context)
-                                  //           .primaryText,
-                                  //     ),
-                                  //   ),
-                                  // ),
-                                  // NOTE: Account Security navigation has been hidden - backend functionality will not be implemented
-                                  // Expanded(
-                                  //   child: InkWell(
-                                  //     splashColor: Colors.transparent,
-                                  //     focusColor: Colors.transparent,
-                                  //     hoverColor: Colors.transparent,
-                                  //     highlightColor: Colors.transparent,
-                                  //     onTap: () async {
-                                  //       context.pushNamed(
-                                  //           AccountSecurityWidget.routeName);
-                                  //     },
-                                  //     child: wrapWithModel(
-                                  //       model: _model.iconTextRightModel8,
-                                  //       updateCallback: () =>
-                                  //           safeSetState(() {}),
-                                  //       child: IconTextRightWidget(
-                                  //         icon: Icon(
-                                  //           FFIcons.kshieldTick,
-                                  //           color: FlutterFlowTheme.of(context)
-                                  //               .primaryText,
-                                  //           size: 24.0,
-                                  //         ),
-                                  //         text: 'Account & Security',
-                                  //         textColor:
-                                  //             FlutterFlowTheme.of(context)
-                                  //                 .primaryText,
-                                  //       ),
-                                  //     ),
-                                  //   ),
-                                  // ),
-                                  InkWell(
-                                    splashColor: Colors.transparent,
-                                    focusColor: Colors.transparent,
-                                    hoverColor: Colors.transparent,
-                                    highlightColor: Colors.transparent,
-                                    onTap: () async {
-                                      context.pushNamed(
-                                          LinkedAccountsWidget.routeName);
-                                    },
-                                    child: wrapWithModel(
-                                      model: _model.iconTextRightModel9,
-                                      updateCallback: () => safeSetState(() {}),
-                                      child: IconTextRightWidget(
-                                        icon: Icon(
-                                          FFIcons.karrowsUpDown,
-                                          color: FlutterFlowTheme.of(context)
-                                              .primaryText,
-                                          size: 24.0,
-                                        ),
-                                        text: 'Linked Accounts',
-                                        textColor: FlutterFlowTheme.of(context)
-                                            .primaryText,
-                                      ),
-                                    ),
+                            InkWell(
+                              splashColor: Colors.transparent,
+                              focusColor: Colors.transparent,
+                              hoverColor: Colors.transparent,
+                              highlightColor: Colors.transparent,
+                              onTap: () async {
+                                context.pushNamed(StepCounterWidget.routeName);
+                              },
+                              child: wrapWithModel(
+                                model: _model.iconTextRightModel3,
+                                updateCallback: () => safeSetState(() {}),
+                                child: IconTextRightWidget(
+                                  icon: Icon(
+                                    FFIcons.kstepIcon,
+                                    color: FlutterFlowTheme.of(context)
+                                        .primaryText,
+                                    size: 26.0,
                                   ),
-                                  InkWell(
-                                    splashColor: Colors.transparent,
-                                    focusColor: Colors.transparent,
-                                    hoverColor: Colors.transparent,
-                                    highlightColor: Colors.transparent,
-                                    onTap: () async {
-                                      context.pushNamed(
-                                          AppAppearanceWidget.routeName);
-                                    },
-                                    child: wrapWithModel(
-                                      model: _model.iconTextRightModel10,
-                                      updateCallback: () => safeSetState(() {}),
-                                      child: IconTextRightWidget(
-                                        icon: Icon(
-                                          FFIcons.keye,
-                                          color: FlutterFlowTheme.of(context)
-                                              .primaryText,
-                                          size: 24.0,
-                                        ),
-                                        text: 'App Appearance',
-                                        textColor: FlutterFlowTheme.of(context)
-                                            .primaryText,
-                                      ),
-                                    ),
-                                  ),
-                                  // NOTE: Help & Support navigation has been hidden - backend functionality will not be implemented
-                                  // Expanded(
-                                  //   child: InkWell(
-                                  //     splashColor: Colors.transparent,
-                                  //     focusColor: Colors.transparent,
-                                  //     hoverColor: Colors.transparent,
-                                  //     highlightColor: Colors.transparent,
-                                  //     onTap: () async {
-                                  //       context.pushNamed(
-                                  //           HelpSupportWidget.routeName);
-                                  //     },
-                                  //     child: wrapWithModel(
-                                  //       model: _model.iconTextRightModel11,
-                                  //       updateCallback: () =>
-                                  //           safeSetState(() {}),
-                                  //       child: IconTextRightWidget(
-                                  //         icon: Icon(
-                                  //           FFIcons.kfileText,
-                                  //           color: FlutterFlowTheme.of(context)
-                                  //               .primaryText,
-                                  //           size: 24.0,
-                                  //         ),
-                                  //         text: 'Help & Support',
-                                  //         textColor:
-                                  //             FlutterFlowTheme.of(context)
-                                  //                 .primaryText,
-                                  //       ),
-                                  //     ),
-                                  //   ),
-                                  // ),
-                                  Builder(
-                                    builder: (context) => InkWell(
-                                      splashColor: Colors.transparent,
-                                      focusColor: Colors.transparent,
-                                      hoverColor: Colors.transparent,
-                                      highlightColor: Colors.transparent,
-                                      onTap: () async {
-                                        await showDialog(
-                                          barrierColor:
-                                              FlutterFlowTheme.of(context)
-                                                  .barrier,
-                                          context: context,
-                                          builder: (dialogContext) {
-                                            return Dialog(
-                                              elevation: 0,
-                                              insetPadding: EdgeInsets.zero,
-                                              backgroundColor:
-                                                  Colors.transparent,
-                                              alignment:
-                                                  AlignmentDirectional(0.0, 0.0)
-                                                      .resolve(
-                                                          Directionality.of(
-                                                              context)),
-                                              child: GestureDetector(
-                                                onTap: () {
-                                                  FocusScope.of(dialogContext)
-                                                      .unfocus();
-                                                  FocusManager
-                                                      .instance.primaryFocus
-                                                      ?.unfocus();
-                                                },
-                                                child: RateUsWidget(),
-                                              ),
-                                            );
-                                          },
-                                        );
-                                      },
-                                      child: wrapWithModel(
-                                        model: _model.iconTextRightModel12,
-                                        updateCallback: () =>
-                                            safeSetState(() {}),
-                                        child: IconTextRightWidget(
-                                          icon: Icon(
-                                            FFIcons.kstar01,
-                                            color: FlutterFlowTheme.of(context)
-                                                .primaryText,
-                                            size: 24.0,
-                                          ),
-                                          text: 'Rate Us',
-                                          textColor:
-                                              FlutterFlowTheme.of(context)
-                                                  .primaryText,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Builder(
-                                    builder: (context) => InkWell(
-                                      splashColor: Colors.transparent,
-                                      focusColor: Colors.transparent,
-                                      hoverColor: Colors.transparent,
-                                      highlightColor: Colors.transparent,
-                                      onTap: () async {
-                                        await showDialog(
-                                          barrierColor:
-                                              FlutterFlowTheme.of(context)
-                                                  .barrier,
-                                          context: context,
-                                          builder: (dialogContext) {
-                                            return Dialog(
-                                              elevation: 0,
-                                              insetPadding: EdgeInsets.zero,
-                                              backgroundColor:
-                                                  Colors.transparent,
-                                              alignment:
-                                                  AlignmentDirectional(0.0, 0.0)
-                                                      .resolve(
-                                                          Directionality.of(
-                                                              context)),
-                                              child: GestureDetector(
-                                                onTap: () {
-                                                  FocusScope.of(dialogContext)
-                                                      .unfocus();
-                                                  FocusManager
-                                                      .instance.primaryFocus
-                                                      ?.unfocus();
-                                                },
-                                                child: LogOutWidget(),
-                                              ),
-                                            );
-                                          },
-                                        );
-                                      },
-                                      child: wrapWithModel(
-                                        model: _model.iconTextRightModel13,
-                                        updateCallback: () =>
-                                            safeSetState(() {}),
-                                        child: IconTextRightWidget(
-                                          icon: Icon(
-                                            FFIcons.klogOut03,
-                                            color: FlutterFlowTheme.of(context)
-                                                .error,
-                                            size: 24.0,
-                                          ),
-                                          text: 'Log Out',
-                                          textColor:
-                                              FlutterFlowTheme.of(context)
-                                                  .error,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                                  text: 'Step Counter',
+                                  textColor:
+                                      FlutterFlowTheme.of(context).primaryText,
+                                ),
                               ),
                             ),
-                          ),
-                        ]
-                            .addToStart(SizedBox(height: 12.0))
-                            .addToEnd(SizedBox(height: 24.0)),
+                            InkWell(
+                              splashColor: Colors.transparent,
+                              focusColor: Colors.transparent,
+                              hoverColor: Colors.transparent,
+                              highlightColor: Colors.transparent,
+                              onTap: () async {
+                                context
+                                    .pushNamed(WeightTrackerWidget.routeName);
+                              },
+                              child: wrapWithModel(
+                                model: _model.iconTextRightModel4,
+                                updateCallback: () => safeSetState(() {}),
+                                child: IconTextRightWidget(
+                                  icon: Icon(
+                                    FFIcons.khuman,
+                                    color: FlutterFlowTheme.of(context)
+                                        .primaryText,
+                                    size: 24.0,
+                                  ),
+                                  text: 'Weight Tracker',
+                                  textColor:
+                                      FlutterFlowTheme.of(context).primaryText,
+                                ),
+                              ),
+                            ),
+                            // NOTE: Preferences navigation has been hidden - backend functionality will not be implemented
+                            // Expanded(
+                            //   child: InkWell(
+                            //     splashColor: Colors.transparent,
+                            //     focusColor: Colors.transparent,
+                            //     hoverColor: Colors.transparent,
+                            //     highlightColor: Colors.transparent,
+                            //     onTap: () async {
+                            //       context.pushNamed(
+                            //           PreferencesWidget.routeName);
+                            //     },
+                            //     child: wrapWithModel(
+                            //       model: _model.iconTextRightModel5,
+                            //       updateCallback: () =>
+                            //           safeSetState(() {}),
+                            //       child: IconTextRightWidget(
+                            //         icon: Icon(
+                            //           FFIcons.ksettings,
+                            //           color: FlutterFlowTheme.of(context)
+                            //               .primaryText,
+                            //           size: 24.0,
+                            //         ),
+                            //         text: 'Preferences',
+                            //         textColor:
+                            //             FlutterFlowTheme.of(context)
+                            //                 .primaryText,
+                            //       ),
+                            //     ),
+                            //   ),
+                            // ),
+                          ],
+                        ),
                       ),
                     ),
-                    SingleChildScrollView(
+                    Padding(
+                      padding:
+                          EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 0.0),
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color:
+                              FlutterFlowTheme.of(context).secondaryBackground,
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.max,
+                          children: [
+                            // NOTE: Notifications Settings navigation has been hidden - backend functionality will not be implemented
+                            // InkWell(
+                            //   splashColor: Colors.transparent,
+                            //   focusColor: Colors.transparent,
+                            //   hoverColor: Colors.transparent,
+                            //   highlightColor: Colors.transparent,
+                            //   onTap: () async {
+                            //     context.pushNamed(
+                            //         NotificationsSettingsWidget
+                            //             .routeName);
+                            //   },
+                            //   child: wrapWithModel(
+                            //     model: _model.iconTextRightModel6,
+                            //     updateCallback: () => safeSetState(() {}),
+                            //     child: IconTextRightWidget(
+                            //       icon: Icon(
+                            //         FFIcons.kbell,
+                            //         color: FlutterFlowTheme.of(context)
+                            //             .primaryText,
+                            //         size: 24.0,
+                            //       ),
+                            //       text: 'Notification',
+                            //       textColor: FlutterFlowTheme.of(context)
+                            //           .primaryText,
+                            //     ),
+                            //   ),
+                            // ),
+                            // NOTE: Payment Methods navigation has been hidden - backend functionality will not be implemented
+                            // InkWell(
+                            //   splashColor: Colors.transparent,
+                            //   focusColor: Colors.transparent,
+                            //   hoverColor: Colors.transparent,
+                            //   highlightColor: Colors.transparent,
+                            //   onTap: () async {
+                            //     context.pushNamed(
+                            //         PaymentMethodsWidget.routeName);
+                            //   },
+                            //   child: wrapWithModel(
+                            //     model: _model.iconTextRightModel7,
+                            //     updateCallback: () => safeSetState(() {}),
+                            //     child: IconTextRightWidget(
+                            //       icon: Icon(
+                            //         FFIcons.kcreditCard,
+                            //         color: FlutterFlowTheme.of(context)
+                            //             .primaryText,
+                            //         size: 24.0,
+                            //       ),
+                            //       text: 'Payment Methods',
+                            //       textColor: FlutterFlowTheme.of(context)
+                            //           .primaryText,
+                            //     ),
+                            //   ),
+                            // ),
+                            // NOTE: Account Security navigation has been hidden - backend functionality will not be implemented
+                            // Expanded(
+                            //   child: InkWell(
+                            //     splashColor: Colors.transparent,
+                            //     focusColor: Colors.transparent,
+                            //     hoverColor: Colors.transparent,
+                            //     highlightColor: Colors.transparent,
+                            //     onTap: () async {
+                            //       context.pushNamed(
+                            //           AccountSecurityWidget.routeName);
+                            //     },
+                            //     child: wrapWithModel(
+                            //       model: _model.iconTextRightModel8,
+                            //       updateCallback: () =>
+                            //           safeSetState(() {}),
+                            //       child: IconTextRightWidget(
+                            //         icon: Icon(
+                            //           FFIcons.kshieldTick,
+                            //           color: FlutterFlowTheme.of(context)
+                            //               .primaryText,
+                            //           size: 24.0,
+                            //         ),
+                            //         text: 'Account & Security',
+                            //         textColor:
+                            //             FlutterFlowTheme.of(context)
+                            //                 .primaryText,
+                            //       ),
+                            //     ),
+                            //   ),
+                            // ),
+                            InkWell(
+                              splashColor: Colors.transparent,
+                              focusColor: Colors.transparent,
+                              hoverColor: Colors.transparent,
+                              highlightColor: Colors.transparent,
+                              onTap: () async {
+                                context
+                                    .pushNamed(LinkedAccountsWidget.routeName);
+                              },
+                              child: wrapWithModel(
+                                model: _model.iconTextRightModel9,
+                                updateCallback: () => safeSetState(() {}),
+                                child: IconTextRightWidget(
+                                  icon: Icon(
+                                    FFIcons.karrowsUpDown,
+                                    color: FlutterFlowTheme.of(context)
+                                        .primaryText,
+                                    size: 24.0,
+                                  ),
+                                  text: 'Linked Accounts',
+                                  textColor:
+                                      FlutterFlowTheme.of(context).primaryText,
+                                ),
+                              ),
+                            ),
+                            InkWell(
+                              splashColor: Colors.transparent,
+                              focusColor: Colors.transparent,
+                              hoverColor: Colors.transparent,
+                              highlightColor: Colors.transparent,
+                              onTap: () async {
+                                context
+                                    .pushNamed(AppAppearanceWidget.routeName);
+                              },
+                              child: wrapWithModel(
+                                model: _model.iconTextRightModel10,
+                                updateCallback: () => safeSetState(() {}),
+                                child: IconTextRightWidget(
+                                  icon: Icon(
+                                    FFIcons.keye,
+                                    color: FlutterFlowTheme.of(context)
+                                        .primaryText,
+                                    size: 24.0,
+                                  ),
+                                  text: 'App Appearance',
+                                  textColor:
+                                      FlutterFlowTheme.of(context).primaryText,
+                                ),
+                              ),
+                            ),
+                            // NOTE: Help & Support navigation has been hidden - backend functionality will not be implemented
+                            // Expanded(
+                            //   child: InkWell(
+                            //     splashColor: Colors.transparent,
+                            //     focusColor: Colors.transparent,
+                            //     hoverColor: Colors.transparent,
+                            //     highlightColor: Colors.transparent,
+                            //     onTap: () async {
+                            //       context.pushNamed(
+                            //           HelpSupportWidget.routeName);
+                            //     },
+                            //     child: wrapWithModel(
+                            //       model: _model.iconTextRightModel11,
+                            //       updateCallback: () =>
+                            //           safeSetState(() {}),
+                            //       child: IconTextRightWidget(
+                            //         icon: Icon(
+                            //           FFIcons.kfileText,
+                            //           color: FlutterFlowTheme.of(context)
+                            //               .primaryText,
+                            //           size: 24.0,
+                            //         ),
+                            //         text: 'Help & Support',
+                            //         textColor:
+                            //             FlutterFlowTheme.of(context)
+                            //                 .primaryText,
+                            //       ),
+                            //     ),
+                            //   ),
+                            // ),
+                            Builder(
+                              builder: (context) => InkWell(
+                                splashColor: Colors.transparent,
+                                focusColor: Colors.transparent,
+                                hoverColor: Colors.transparent,
+                                highlightColor: Colors.transparent,
+                                onTap: () async {
+                                  await showDialog(
+                                    barrierColor:
+                                        FlutterFlowTheme.of(context).barrier,
+                                    context: context,
+                                    builder: (dialogContext) {
+                                      return Dialog(
+                                        elevation: 0,
+                                        insetPadding: EdgeInsets.zero,
+                                        backgroundColor: Colors.transparent,
+                                        alignment:
+                                            AlignmentDirectional(0.0, 0.0)
+                                                .resolve(
+                                                    Directionality.of(context)),
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            FocusScope.of(dialogContext)
+                                                .unfocus();
+                                            FocusManager.instance.primaryFocus
+                                                ?.unfocus();
+                                          },
+                                          child: RateUsWidget(),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                                child: wrapWithModel(
+                                  model: _model.iconTextRightModel12,
+                                  updateCallback: () => safeSetState(() {}),
+                                  child: IconTextRightWidget(
+                                    icon: Icon(
+                                      FFIcons.kstar01,
+                                      color: FlutterFlowTheme.of(context)
+                                          .primaryText,
+                                      size: 24.0,
+                                    ),
+                                    text: 'Rate Us',
+                                    textColor: FlutterFlowTheme.of(context)
+                                        .primaryText,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Builder(
+                              builder: (context) => InkWell(
+                                splashColor: Colors.transparent,
+                                focusColor: Colors.transparent,
+                                hoverColor: Colors.transparent,
+                                highlightColor: Colors.transparent,
+                                onTap: () async {
+                                  await showDialog(
+                                    barrierColor:
+                                        FlutterFlowTheme.of(context).barrier,
+                                    context: context,
+                                    builder: (dialogContext) {
+                                      return Dialog(
+                                        elevation: 0,
+                                        insetPadding: EdgeInsets.zero,
+                                        backgroundColor: Colors.transparent,
+                                        alignment:
+                                            AlignmentDirectional(0.0, 0.0)
+                                                .resolve(
+                                                    Directionality.of(context)),
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            FocusScope.of(dialogContext)
+                                                .unfocus();
+                                            FocusManager.instance.primaryFocus
+                                                ?.unfocus();
+                                          },
+                                          child: LogOutWidget(),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                                child: wrapWithModel(
+                                  model: _model.iconTextRightModel13,
+                                  updateCallback: () => safeSetState(() {}),
+                                  child: IconTextRightWidget(
+                                    icon: Icon(
+                                      FFIcons.klogOut03,
+                                      color: FlutterFlowTheme.of(context).error,
+                                      size: 24.0,
+                                    ),
+                                    text: 'Log Out',
+                                    textColor:
+                                        FlutterFlowTheme.of(context).error,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ]
+                      .addToStart(SizedBox(height: 12.0))
+                      .addToEnd(SizedBox(height: 24.0)),
+                ),
+              ),
+            ),
+            // My Friends page removed
+            /* SingleChildScrollView(
                       child: Column(
                         mainAxisSize: MainAxisSize.max,
                         children: [
@@ -1217,12 +1183,7 @@ class _ProfileWidgetState extends State<ProfileWidget>
                           ),
                         ].addToStart(SizedBox(height: 12.0)),
                       ),
-                    ),
-                  ],
-                ).animateOnPageLoad(
-                    animationsMap['pageViewOnPageLoadAnimation']!),
-              ),
-            ),
+                    ), */
             wrapWithModel(
               model: _model.zNawBarModel,
               updateCallback: () => safeSetState(() {}),

@@ -248,7 +248,7 @@ class _ZActivityIconsWidgetState extends State<ZActivityIconsWidget> {
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () async {
-                              Navigator.pop(context);
+                              Navigator.pop(context, 'sport1');
                             },
                             child: Column(
                               mainAxisSize: MainAxisSize.max,
@@ -313,7 +313,7 @@ class _ZActivityIconsWidgetState extends State<ZActivityIconsWidget> {
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () async {
-                              Navigator.pop(context);
+                              Navigator.pop(context, 'sport2');
                             },
                             child: Column(
                               mainAxisSize: MainAxisSize.max,
@@ -378,7 +378,7 @@ class _ZActivityIconsWidgetState extends State<ZActivityIconsWidget> {
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () async {
-                              Navigator.pop(context);
+                              Navigator.pop(context, 'sport5');
                             },
                             child: Column(
                               mainAxisSize: MainAxisSize.max,
@@ -443,7 +443,7 @@ class _ZActivityIconsWidgetState extends State<ZActivityIconsWidget> {
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () async {
-                              Navigator.pop(context);
+                              Navigator.pop(context, 'sport6');
                             },
                             child: Column(
                               mainAxisSize: MainAxisSize.max,
@@ -508,7 +508,7 @@ class _ZActivityIconsWidgetState extends State<ZActivityIconsWidget> {
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () async {
-                              Navigator.pop(context);
+                              Navigator.pop(context, 'sport8');
                             },
                             child: Column(
                               mainAxisSize: MainAxisSize.max,
@@ -573,7 +573,7 @@ class _ZActivityIconsWidgetState extends State<ZActivityIconsWidget> {
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () async {
-                              Navigator.pop(context);
+                              Navigator.pop(context, 'sport13');
                             },
                             child: Column(
                               mainAxisSize: MainAxisSize.max,
@@ -638,7 +638,7 @@ class _ZActivityIconsWidgetState extends State<ZActivityIconsWidget> {
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () async {
-                              Navigator.pop(context);
+                              Navigator.pop(context, 'sport10');
                             },
                             child: Column(
                               mainAxisSize: MainAxisSize.max,
@@ -703,7 +703,7 @@ class _ZActivityIconsWidgetState extends State<ZActivityIconsWidget> {
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () async {
-                              Navigator.pop(context);
+                              Navigator.pop(context, 'sport7');
                             },
                             child: Column(
                               mainAxisSize: MainAxisSize.max,
@@ -768,7 +768,7 @@ class _ZActivityIconsWidgetState extends State<ZActivityIconsWidget> {
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () async {
-                              Navigator.pop(context);
+                              Navigator.pop(context, 'sport12');
                             },
                             child: Column(
                               mainAxisSize: MainAxisSize.max,
@@ -833,7 +833,7 @@ class _ZActivityIconsWidgetState extends State<ZActivityIconsWidget> {
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () async {
-                              Navigator.pop(context);
+                              Navigator.pop(context, 'sport3');
                             },
                             child: Column(
                               mainAxisSize: MainAxisSize.max,
@@ -898,7 +898,7 @@ class _ZActivityIconsWidgetState extends State<ZActivityIconsWidget> {
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () async {
-                              Navigator.pop(context);
+                              Navigator.pop(context, 'sport11');
                             },
                             child: Column(
                               mainAxisSize: MainAxisSize.max,
@@ -963,7 +963,7 @@ class _ZActivityIconsWidgetState extends State<ZActivityIconsWidget> {
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () async {
-                              Navigator.pop(context);
+                              Navigator.pop(context, 'sport9');
                             },
                             child: Column(
                               mainAxisSize: MainAxisSize.max,
@@ -1028,7 +1028,7 @@ class _ZActivityIconsWidgetState extends State<ZActivityIconsWidget> {
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () async {
-                              Navigator.pop(context);
+                              Navigator.pop(context, 'sport4');
                             },
                             child: Column(
                               mainAxisSize: MainAxisSize.max,
@@ -1093,7 +1093,7 @@ class _ZActivityIconsWidgetState extends State<ZActivityIconsWidget> {
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () async {
-                              Navigator.pop(context);
+                              Navigator.pop(context, 'sport14');
                             },
                             child: Column(
                               mainAxisSize: MainAxisSize.max,
@@ -1156,7 +1156,7 @@ class _ZActivityIconsWidgetState extends State<ZActivityIconsWidget> {
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () async {
-                              Navigator.pop(context);
+                              Navigator.pop(context, 'sport20');
                             },
                             child: Column(
                               mainAxisSize: MainAxisSize.max,
@@ -1221,7 +1221,7 @@ class _ZActivityIconsWidgetState extends State<ZActivityIconsWidget> {
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () async {
-                              Navigator.pop(context);
+                              Navigator.pop(context, 'sport15');
                             },
                             child: Column(
                               mainAxisSize: MainAxisSize.max,
@@ -1286,7 +1286,7 @@ class _ZActivityIconsWidgetState extends State<ZActivityIconsWidget> {
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () async {
-                              Navigator.pop(context);
+                              Navigator.pop(context, 'sport16');
                             },
                             child: Column(
                               mainAxisSize: MainAxisSize.max,
@@ -1351,7 +1351,7 @@ class _ZActivityIconsWidgetState extends State<ZActivityIconsWidget> {
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () async {
-                              Navigator.pop(context);
+                              Navigator.pop(context, 'sport19');
                             },
                             child: Column(
                               mainAxisSize: MainAxisSize.max,
@@ -1416,7 +1416,7 @@ class _ZActivityIconsWidgetState extends State<ZActivityIconsWidget> {
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () async {
-                              Navigator.pop(context);
+                              Navigator.pop(context, 'sport17');
                             },
                             child: Column(
                               mainAxisSize: MainAxisSize.max,
@@ -1481,7 +1481,7 @@ class _ZActivityIconsWidgetState extends State<ZActivityIconsWidget> {
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () async {
-                              Navigator.pop(context);
+                              Navigator.pop(context, 'other');
                             },
                             child: Column(
                               mainAxisSize: MainAxisSize.max,
@@ -1500,17 +1500,17 @@ class _ZActivityIconsWidgetState extends State<ZActivityIconsWidget> {
                                   ),
                                   alignment: AlignmentDirectional(0.0, 0.0),
                                   child: Icon(
-                                    FFIcons.kplus,
+                                    FFIcons.kdotsHorizontal,
                                     color: FlutterFlowTheme.of(context)
                                         .primaryText,
-                                    size: 32.0,
+                                    size: 44.0,
                                   ),
                                 ),
                                 Padding(
                                   padding: EdgeInsetsDirectional.fromSTEB(
                                       0.0, 12.0, 0.0, 0.0),
                                   child: Text(
-                                    'Custom',
+                                    'Other',
                                     style: FlutterFlowTheme.of(context)
                                         .bodySmall
                                         .override(

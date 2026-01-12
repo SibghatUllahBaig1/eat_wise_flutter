@@ -28,3 +28,8 @@ export 'tracker_settings_struct.dart';
 export 'tracker_value_struct.dart';
 export 'weight_struct.dart';
 export 'weight_settings_struct.dart';
+export 'food_nutrition_struct.dart';
+export 'macros_struct.dart';
+export 'macro_detail_struct.dart';
+export 'nutrient_struct.dart';
+export 'minerals_struct.dart';

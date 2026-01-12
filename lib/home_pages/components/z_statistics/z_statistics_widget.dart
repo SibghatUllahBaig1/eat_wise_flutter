@@ -4,6 +4,7 @@ import '/flutter_flow/flutter_flow_widgets.dart';
 import 'dart:ui';
 import '/custom_code/widgets/index.dart' as custom_widgets;
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:provider/provider.dart';
@@ -30,6 +31,14 @@ class _ZStatisticsWidgetState extends State<ZStatisticsWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => ZStatisticsModel());
+
+    // Load nutrition data when widget is first created
+    SchedulerBinding.instance.addPostFrameCallback((_) async {
+      await _model.loadNutritionData();
+      if (mounted) {
+        setState(() {});
+      }
+    });
   }
 
   @override
@@ -40,7 +49,21 @@ class _ZStatisticsWidgetState extends State<ZStatisticsWidget> {
   }
 
   @override
+  void didUpdateWidget(ZStatisticsWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reload nutrition data when widget is updated
+    SchedulerBinding.instance.addPostFrameCallback((_) async {
+      await _model.loadNutritionData();
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    context.watch<FFAppState>();
+
     return Padding(
       padding: EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
       child: Container(
@@ -68,7 +91,7 @@ class _ZStatisticsWidgetState extends State<ZStatisticsWidget> {
                         child: custom_widgets.SemiCircleProgress(
                           width: 144.0,
                           height: 144.0,
-                          progress: 0.2,
+                          progress: _model.calorieProgress,
                           progressColor: FlutterFlowTheme.of(context).primary,
                           backgroundColor: FlutterFlowTheme.of(context).divider,
                           text: '',
@@ -97,7 +120,7 @@ class _ZStatisticsWidgetState extends State<ZStatisticsWidget> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    '297',
+                                    '${_model.totalCalories}',
                                     style: FlutterFlowTheme.of(context)
                                         .titleLarge
                                         .override(
@@ -168,7 +191,7 @@ class _ZStatisticsWidgetState extends State<ZStatisticsWidget> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    '1067',
+                                    '${_model.caloriesLeft}',
                                     style: FlutterFlowTheme.of(context)
                                         .titleLarge
                                         .override(
@@ -238,7 +261,7 @@ class _ZStatisticsWidgetState extends State<ZStatisticsWidget> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    '178',
+                                    '${_model.burnedCalories}',
                                     style: FlutterFlowTheme.of(context)
                                         .titleLarge
                                         .override(
@@ -340,7 +363,7 @@ class _ZStatisticsWidgetState extends State<ZStatisticsWidget> {
                                 ),
                           ),
                           LinearPercentIndicator(
-                            percent: 0.5,
+                            percent: _model.carbsProgress,
                             width: (MediaQuery.sizeOf(context).width - 128) / 3,
                             lineHeight: 7.0,
                             animation: true,
@@ -352,7 +375,7 @@ class _ZStatisticsWidgetState extends State<ZStatisticsWidget> {
                             padding: EdgeInsets.zero,
                           ),
                           Text(
-                            '71/141 g',
+                            '${_model.totalCarbs}/${_model.carbsGoal} g',
                             style: FlutterFlowTheme.of(context)
                                 .bodyMedium
                                 .override(
@@ -406,7 +429,7 @@ class _ZStatisticsWidgetState extends State<ZStatisticsWidget> {
                                 ),
                           ),
                           LinearPercentIndicator(
-                            percent: 0.2,
+                            percent: _model.proteinProgress,
                             width: (MediaQuery.sizeOf(context).width - 128) / 3,
                             lineHeight: 7.0,
                             animation: true,
@@ -418,7 +441,7 @@ class _ZStatisticsWidgetState extends State<ZStatisticsWidget> {
                             padding: EdgeInsets.zero,
                           ),
                           Text(
-                            '6/68 g',
+                            '${_model.totalProtein}/${_model.proteinGoal} g',
                             style: FlutterFlowTheme.of(context)
                                 .bodyMedium
                                 .override(
@@ -472,7 +495,7 @@ class _ZStatisticsWidgetState extends State<ZStatisticsWidget> {
                                 ),
                           ),
                           LinearPercentIndicator(
-                            percent: 0.7,
+                            percent: _model.fatProgress,
                             width: (MediaQuery.sizeOf(context).width - 128) / 3,
                             lineHeight: 7.0,
                             animation: true,
@@ -484,7 +507,7 @@ class _ZStatisticsWidgetState extends State<ZStatisticsWidget> {
                             padding: EdgeInsets.zero,
                           ),
                           Text(
-                            '30/45 g',
+                            '${_model.totalFat}/${_model.fatGoal} g',
                             style: FlutterFlowTheme.of(context)
                                 .bodyMedium
                                 .override(

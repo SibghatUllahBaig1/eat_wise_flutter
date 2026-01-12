@@ -12,9 +12,20 @@ import 'package:provider/provider.dart';
 class ActivityDetailsModel extends FlutterFlowModel<ActivityDetailsWidget> {
   ///  Local state fields for this page.
 
+  String? activityId;
+
+  String activityName = '';
+
   int? duration = 0;
 
   bool favorite = false;
+
+  String iconName = 'sport2';
+
+  int? caloriesBurned = 0;
+
+  // Store the base calories per minute from the template
+  double? baseCaloriesPerMinute;
 
   ///  State fields for stateful widgets in this page.
 
@@ -26,10 +37,6 @@ class ActivityDetailsModel extends FlutterFlowModel<ActivityDetailsWidget> {
   FocusNode? textFieldFocusNode2;
   TextEditingController? textController2;
   String? Function(BuildContext, String?)? textController2Validator;
-  // State field(s) for TextField widget.
-  FocusNode? textFieldFocusNode3;
-  TextEditingController? textController3;
-  String? Function(BuildContext, String?)? textController3Validator;
 
   @override
   void initState(BuildContext context) {}
@@ -41,8 +48,5 @@ class ActivityDetailsModel extends FlutterFlowModel<ActivityDetailsWidget> {
 
     textFieldFocusNode2?.dispose();
     textController2?.dispose();
-
-    textFieldFocusNode3?.dispose();
-    textController3?.dispose();
   }
 }

@@ -9,7 +9,12 @@ import 'z_delete_food_model.dart';
 export 'z_delete_food_model.dart';
 
 class ZDeleteFoodWidget extends StatefulWidget {
-  const ZDeleteFoodWidget({super.key});
+  const ZDeleteFoodWidget({
+    super.key,
+    this.mealId,
+  });
+
+  final String? mealId;
 
   @override
   State<ZDeleteFoodWidget> createState() => _ZDeleteFoodWidgetState();
@@ -142,6 +147,10 @@ class _ZDeleteFoodWidgetState extends State<ZDeleteFoodWidget> {
                       ),
                       FFButtonWidget(
                         onPressed: () async {
+                          if (widget.mealId != null &&
+                              widget.mealId!.isNotEmpty) {
+                            await _model.deleteMeal(context, widget.mealId!);
+                          }
                           Navigator.pop(context);
                         },
                         text: 'Delete',

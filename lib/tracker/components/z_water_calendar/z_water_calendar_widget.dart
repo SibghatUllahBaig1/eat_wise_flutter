@@ -44,6 +44,13 @@ class _ZWaterCalendarWidgetState extends State<ZWaterCalendarWidget>
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       _model.selectedMonthAndYear = FFAppState().tracker.currentDate;
       _model.size = (MediaQuery.sizeOf(context).width - 100) / 7;
+
+      // Load water progress for visible week
+      final currentDate = FFAppState().tracker.currentDate ?? DateTime.now();
+      final weekDates =
+          functions.daysFunction('Monday', currentDate, 7).toList();
+      await _model.loadWaterProgressForDates(weekDates);
+
       safeSetState(() {});
     });
 
@@ -123,6 +130,15 @@ class _ZWaterCalendarWidgetState extends State<ZWaterCalendarWidget>
                                   _model.selectedMonthAndYear =
                                       functions.getLastMonthDateTime(
                                           _model.selectedMonthAndYear!);
+                                  // Load water progress for the new month
+                                  final monthDays = functions
+                                      .getMonthDays(
+                                          'Monday',
+                                          dateTimeFormat("yyyy/MM",
+                                              _model.selectedMonthAndYear))
+                                      .toList();
+                                  await _model
+                                      .loadWaterProgressForDates(monthDays);
                                   safeSetState(() {});
                                 },
                               ),
@@ -164,6 +180,15 @@ class _ZWaterCalendarWidgetState extends State<ZWaterCalendarWidget>
                                   _model.selectedMonthAndYear =
                                       functions.getNextMonthDateTime(
                                           _model.selectedMonthAndYear!);
+                                  // Load water progress for the new month
+                                  final monthDays = functions
+                                      .getMonthDays(
+                                          'Monday',
+                                          dateTimeFormat("yyyy/MM",
+                                              _model.selectedMonthAndYear))
+                                      .toList();
+                                  await _model
+                                      .loadWaterProgressForDates(monthDays);
                                   safeSetState(() {});
                                 },
                               ),
@@ -395,12 +420,11 @@ class _ZWaterCalendarWidgetState extends State<ZWaterCalendarWidget>
                                   final daysListItem = daysList[daysListIndex];
                                   return Builder(
                                     builder: (context) {
-                                      if (FFAppState()
-                                          .tracker
-                                          .step
-                                          .where((e) => e.date == daysListItem)
-                                          .toList()
-                                          .isNotEmpty) {
+                                      final hasWaterData =
+                                          _model.getProgressForDate(
+                                                  daysListItem) >
+                                              0;
+                                      if (hasWaterData) {
                                         return Container(
                                           width: _model.size,
                                           height: _model.size,
@@ -420,14 +444,9 @@ class _ZWaterCalendarWidgetState extends State<ZWaterCalendarWidget>
                                               FFAppState().update(() {});
                                             },
                                             child: CircularPercentIndicator(
-                                              percent: FFAppState()
-                                                  .tracker
-                                                  .water
-                                                  .where((e) =>
-                                                      e.date == daysListItem)
-                                                  .toList()
-                                                  .firstOrNull!
-                                                  .progress,
+                                              percent:
+                                                  _model.getProgressForDate(
+                                                      daysListItem),
                                               radius: 18.0,
                                               lineWidth: 3.0,
                                               animation: true,
@@ -716,17 +735,8 @@ class _ZWaterCalendarWidgetState extends State<ZWaterCalendarWidget>
                                               ),
                                         ),
                                         CircularPercentIndicator(
-                                          percent: valueOrDefault<double>(
-                                            FFAppState()
-                                                .tracker
-                                                .water
-                                                .where(
-                                                    (e) => e.date == daysItem)
-                                                .toList()
-                                                .firstOrNull
-                                                ?.progress,
-                                            0.5,
-                                          ),
+                                          percent: _model
+                                              .getProgressForDate(daysItem),
                                           radius: 15.0,
                                           lineWidth: 3.0,
                                           animation: true,
@@ -807,6 +817,16 @@ class _ZWaterCalendarWidgetState extends State<ZWaterCalendarWidget>
                         .forward(from: 0.0);
                   }
                   _model.showMore = true;
+                  // Load water progress for expanded month view
+                  final monthDays = functions
+                      .getMonthDays(
+                          'Monday',
+                          dateTimeFormat(
+                              "yyyy/MM", _model.selectedMonthAndYear))
+                      .toList();
+                  _model.loadWaterProgressForDates(monthDays).then((_) {
+                    safeSetState(() {});
+                  });
                   safeSetState(() {});
                 }
               },

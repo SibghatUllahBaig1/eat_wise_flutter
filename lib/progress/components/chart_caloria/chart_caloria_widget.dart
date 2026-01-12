@@ -61,7 +61,7 @@ class _ChartCaloriaWidgetState extends State<ChartCaloriaWidget> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Calorie (kcal)',
+                    'Calorie (cal)',
                     style: FlutterFlowTheme.of(context).titleSmall.override(
                           font: GoogleFonts.inter(
                             fontWeight: FlutterFlowTheme.of(context)

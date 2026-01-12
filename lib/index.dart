@@ -71,6 +71,7 @@ export '/home_pages/food_details/food_details_widget.dart'
     show FoodDetailsWidget;
 export '/home_pages/personal_food_details/personal_food_details_widget.dart'
     show PersonalFoodDetailsWidget;
+export '/pages/food_capture/food_capture_widget.dart' show FoodCaptureWidget;
 export '/home_pages/activity_details/activity_details_widget.dart'
     show ActivityDetailsWidget;
 export '/home_pages/notification/notification_widget.dart'

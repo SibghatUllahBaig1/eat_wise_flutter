@@ -356,12 +356,23 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           builder: (context, params) => FoodHistoryWidget(),
         ),
         FFRoute(
+          name: FoodCaptureWidget.routeName,
+          path: FoodCaptureWidget.routePath,
+          builder: (context, params) => FoodCaptureWidget(),
+        ),
+        FFRoute(
           name: FoodDetailsWidget.routeName,
           path: FoodDetailsWidget.routePath,
           builder: (context, params) => FoodDetailsWidget(
             fromHistory: params.getParam(
               'fromHistory',
               ParamType.bool,
+            ),
+            nutritionData: params.getParam(
+              'nutritionData',
+              ParamType.DataStruct,
+              isList: false,
+              structBuilder: FoodNutritionStruct.fromSerializableMap,
             ),
           ),
         ),
@@ -388,7 +399,12 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
         FFRoute(
           name: ActivityHistoryWidget.routeName,
           path: ActivityHistoryWidget.routePath,
-          builder: (context, params) => ActivityHistoryWidget(),
+          builder: (context, params) => ActivityHistoryWidget(
+            selectedDate: params.getParam(
+              'selectedDate',
+              ParamType.DateTime,
+            ),
+          ),
         ),
         FFRoute(
           name: DietsWidget.routeName,

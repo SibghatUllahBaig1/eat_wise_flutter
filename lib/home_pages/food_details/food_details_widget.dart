@@ -5,6 +5,7 @@ import '/flutter_flow/flutter_flow_widgets.dart';
 import '/home_pages/components/z_food_details_app_bar/z_food_details_app_bar_widget.dart';
 import '/home_pages/components/z_food_details_content/z_food_details_content_widget.dart';
 import '/home_pages/components/z_food_details_headar/z_food_details_headar_widget.dart';
+import '/backend/schema/structs/index.dart';
 import 'dart:ui';
 import '/custom_code/widgets/index.dart' as custom_widgets;
 import 'package:flutter/material.dart';
@@ -17,9 +18,11 @@ class FoodDetailsWidget extends StatefulWidget {
   const FoodDetailsWidget({
     super.key,
     bool? fromHistory,
+    this.nutritionData,
   }) : this.fromHistory = fromHistory ?? false;
 
   final bool fromHistory;
+  final FoodNutritionStruct? nutritionData;
 
   static String routeName = 'FoodDetails';
   static String routePath = '/foodDetails';
@@ -89,12 +92,26 @@ class _FoodDetailsWidgetState extends State<FoodDetailsWidget> {
                       FlutterFlowTheme.of(context).primaryBackground,
                   expandedHeightAppBAr: 240.0,
                   shareborderRadius: 24.0,
-                  homepage: () => ZFoodDetailsContentWidget(),
+                  homepage: () => ZFoodDetailsContentWidget(
+                    nutritionData: widget.nutritionData,
+                    onNutritionDataChanged: (updatedData) {
+                      // Store the updated nutrition data in the model
+                      // Preserve the mealId from the original nutrition data
+                      if (updatedData != null &&
+                          widget.nutritionData?.mealId != null) {
+                        updatedData.mealId = widget.nutritionData!.mealId;
+                      }
+                      _model.contentModel = ZFoodDetailsContentModel()
+                        ..calculatedNutrition = updatedData;
+                    },
+                  ),
                   pageSimpleAppBar: () => ZFoodDetailsAppBarWidget(
                     fromHistory: widget!.fromHistory,
+                    nutritionData: widget.nutritionData,
                   ),
                   pageSliverAppBar: () => ZFoodDetailsHeadarWidget(
                     fromHistory: widget!.fromHistory,
+                    nutritionData: widget.nutritionData,
                   ),
                 ),
               ),
@@ -117,171 +134,11 @@ class _FoodDetailsWidgetState extends State<FoodDetailsWidget> {
                 mainAxisSize: MainAxisSize.max,
                 children: [
                   Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.max,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.max,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'kcal',
-                                style: FlutterFlowTheme.of(context)
-                                    .bodyMedium
-                                    .override(
-                                      font: GoogleFonts.inter(
-                                        fontWeight: FlutterFlowTheme.of(context)
-                                            .bodyMedium
-                                            .fontWeight,
-                                        fontStyle: FlutterFlowTheme.of(context)
-                                            .bodyMedium
-                                            .fontStyle,
-                                      ),
-                                      letterSpacing: 0.0,
-                                      fontWeight: FlutterFlowTheme.of(context)
-                                          .bodyMedium
-                                          .fontWeight,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .bodyMedium
-                                          .fontStyle,
-                                      lineHeight: 1.0,
-                                    ),
-                              ),
-                              Row(
-                                mainAxisSize: MainAxisSize.max,
-                                children: [
-                                  Text(
-                                    '250 g',
-                                    style: FlutterFlowTheme.of(context)
-                                        .titleLarge
-                                        .override(
-                                          font: GoogleFonts.inter(
-                                            fontWeight:
-                                                FlutterFlowTheme.of(context)
-                                                    .titleLarge
-                                                    .fontWeight,
-                                            fontStyle:
-                                                FlutterFlowTheme.of(context)
-                                                    .titleLarge
-                                                    .fontStyle,
-                                          ),
-                                          letterSpacing: 0.0,
-                                          fontWeight:
-                                              FlutterFlowTheme.of(context)
-                                                  .titleLarge
-                                                  .fontWeight,
-                                          fontStyle:
-                                              FlutterFlowTheme.of(context)
-                                                  .titleLarge
-                                                  .fontStyle,
-                                          lineHeight: 1.0,
-                                        ),
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        8.0, 0.0, 0.0, 0.0),
-                                    child: Icon(
-                                      FFIcons.kpencilMinus,
-                                      color: FlutterFlowTheme.of(context)
-                                          .iconColor,
-                                      size: 20.0,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ].divide(SizedBox(height: 10.0)),
-                          ),
-                        ),
-                        Container(
-                          width: 125.0,
-                          decoration: BoxDecoration(),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.max,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              FlutterFlowIconButton(
-                                borderRadius: 10.0,
-                                borderWidth: 2.0,
-                                buttonSize: 36.0,
-                                fillColor: FlutterFlowTheme.of(context)
-                                    .primaryBackground,
-                                icon: Icon(
-                                  FFIcons.kminus,
-                                  color: _model.quantity == 1
-                                      ? FlutterFlowTheme.of(context)
-                                          .secondaryText
-                                      : FlutterFlowTheme.of(context)
-                                          .primaryText,
-                                  size: 18.0,
-                                ),
-                                onPressed: () async {
-                                  if (_model.quantity! > 1) {
-                                    _model.quantity = _model.quantity! + -1;
-                                    safeSetState(() {});
-                                  }
-                                },
-                              ),
-                              Text(
-                                valueOrDefault<String>(
-                                  _model.quantity?.toString(),
-                                  '1',
-                                ),
-                                style: FlutterFlowTheme.of(context)
-                                    .titleLarge
-                                    .override(
-                                      font: GoogleFonts.inter(
-                                        fontWeight: FlutterFlowTheme.of(context)
-                                            .titleLarge
-                                            .fontWeight,
-                                        fontStyle: FlutterFlowTheme.of(context)
-                                            .titleLarge
-                                            .fontStyle,
-                                      ),
-                                      letterSpacing: 0.0,
-                                      fontWeight: FlutterFlowTheme.of(context)
-                                          .titleLarge
-                                          .fontWeight,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .titleLarge
-                                          .fontStyle,
-                                    ),
-                              ),
-                              FlutterFlowIconButton(
-                                borderRadius: 10.0,
-                                borderWidth: 2.0,
-                                buttonSize: 36.0,
-                                fillColor: FlutterFlowTheme.of(context)
-                                    .primaryBackground,
-                                icon: Icon(
-                                  FFIcons.kplus,
-                                  color: _model.quantity == 8
-                                      ? FlutterFlowTheme.of(context)
-                                          .secondaryText
-                                      : FlutterFlowTheme.of(context)
-                                          .primaryText,
-                                  size: 18.0,
-                                ),
-                                onPressed: () async {
-                                  if (_model.quantity! < 8) {
-                                    _model.quantity = _model.quantity! + 1;
-                                    safeSetState(() {});
-                                  }
-                                },
-                              ),
-                            ].divide(SizedBox(width: 4.0)),
-                          ),
-                        ),
-                      ].divide(SizedBox(width: 16.0)),
-                    ),
-                  ),
-                  Padding(
                     padding:
-                        EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 16.0),
+                        EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 16.0),
                     child: FFButtonWidget(
                       onPressed: () async {
-                        context.safePop();
+                        await _model.saveMeal(context, widget.nutritionData);
                       },
                       text: 'Save',
                       options: FFButtonOptions(
