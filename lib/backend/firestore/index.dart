@@ -5,7 +5,6 @@ export 'meal_service.dart';
 export 'water_tracker_service.dart';
 export 'weight_tracker_service.dart';
 export 'step_tracker_service.dart';
-export 'goals_service.dart';
 export 'recipe_service.dart';
 export 'analytics_service.dart';
 export 'sync_service.dart';

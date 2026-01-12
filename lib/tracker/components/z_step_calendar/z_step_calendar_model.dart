@@ -1,4 +1,6 @@
 import '/backend/schema/structs/index.dart';
+import '/backend/firestore/step_tracker_service.dart';
+import '/auth/firebase_auth/auth_util.dart';
 import '/flutter_flow/flutter_flow_animations.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -23,6 +25,44 @@ class ZStepCalendarModel extends FlutterFlowModel<ZStepCalendarWidget> {
   bool showMore = false;
 
   double? size;
+
+  /// Step progress data for visible dates (date string -> progress 0.0-1.0)
+  Map<String, double> stepProgressByDate = {};
+
+  final StepTrackerService _stepTrackerService = StepTrackerService();
+
+  /// Load step progress for a list of dates
+  Future<void> loadStepProgressForDates(List<DateTime> dates) async {
+    if (!loggedIn) return;
+
+    for (final date in dates) {
+      final dateKey =
+          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+
+      try {
+        final data = await _stepTrackerService.getStepSummary(
+          userId: currentUserUid,
+          date: date,
+        );
+
+        if (data != null) {
+          final progress = (data['progress'] as num?)?.toDouble() ?? 0.0;
+          stepProgressByDate[dateKey] = progress.clamp(0.0, 1.0);
+        } else {
+          stepProgressByDate[dateKey] = 0.0;
+        }
+      } catch (e) {
+        stepProgressByDate[dateKey] = 0.0;
+      }
+    }
+  }
+
+  /// Get progress for a specific date
+  double getProgressForDate(DateTime date) {
+    final dateKey =
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    return stepProgressByDate[dateKey] ?? 0.0;
+  }
 
   @override
   void initState(BuildContext context) {}

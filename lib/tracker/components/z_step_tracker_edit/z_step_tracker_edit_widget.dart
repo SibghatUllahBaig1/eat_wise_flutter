@@ -1,4 +1,6 @@
 import '/backend/schema/structs/index.dart';
+import '/backend/backend_manager.dart';
+import '/auth/firebase_auth/auth_util.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -21,6 +23,7 @@ class ZStepTrackerEditWidget extends StatefulWidget {
 
 class _ZStepTrackerEditWidgetState extends State<ZStepTrackerEditWidget> {
   late ZStepTrackerEditModel _model;
+  final backend = BackendManager();
 
   @override
   void setState(VoidCallback callback) {
@@ -147,217 +150,78 @@ class _ZStepTrackerEditWidgetState extends State<ZStepTrackerEditWidget> {
                                 width: 1.5,
                               ),
                             ),
-                            child: Builder(
-                              builder: (context) {
-                                if (FFAppState()
-                                    .tracker
-                                    .step
-                                    .where((e) => e.date == daysItem)
-                                    .toList()
-                                    .isNotEmpty) {
-                                  return Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        0.0, 8.0, 0.0, 8.0),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          dateTimeFormat("E", daysItem),
-                                          style: FlutterFlowTheme.of(context)
-                                              .bodyMedium
-                                              .override(
-                                                font: GoogleFonts.inter(
-                                                  fontWeight:
-                                                      FlutterFlowTheme.of(
-                                                              context)
-                                                          .bodyMedium
-                                                          .fontWeight,
-                                                  fontStyle:
-                                                      FlutterFlowTheme.of(
-                                                              context)
-                                                          .bodyMedium
-                                                          .fontStyle,
-                                                ),
-                                                color: daysItem ==
-                                                        FFAppState()
-                                                            .tracker
-                                                            .selectedDate
-                                                    ? FlutterFlowTheme.of(
-                                                            context)
-                                                        .stepColor
-                                                    : FlutterFlowTheme.of(
-                                                            context)
-                                                        .primaryText,
-                                                fontSize: 12.0,
-                                                letterSpacing: 0.0,
-                                                fontWeight:
-                                                    FlutterFlowTheme.of(context)
-                                                        .bodyMedium
-                                                        .fontWeight,
-                                                fontStyle:
-                                                    FlutterFlowTheme.of(context)
-                                                        .bodyMedium
-                                                        .fontStyle,
-                                              ),
-                                        ),
-                                        CircularPercentIndicator(
-                                          percent: valueOrDefault<double>(
-                                            FFAppState()
-                                                .tracker
-                                                .step
-                                                .where(
-                                                    (e) => e.date == daysItem)
-                                                .toList()
-                                                .firstOrNull
-                                                ?.progress,
-                                            0.0,
+                            child: Padding(
+                              padding: EdgeInsetsDirectional.fromSTEB(
+                                  0.0, 8.0, 0.0, 8.0),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    dateTimeFormat("E", daysItem),
+                                    style: FlutterFlowTheme.of(context)
+                                        .bodyMedium
+                                        .override(
+                                          font: GoogleFonts.inter(
+                                            fontWeight:
+                                                FlutterFlowTheme.of(context)
+                                                    .bodyMedium
+                                                    .fontWeight,
+                                            fontStyle:
+                                                FlutterFlowTheme.of(context)
+                                                    .bodyMedium
+                                                    .fontStyle,
                                           ),
-                                          radius: 15.0,
-                                          lineWidth: 3.0,
-                                          animation: true,
-                                          animateFromLastPercent: true,
-                                          progressColor:
+                                          color: daysItem ==
+                                                  FFAppState()
+                                                      .tracker
+                                                      .selectedDate
+                                              ? FlutterFlowTheme.of(context)
+                                                  .stepColor
+                                              : FlutterFlowTheme.of(context)
+                                                  .primaryText,
+                                          fontSize: 12.0,
+                                          letterSpacing: 0.0,
+                                          fontWeight:
                                               FlutterFlowTheme.of(context)
-                                                  .stepColor,
-                                          backgroundColor:
+                                                  .bodyMedium
+                                                  .fontWeight,
+                                          fontStyle:
                                               FlutterFlowTheme.of(context)
-                                                  .stepAccent,
-                                          center: Text(
-                                            dateTimeFormat("d", daysItem),
-                                            style: FlutterFlowTheme.of(context)
-                                                .bodySmall
-                                                .override(
-                                                  font: GoogleFonts.inter(
-                                                    fontWeight:
-                                                        FontWeight.normal,
-                                                    fontStyle:
-                                                        FlutterFlowTheme.of(
-                                                                context)
-                                                            .bodySmall
-                                                            .fontStyle,
-                                                  ),
-                                                  color: daysItem ==
-                                                          FFAppState()
-                                                              .tracker
-                                                              .selectedDate
-                                                      ? FlutterFlowTheme.of(
-                                                              context)
-                                                          .stepColor
-                                                      : FlutterFlowTheme.of(
-                                                              context)
-                                                          .primaryText,
-                                                  fontSize: 14.0,
-                                                  letterSpacing: 0.0,
-                                                  fontWeight: FontWeight.normal,
-                                                  fontStyle:
-                                                      FlutterFlowTheme.of(
-                                                              context)
-                                                          .bodySmall
-                                                          .fontStyle,
-                                                ),
+                                                  .bodyMedium
+                                                  .fontStyle,
+                                        ),
+                                  ),
+                                  Text(
+                                    dateTimeFormat("d", daysItem),
+                                    style: FlutterFlowTheme.of(context)
+                                        .bodySmall
+                                        .override(
+                                          font: GoogleFonts.inter(
+                                            fontWeight: FontWeight.normal,
+                                            fontStyle:
+                                                FlutterFlowTheme.of(context)
+                                                    .bodySmall
+                                                    .fontStyle,
                                           ),
-                                        ),
-                                      ].divide(SizedBox(height: 10.0)),
-                                    ),
-                                  );
-                                } else {
-                                  return Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        0.0, 8.0, 0.0, 8.0),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          dateTimeFormat("E", daysItem),
-                                          style: FlutterFlowTheme.of(context)
-                                              .bodyMedium
-                                              .override(
-                                                font: GoogleFonts.inter(
-                                                  fontWeight:
-                                                      FlutterFlowTheme.of(
-                                                              context)
-                                                          .bodyMedium
-                                                          .fontWeight,
-                                                  fontStyle:
-                                                      FlutterFlowTheme.of(
-                                                              context)
-                                                          .bodyMedium
-                                                          .fontStyle,
-                                                ),
-                                                color: daysItem ==
-                                                        FFAppState()
-                                                            .tracker
-                                                            .selectedDate
-                                                    ? FlutterFlowTheme.of(
-                                                            context)
-                                                        .stepColor
-                                                    : FlutterFlowTheme.of(
-                                                            context)
-                                                        .primaryText,
-                                                fontSize: 12.0,
-                                                letterSpacing: 0.0,
-                                                fontWeight:
-                                                    FlutterFlowTheme.of(context)
-                                                        .bodyMedium
-                                                        .fontWeight,
-                                                fontStyle:
-                                                    FlutterFlowTheme.of(context)
-                                                        .bodyMedium
-                                                        .fontStyle,
-                                              ),
-                                        ),
-                                        CircularPercentIndicator(
-                                          percent: 0.0,
-                                          radius: 15.0,
-                                          lineWidth: 3.0,
-                                          animation: true,
-                                          animateFromLastPercent: true,
-                                          progressColor:
+                                          color: daysItem ==
+                                                  FFAppState()
+                                                      .tracker
+                                                      .selectedDate
+                                              ? FlutterFlowTheme.of(context)
+                                                  .stepColor
+                                              : FlutterFlowTheme.of(context)
+                                                  .primaryText,
+                                          fontSize: 14.0,
+                                          letterSpacing: 0.0,
+                                          fontWeight: FontWeight.normal,
+                                          fontStyle:
                                               FlutterFlowTheme.of(context)
-                                                  .stepColor,
-                                          backgroundColor:
-                                              FlutterFlowTheme.of(context)
-                                                  .stepAccent,
-                                          center: Text(
-                                            dateTimeFormat("d", daysItem),
-                                            style: FlutterFlowTheme.of(context)
-                                                .bodySmall
-                                                .override(
-                                                  font: GoogleFonts.inter(
-                                                    fontWeight:
-                                                        FontWeight.normal,
-                                                    fontStyle:
-                                                        FlutterFlowTheme.of(
-                                                                context)
-                                                            .bodySmall
-                                                            .fontStyle,
-                                                  ),
-                                                  color: daysItem ==
-                                                          FFAppState()
-                                                              .tracker
-                                                              .selectedDate
-                                                      ? FlutterFlowTheme.of(
-                                                              context)
-                                                          .stepColor
-                                                      : FlutterFlowTheme.of(
-                                                              context)
-                                                          .primaryText,
-                                                  fontSize: 14.0,
-                                                  letterSpacing: 0.0,
-                                                  fontWeight: FontWeight.normal,
-                                                  fontStyle:
-                                                      FlutterFlowTheme.of(
-                                                              context)
-                                                          .bodySmall
-                                                          .fontStyle,
-                                                ),
-                                          ),
+                                                  .bodySmall
+                                                  .fontStyle,
                                         ),
-                                      ].divide(SizedBox(height: 10.0)),
-                                    ),
-                                  );
-                                }
-                              },
+                                  ),
+                                ].divide(SizedBox(height: 10.0)),
+                              ),
                             ),
                           ),
                         );
@@ -567,39 +431,101 @@ class _ZStepTrackerEditWidgetState extends State<ZStepTrackerEditWidget> {
                   Expanded(
                     child: FFButtonWidget(
                       onPressed: () async {
+                        if (currentUserUid.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Please sign in to save steps'),
+                              backgroundColor:
+                                  FlutterFlowTheme.of(context).error,
+                            ),
+                          );
+                          return;
+                        }
+
                         final stepValue =
                             int.tryParse(_model.textController.text) ?? 0;
-                        final goal = FFAppState().trackerSettings.step.goal;
-                        final progress =
-                            goal > 0 ? (stepValue / goal).clamp(0.0, 1.0) : 0.0;
 
-                        FFAppState().updateTrackerStruct(
-                          (e) => e
-                            ..updateStep(
-                              (steps) {
-                                final existingIndex = steps.indexWhere(
-                                  (s) =>
-                                      s.date ==
-                                      FFAppState().tracker.selectedDate,
-                                );
-                                if (existingIndex >= 0) {
-                                  steps[existingIndex] = TrackerValueStruct(
-                                    date: FFAppState().tracker.selectedDate,
-                                    value: stepValue,
-                                    progress: progress,
-                                  );
-                                } else {
-                                  steps.add(TrackerValueStruct(
-                                    date: FFAppState().tracker.selectedDate,
-                                    value: stepValue,
-                                    progress: progress,
-                                  ));
-                                }
-                              },
+                        if (stepValue <= 0) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content:
+                                  Text('Please enter a valid number of steps'),
+                              backgroundColor:
+                                  FlutterFlowTheme.of(context).error,
                             ),
-                        );
-                        FFAppState().update(() {});
-                        Navigator.pop(context);
+                          );
+                          return;
+                        }
+
+                        final selectedDate =
+                            FFAppState().tracker.selectedDate ?? DateTime.now();
+
+                        try {
+                          // Save to Firestore - assume 10 minutes duration for manual entry
+                          await backend.stepTrackerService.addStepEntry(
+                            userId: currentUserUid,
+                            date: selectedDate,
+                            steps: stepValue,
+                            duration: 10, // Default duration
+                          );
+
+                          // Update FFAppState with the new data
+                          final goal = FFAppState().trackerSettings.step.goal;
+                          final progress = goal > 0
+                              ? (stepValue / goal).clamp(0.0, 1.0)
+                              : 0.0;
+
+                          FFAppState().updateTrackerStruct(
+                            (e) => e
+                              ..updateStep(
+                                (steps) {
+                                  final existingIndex = steps.indexWhere(
+                                    (s) =>
+                                        s.date != null &&
+                                        s.date!.year == selectedDate.year &&
+                                        s.date!.month == selectedDate.month &&
+                                        s.date!.day == selectedDate.day,
+                                  );
+                                  if (existingIndex >= 0) {
+                                    steps[existingIndex] = TrackerValueStruct(
+                                      date: selectedDate,
+                                      value: stepValue,
+                                      progress: progress,
+                                    );
+                                  } else {
+                                    steps.add(TrackerValueStruct(
+                                      date: selectedDate,
+                                      value: stepValue,
+                                      progress: progress,
+                                    ));
+                                  }
+                                },
+                              ),
+                          );
+                          FFAppState().update(() {});
+
+                          if (!context.mounted) return;
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Steps saved successfully!'),
+                              backgroundColor:
+                                  FlutterFlowTheme.of(context).success,
+                            ),
+                          );
+
+                          Navigator.pop(context);
+                        } catch (e) {
+                          if (!context.mounted) return;
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error saving steps: $e'),
+                              backgroundColor:
+                                  FlutterFlowTheme.of(context).error,
+                            ),
+                          );
+                        }
                       },
                       text: 'Save',
                       options: FFButtonOptions(

@@ -8,7 +8,11 @@ import '/tracker/components/z_step_tracker_edit/z_step_tracker_edit_widget.dart'
 import 'dart:ui';
 import '/custom_code/widgets/index.dart' as custom_widgets;
 import '/index.dart';
+import '/backend/backend_manager.dart';
+import '/backend/schema/structs/index.dart';
+import '/auth/firebase_auth/auth_util.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'tracker_step_model.dart';
@@ -26,6 +30,7 @@ class TrackerStepWidget extends StatefulWidget {
 
 class _TrackerStepWidgetState extends State<TrackerStepWidget> {
   late TrackerStepModel _model;
+  final backend = BackendManager();
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -33,6 +38,11 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => TrackerStepModel());
+
+    // Load step data when page loads
+    SchedulerBinding.instance.addPostFrameCallback((_) async {
+      await _loadStepData();
+    });
   }
 
   @override
@@ -40,6 +50,69 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
     _model.dispose();
 
     super.dispose();
+  }
+
+  /// Load step data from Firestore and update FFAppState
+  Future<void> _loadStepData() async {
+    if (currentUserUid.isEmpty) return;
+
+    try {
+      final selectedDate = FFAppState().tracker.selectedDate ?? DateTime.now();
+
+      // Get step summary from Firestore
+      final summary = await backend.stepTrackerService.getStepSummary(
+        userId: currentUserUid,
+        date: selectedDate,
+      );
+
+      if (summary != null) {
+        // Update FFAppState with real data
+        final totalSteps = summary['totalSteps'] as int? ?? 0;
+        final goal =
+            summary['goal'] as int? ?? FFAppState().trackerSettings.step.goal;
+        final progress = summary['progress'] as double? ?? 0.0;
+
+        // Update the tracker state
+        FFAppState().updateTrackerStruct((tracker) {
+          // Find existing entry for this date or create new one
+          final existingIndex = tracker.step.indexWhere(
+            (e) =>
+                e.date != null &&
+                e.date!.year == selectedDate.year &&
+                e.date!.month == selectedDate.month &&
+                e.date!.day == selectedDate.day,
+          );
+
+          final trackerValue = TrackerValueStruct(
+            date: selectedDate,
+            value: totalSteps,
+            progress: progress,
+            unit: 'steps',
+          );
+
+          if (existingIndex >= 0) {
+            // Update existing entry
+            tracker.step[existingIndex] = trackerValue;
+          } else {
+            // Add new entry
+            tracker.step.add(trackerValue);
+          }
+        });
+
+        // Update goal if different
+        if (goal != FFAppState().trackerSettings.step.goal) {
+          FFAppState().updateTrackerSettingsStruct((settings) {
+            settings.step.goal = goal;
+          });
+        }
+
+        if (mounted) {
+          setState(() {});
+        }
+      }
+    } catch (e) {
+      print('Error loading step data: $e');
+    }
   }
 
   @override

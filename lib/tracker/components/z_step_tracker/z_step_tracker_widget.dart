@@ -266,22 +266,23 @@ class _ZStepTrackerWidgetState extends State<ZStepTrackerWidget> {
                             center: Text(
                               valueOrDefault<String>(
                                 '${valueOrDefault<String>(
-                                  (FFAppState()
-                                              .tracker
-                                              .step
-                                              .where((e) =>
-                                                  e.date ==
-                                                  FFAppState()
-                                                      .tracker
-                                                      .currentDate)
-                                              .toList()
-                                              .firstOrNull!
-                                              .progress *
+                                  ((FFAppState()
+                                                  .tracker
+                                                  .step
+                                                  .where((e) =>
+                                                      e.date ==
+                                                      FFAppState()
+                                                          .tracker
+                                                          .currentDate)
+                                                  .toList()
+                                                  .firstOrNull
+                                                  ?.progress ??
+                                              0.0) *
                                           100)
-                                      .toString(),
-                                  '#',
+                                      .toStringAsFixed(0),
+                                  '0',
                                 )}%',
-                                '64%',
+                                '0%',
                               ),
                               style: FlutterFlowTheme.of(context)
                                   .bodyMedium

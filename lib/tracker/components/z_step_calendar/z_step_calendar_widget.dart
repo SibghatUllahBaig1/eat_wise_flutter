@@ -44,6 +44,13 @@ class _ZStepCalendarWidgetState extends State<ZStepCalendarWidget>
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       _model.selectedMonthAndYear = FFAppState().tracker.currentDate;
       _model.size = (MediaQuery.sizeOf(context).width - 100) / 7;
+
+      // Load step progress for visible week
+      final currentDate = FFAppState().tracker.currentDate ?? DateTime.now();
+      final weekDates =
+          functions.daysFunction('Monday', currentDate, 7).toList();
+      await _model.loadStepProgressForDates(weekDates);
+
       safeSetState(() {});
     });
 
@@ -123,6 +130,15 @@ class _ZStepCalendarWidgetState extends State<ZStepCalendarWidget>
                                   _model.selectedMonthAndYear =
                                       functions.getLastMonthDateTime(
                                           _model.selectedMonthAndYear!);
+                                  // Load step progress for the new month
+                                  final monthDays = functions
+                                      .getMonthDays(
+                                          'Monday',
+                                          dateTimeFormat("yyyy/MM",
+                                              _model.selectedMonthAndYear))
+                                      .toList();
+                                  await _model
+                                      .loadStepProgressForDates(monthDays);
                                   safeSetState(() {});
                                 },
                               ),
@@ -164,6 +180,15 @@ class _ZStepCalendarWidgetState extends State<ZStepCalendarWidget>
                                   _model.selectedMonthAndYear =
                                       functions.getNextMonthDateTime(
                                           _model.selectedMonthAndYear!);
+                                  // Load step progress for the new month
+                                  final monthDays = functions
+                                      .getMonthDays(
+                                          'Monday',
+                                          dateTimeFormat("yyyy/MM",
+                                              _model.selectedMonthAndYear))
+                                      .toList();
+                                  await _model
+                                      .loadStepProgressForDates(monthDays);
                                   safeSetState(() {});
                                 },
                               ),
@@ -420,14 +445,9 @@ class _ZStepCalendarWidgetState extends State<ZStepCalendarWidget>
                                               FFAppState().update(() {});
                                             },
                                             child: CircularPercentIndicator(
-                                              percent: FFAppState()
-                                                  .tracker
-                                                  .step
-                                                  .where((e) =>
-                                                      e.date == daysListItem)
-                                                  .toList()
-                                                  .firstOrNull!
-                                                  .progress,
+                                              percent:
+                                                  _model.getProgressForDate(
+                                                      daysListItem),
                                               radius: 18.0,
                                               lineWidth: 3.0,
                                               animation: true,
@@ -718,17 +738,8 @@ class _ZStepCalendarWidgetState extends State<ZStepCalendarWidget>
                                               ),
                                         ),
                                         CircularPercentIndicator(
-                                          percent: valueOrDefault<double>(
-                                            FFAppState()
-                                                .tracker
-                                                .step
-                                                .where(
-                                                    (e) => e.date == daysItem)
-                                                .toList()
-                                                .firstOrNull
-                                                ?.progress,
-                                            0.5,
-                                          ),
+                                          percent: _model
+                                              .getProgressForDate(daysItem),
                                           radius: 15.0,
                                           lineWidth: 3.0,
                                           animation: true,

@@ -17,7 +17,6 @@ class BackendManager {
   final WaterTrackerService _waterTrackerService = WaterTrackerService();
   final WeightTrackerService _weightTrackerService = WeightTrackerService();
   final StepTrackerService _stepTrackerService = StepTrackerService();
-  final GoalsService _goalsService = GoalsService();
   final RecipeService _recipeService = RecipeService();
   final AnalyticsService _analyticsService = AnalyticsService();
   final SyncService _syncService = SyncService();
@@ -33,7 +32,6 @@ class BackendManager {
   WaterTrackerService get waterTrackerService => _waterTrackerService;
   WeightTrackerService get weightTrackerService => _weightTrackerService;
   StepTrackerService get stepTrackerService => _stepTrackerService;
-  GoalsService get goalsService => _goalsService;
   RecipeService get recipeService => _recipeService;
   AnalyticsService get analyticsService => _analyticsService;
   SyncService get syncService => _syncService;
@@ -112,18 +110,7 @@ class BackendManager {
         );
       }
 
-      if (goals != null && goals.isNotEmpty) {
-        for (var goal in goals) {
-          await _goalsService.createGoal(
-            userId: userId,
-            goalType: goal['goalType'] ?? 'general',
-            title: goal['title'] ?? goal['goal'] ?? '',
-            description: goal['description'],
-            targetValues: goal['targetValues'],
-            targetDate: goal['targetDate'],
-          );
-        }
-      }
+      // Goals sync removed - GoalsService was deleted
     } catch (e) {
       throw Exception('Failed to sync app state: $e');
     }
@@ -136,12 +123,11 @@ class BackendManager {
     try {
       final profile = await _userService.getUserProfile(userId);
       final settings = await _userService.getUserSettings(userId);
-      final goals = await _goalsService.getUserGoals(userId: userId);
 
       return {
         'profile': profile,
         'settings': settings,
-        'goals': goals,
+        'goals': [], // Goals sync removed - GoalsService was deleted
       };
     } catch (e) {
       throw Exception('Failed to load user data: $e');
@@ -231,7 +217,6 @@ class BackendManager {
     _waterTrackerService.dispose();
     _weightTrackerService.dispose();
     _stepTrackerService.dispose();
-    _goalsService.dispose();
     _recipeService.dispose();
   }
 }

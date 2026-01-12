@@ -269,22 +269,23 @@ class _ZWaterTrackerWidgetState extends State<ZWaterTrackerWidget> {
                             center: Text(
                               valueOrDefault<String>(
                                 '${valueOrDefault<String>(
-                                  (FFAppState()
-                                              .tracker
-                                              .water
-                                              .where((e) =>
-                                                  e.date ==
-                                                  FFAppState()
-                                                      .tracker
-                                                      .currentDate)
-                                              .toList()
-                                              .firstOrNull!
-                                              .progress *
+                                  ((FFAppState()
+                                                  .tracker
+                                                  .water
+                                                  .where((e) =>
+                                                      e.date ==
+                                                      FFAppState()
+                                                          .tracker
+                                                          .currentDate)
+                                                  .toList()
+                                                  .firstOrNull
+                                                  ?.progress ??
+                                              0.0) *
                                           100)
-                                      .toString(),
-                                  '#',
+                                      .toStringAsFixed(0),
+                                  '0',
                                 )}%',
-                                '64%',
+                                '0%',
                               ),
                               style: FlutterFlowTheme.of(context)
                                   .bodyMedium

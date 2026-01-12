@@ -5,23 +5,23 @@ import '../backend_manager.dart';
 /// Controller for managing tracker data (water, steps, weight)
 class TrackerController extends ChangeNotifier {
   final BackendManager _backend = BackendManager();
-  
+
   // Tracker data
   Map<String, dynamic>? _waterData;
   Map<String, dynamic>? _stepData;
   Map<String, dynamic>? _latestWeight;
   List<Map<String, dynamic>> _weightHistory = [];
-  
+
   // Loading states
   bool _isLoading = false;
   bool _isSaving = false;
-  
+
   // Error state
   String? _error;
-  
+
   // Selected date
   DateTime _selectedDate = DateTime.now();
-  
+
   // Getters
   Map<String, dynamic>? get waterData => _waterData;
   Map<String, dynamic>? get stepData => _stepData;
@@ -31,9 +31,9 @@ class TrackerController extends ChangeNotifier {
   bool get isSaving => _isSaving;
   String? get error => _error;
   DateTime get selectedDate => _selectedDate;
-  
+
   String? get currentUserId => FirebaseAuth.instance.currentUser?.uid;
-  
+
   /// Load all tracker data for the selected date
   Future<void> loadTrackerData() async {
     if (currentUserId == null) {
@@ -41,18 +41,18 @@ class TrackerController extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    
+
     _isLoading = true;
     _error = null;
     notifyListeners();
-    
+
     try {
       final results = await Future.wait([
         _backend.waterTrackerService.getWaterIntake(
           userId: currentUserId!,
           date: _selectedDate,
         ),
-        _backend.stepTrackerService.getStepCount(
+        _backend.stepTrackerService.getStepSummary(
           userId: currentUserId!,
           date: _selectedDate,
         ),
@@ -60,7 +60,7 @@ class TrackerController extends ChangeNotifier {
           userId: currentUserId!,
         ),
       ]);
-      
+
       _waterData = results[0];
       _stepData = results[1];
       _latestWeight = results[2];
@@ -73,30 +73,30 @@ class TrackerController extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   /// Add water intake
   Future<bool> addWaterIntake({
     required int amount,
     int? goal,
   }) async {
     if (currentUserId == null) return false;
-    
+
     _isSaving = true;
     notifyListeners();
-    
+
     try {
       await _backend.waterTrackerService.incrementWaterIntake(
         userId: currentUserId!,
         amount: amount,
         goal: goal,
       );
-      
+
       // Reload water data
       _waterData = await _backend.waterTrackerService.getWaterIntake(
         userId: currentUserId!,
         date: _selectedDate,
       );
-      
+
       return true;
     } catch (e) {
       _error = 'Failed to add water intake: $e';
@@ -107,14 +107,14 @@ class TrackerController extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   /// Reset water intake for the day
   Future<bool> resetWaterIntake() async {
     if (currentUserId == null) return false;
-    
+
     _isSaving = true;
     notifyListeners();
-    
+
     try {
       await _backend.waterTrackerService.addWaterIntake(
         userId: currentUserId!,
@@ -122,13 +122,13 @@ class TrackerController extends ChangeNotifier {
         intake: 0,
         goal: _waterData?['goal'] ?? 2000,
       );
-      
+
       // Reload water data
       _waterData = await _backend.waterTrackerService.getWaterIntake(
         userId: currentUserId!,
         date: _selectedDate,
       );
-      
+
       return true;
     } catch (e) {
       _error = 'Failed to reset water intake: $e';
@@ -139,30 +139,30 @@ class TrackerController extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   /// Add step count
   Future<bool> addSteps({
     required int steps,
     int? goal,
   }) async {
     if (currentUserId == null) return false;
-    
+
     _isSaving = true;
     notifyListeners();
-    
+
     try {
       await _backend.stepTrackerService.incrementStepCount(
         userId: currentUserId!,
         steps: steps,
         goal: goal,
       );
-      
+
       // Reload step data
-      _stepData = await _backend.stepTrackerService.getStepCount(
+      _stepData = await _backend.stepTrackerService.getStepSummary(
         userId: currentUserId!,
         date: _selectedDate,
       );
-      
+
       return true;
     } catch (e) {
       _error = 'Failed to add steps: $e';
@@ -173,7 +173,7 @@ class TrackerController extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   /// Add weight entry
   Future<bool> addWeightEntry({
     required double weight,
@@ -181,10 +181,10 @@ class TrackerController extends ChangeNotifier {
     String? notes,
   }) async {
     if (currentUserId == null) return false;
-    
+
     _isSaving = true;
     notifyListeners();
-    
+
     try {
       await _backend.weightTrackerService.addWeightEntry(
         userId: currentUserId!,
@@ -193,12 +193,12 @@ class TrackerController extends ChangeNotifier {
         unit: unit,
         notes: notes,
       );
-      
+
       // Reload weight data
       _latestWeight = await _backend.weightTrackerService.getLatestWeight(
         userId: currentUserId!,
       );
-      
+
       return true;
     } catch (e) {
       _error = 'Failed to add weight entry: $e';
@@ -209,18 +209,18 @@ class TrackerController extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   /// Load weight history
   Future<void> loadWeightHistory({int daysBack = 30}) async {
     if (currentUserId == null) return;
-    
+
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       final endDate = DateTime.now();
       final startDate = endDate.subtract(Duration(days: daysBack));
-      
+
       _weightHistory = await _backend.weightTrackerService.getWeightHistory(
         userId: currentUserId!,
         startDate: startDate,
@@ -233,18 +233,17 @@ class TrackerController extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   /// Change selected date and reload tracker data
   Future<void> changeDate(DateTime newDate) async {
     _selectedDate = newDate;
     notifyListeners();
     await loadTrackerData();
   }
-  
+
   /// Clear error
   void clearError() {
     _error = null;
     notifyListeners();
   }
 }
-

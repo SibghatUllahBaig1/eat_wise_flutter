@@ -16,15 +16,12 @@ import 'flutter_flow/nav/nav.dart';
 import 'index.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   GoRouter.optionURLReflectsImperativeAPIs = true;
   usePathUrlStrategy();
 
   await initFirebase();
-
 
   // Load API keys from Firestore
   await ApiConfig.loadApiKeys();
@@ -33,6 +30,14 @@ void main() async {
 
   final appState = FFAppState(); // Initialize FFAppState
   await appState.initializePersistedState();
+
+  // Clear old hardcoded tracker data to ensure fresh start
+  appState.updateTrackerStruct((e) => e
+    ..step = []
+    ..water = []
+    ..weight = []
+    ..currentDate = DateTime.now()
+    ..selectedDate = DateTime.now());
 
   runApp(ChangeNotifierProvider(
     create: (context) => appState,

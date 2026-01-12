@@ -2,8 +2,11 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/tracker/components/z_steps/z_steps_widget.dart';
+import '/backend/backend_manager.dart';
+import '/auth/firebase_auth/auth_util.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'z_step_history_list_model.dart';
@@ -18,6 +21,9 @@ class ZStepHistoryListWidget extends StatefulWidget {
 
 class _ZStepHistoryListWidgetState extends State<ZStepHistoryListWidget> {
   late ZStepHistoryListModel _model;
+  final backend = BackendManager();
+  List<Map<String, dynamic>> _stepEntries = [];
+  bool _isLoading = true;
 
   @override
   void setState(VoidCallback callback) {
@@ -29,6 +35,11 @@ class _ZStepHistoryListWidgetState extends State<ZStepHistoryListWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => ZStepHistoryListModel());
+
+    // Load step entries when component loads
+    SchedulerBinding.instance.addPostFrameCallback((_) async {
+      await _loadStepEntries();
+    });
   }
 
   @override
@@ -38,112 +49,85 @@ class _ZStepHistoryListWidgetState extends State<ZStepHistoryListWidget> {
     super.dispose();
   }
 
+  /// Load step entries from Firestore
+  Future<void> _loadStepEntries() async {
+    if (currentUserUid.isEmpty) {
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      final selectedDate = FFAppState().tracker.selectedDate ?? DateTime.now();
+
+      final entries = await backend.stepTrackerService.getStepsForDate(
+        userId: currentUserUid,
+        date: selectedDate,
+      );
+
+      setState(() {
+        _stepEntries = entries;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading step entries: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    context.watch<FFAppState>();
+
+    if (_isLoading) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: CircularProgressIndicator(
+            color: FlutterFlowTheme.of(context).stepColor,
+          ),
+        ),
+      );
+    }
+
+    if (_stepEntries.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Text(
+          'No step entries for this date',
+          style: FlutterFlowTheme.of(context).bodyMedium.override(
+                font: GoogleFonts.inter(),
+                color: FlutterFlowTheme.of(context).secondaryText,
+                letterSpacing: 0.0,
+              ),
+        ),
+      );
+    }
+
     return Column(
       mainAxisSize: MainAxisSize.min,
-      children: [
-        wrapWithModel(
-          model: _model.zStepsModel1,
-          updateCallback: () => safeSetState(() {}),
-          child: ZStepsWidget(
-            step: 850,
-            time: '8m',
-            burning: 40,
-            distance: 0.7,
-          ),
-        ),
-        wrapWithModel(
-          model: _model.zStepsModel2,
-          updateCallback: () => safeSetState(() {}),
-          child: ZStepsWidget(
-            step: 950,
-            time: '9m',
-            burning: 45,
-            distance: 0.8,
-          ),
-        ),
-        wrapWithModel(
-          model: _model.zStepsModel3,
-          updateCallback: () => safeSetState(() {}),
-          child: ZStepsWidget(
-            step: 1200,
-            time: '12m',
-            burning: 60,
-            distance: 1.0,
-          ),
-        ),
-        wrapWithModel(
-          model: _model.zStepsModel4,
-          updateCallback: () => safeSetState(() {}),
-          child: ZStepsWidget(
-            step: 900,
-            time: '8m',
-            burning: 60,
-            distance: 0.5,
-          ),
-        ),
-        wrapWithModel(
-          model: _model.zStepsModel5,
-          updateCallback: () => safeSetState(() {}),
-          child: ZStepsWidget(
-            step: 1000,
-            time: '11m',
-            burning: 55,
-            distance: 1.0,
-          ),
-        ),
-        wrapWithModel(
-          model: _model.zStepsModel6,
-          updateCallback: () => safeSetState(() {}),
-          child: ZStepsWidget(
-            step: 400,
-            time: '5m',
-            burning: 30,
-            distance: 0.3,
-          ),
-        ),
-        wrapWithModel(
-          model: _model.zStepsModel7,
-          updateCallback: () => safeSetState(() {}),
-          child: ZStepsWidget(
-            step: 2000,
-            time: '18m',
-            burning: 45,
-            distance: 1.7,
-          ),
-        ),
-        wrapWithModel(
-          model: _model.zStepsModel8,
-          updateCallback: () => safeSetState(() {}),
-          child: ZStepsWidget(
-            step: 1200,
-            time: '12m',
-            burning: 60,
-            distance: 1.1,
-          ),
-        ),
-        wrapWithModel(
-          model: _model.zStepsModel9,
-          updateCallback: () => safeSetState(() {}),
-          child: ZStepsWidget(
-            step: 1350,
-            time: '9m',
-            burning: 55,
-            distance: 1.1,
-          ),
-        ),
-        wrapWithModel(
-          model: _model.zStepsModel10,
-          updateCallback: () => safeSetState(() {}),
-          child: ZStepsWidget(
-            step: 1050,
-            time: '10m',
-            burning: 65,
-            distance: 1.0,
-          ),
-        ),
-      ].divide(SizedBox(height: 12.0)),
+      children: _stepEntries
+          .map((entry) {
+            final steps = entry['steps'] as int? ?? 0;
+            final duration = entry['duration'] as int? ?? 0;
+            final calories = entry['calories'] as int? ?? 0;
+            final distance = entry['distance'] as double? ?? 0.0;
+
+            // Format duration as "Xm"
+            final timeStr = '${duration}m';
+
+            return ZStepsWidget(
+              step: steps,
+              time: timeStr,
+              burning: calories,
+              distance: distance,
+            );
+          })
+          .toList()
+          .divide(SizedBox(height: 12.0)),
     );
   }
 }

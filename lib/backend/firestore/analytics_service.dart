@@ -4,7 +4,6 @@ import 'meal_service.dart';
 import 'water_tracker_service.dart';
 import 'weight_tracker_service.dart';
 import 'step_tracker_service.dart';
-import 'goals_service.dart';
 
 /// Service for aggregating and analyzing user data
 class AnalyticsService extends FirestoreService {
@@ -12,7 +11,6 @@ class AnalyticsService extends FirestoreService {
   final WaterTrackerService _waterService = WaterTrackerService();
   final WeightTrackerService _weightService = WeightTrackerService();
   final StepTrackerService _stepService = StepTrackerService();
-  final GoalsService _goalsService = GoalsService();
 
   /// Get comprehensive dashboard data for a specific date
   Future<Map<String, dynamic>> getDashboardData({
@@ -21,13 +19,12 @@ class AnalyticsService extends FirestoreService {
   }) async {
     try {
       // Fetch all data in parallel
-      final results = await Future.wait([
+      final results = await Future.wait<dynamic>([
         _mealService.getMealsByDate(userId: userId, date: date),
         _mealService.getDailyNutritionSummary(userId: userId, date: date),
         _waterService.getWaterIntake(userId: userId, date: date),
-        _stepService.getStepCount(userId: userId, date: date),
+        _stepService.getStepSummary(userId: userId, date: date),
         _weightService.getLatestWeight(userId: userId),
-        _goalsService.getActiveGoal(userId: userId),
       ]);
 
       return {
@@ -36,7 +33,7 @@ class AnalyticsService extends FirestoreService {
         'water': results[2],
         'steps': results[3],
         'latestWeight': results[4],
-        'activeGoal': results[5],
+        'activeGoal': null, // Goals sync removed - GoalsService was deleted
         'date': date,
       };
     } catch (e) {
@@ -51,7 +48,7 @@ class AnalyticsService extends FirestoreService {
   }) async {
     try {
       final endDate = startDate.add(Duration(days: 7));
-      
+
       final meals = await _mealService.getMealHistory(
         userId: userId,
         startDate: startDate,
@@ -60,10 +57,10 @@ class AnalyticsService extends FirestoreService {
 
       // Aggregate by day
       final dailyData = <String, Map<String, dynamic>>{};
-      
+
       for (var meal in meals) {
         final dateKey = _formatDateKey(meal['date'] as DateTime);
-        
+
         if (!dailyData.containsKey(dateKey)) {
           dailyData[dateKey] = {
             'date': meal['date'],
@@ -74,7 +71,7 @@ class AnalyticsService extends FirestoreService {
             'mealCount': 0,
           };
         }
-        
+
         dailyData[dateKey]!['calories'] += (meal['totalCalories'] ?? 0.0);
         dailyData[dateKey]!['carbs'] += (meal['totalCarbs'] ?? 0.0);
         dailyData[dateKey]!['protein'] += (meal['totalProtein'] ?? 0.0);
@@ -84,10 +81,22 @@ class AnalyticsService extends FirestoreService {
 
       // Calculate averages
       final days = dailyData.values.toList();
-      final avgCalories = days.isEmpty ? 0.0 : days.map((d) => d['calories'] as double).reduce((a, b) => a + b) / days.length;
-      final avgCarbs = days.isEmpty ? 0.0 : days.map((d) => d['carbs'] as double).reduce((a, b) => a + b) / days.length;
-      final avgProtein = days.isEmpty ? 0.0 : days.map((d) => d['protein'] as double).reduce((a, b) => a + b) / days.length;
-      final avgFat = days.isEmpty ? 0.0 : days.map((d) => d['fat'] as double).reduce((a, b) => a + b) / days.length;
+      final avgCalories = days.isEmpty
+          ? 0.0
+          : days.map((d) => d['calories'] as double).reduce((a, b) => a + b) /
+              days.length;
+      final avgCarbs = days.isEmpty
+          ? 0.0
+          : days.map((d) => d['carbs'] as double).reduce((a, b) => a + b) /
+              days.length;
+      final avgProtein = days.isEmpty
+          ? 0.0
+          : days.map((d) => d['protein'] as double).reduce((a, b) => a + b) /
+              days.length;
+      final avgFat = days.isEmpty
+          ? 0.0
+          : days.map((d) => d['fat'] as double).reduce((a, b) => a + b) /
+              days.length;
 
       return {
         'dailyData': days,
@@ -113,7 +122,7 @@ class AnalyticsService extends FirestoreService {
     try {
       final startDate = DateTime(month.year, month.month, 1);
       final endDate = DateTime(month.year, month.month + 1, 0);
-      
+
       final meals = await _mealService.getMealHistory(
         userId: userId,
         startDate: startDate,
@@ -122,11 +131,11 @@ class AnalyticsService extends FirestoreService {
 
       // Aggregate by day
       final dailyData = <String, Map<String, dynamic>>{};
-      
+
       for (var meal in meals) {
         final date = meal['date'] as DateTime;
         final dateKey = _formatDateKey(date);
-        
+
         if (!dailyData.containsKey(dateKey)) {
           dailyData[dateKey] = {
             'day': date.day.toString(),
@@ -135,13 +144,14 @@ class AnalyticsService extends FirestoreService {
             'fat': 0.0,
           };
         }
-        
+
         dailyData[dateKey]!['carbs'] += (meal['totalCarbs'] ?? 0.0);
         dailyData[dateKey]!['protein'] += (meal['totalProtein'] ?? 0.0);
         dailyData[dateKey]!['fat'] += (meal['totalFat'] ?? 0.0);
       }
 
-      return dailyData.values.toList()..sort((a, b) => int.parse(a['day']).compareTo(int.parse(b['day'])));
+      return dailyData.values.toList()
+        ..sort((a, b) => int.parse(a['day']).compareTo(int.parse(b['day'])));
     } catch (e) {
       throw Exception('Failed to get monthly nutrition chart: $e');
     }
@@ -176,4 +186,3 @@ class AnalyticsService extends FirestoreService {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 }
-

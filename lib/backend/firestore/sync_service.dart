@@ -4,7 +4,6 @@ import 'meal_service.dart';
 import 'water_tracker_service.dart';
 import 'weight_tracker_service.dart';
 import 'step_tracker_service.dart';
-import 'goals_service.dart';
 import '/app_state.dart';
 
 /// Service for synchronizing data between app state and Firestore
@@ -14,7 +13,6 @@ class SyncService {
   final WaterTrackerService _waterService = WaterTrackerService();
   final WeightTrackerService _weightService = WeightTrackerService();
   final StepTrackerService _stepService = StepTrackerService();
-  final GoalsService _goalsService = GoalsService();
 
   /// Sync user profile from app state to Firestore
   Future<void> syncUserProfile({
@@ -88,27 +86,11 @@ class SyncService {
   }
 
   /// Sync goals from app state to Firestore
+  /// Note: Goals sync removed - GoalsService was deleted
   Future<void> syncGoals({
     required String userId,
   }) async {
-    try {
-      final appState = FFAppState();
-
-      for (var goal in appState.goals) {
-        await _goalsService.createGoal(
-          userId: userId,
-          goalType: goal.goal.toLowerCase().replaceAll(' ', '_'),
-          title: goal.goal,
-          description: 'Goal created from app state',
-          targetValues: {
-            // GoalsStruct doesn't have targetWeight, using goal field instead
-            'goal': goal.goal,
-          },
-        );
-      }
-    } catch (e) {
-      throw Exception('Failed to sync goals: $e');
-    }
+    // Goals sync functionality removed
   }
 
   /// Load user profile from Firestore to app state

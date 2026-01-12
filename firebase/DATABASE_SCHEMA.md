@@ -123,20 +123,39 @@ Weight tracking entries.
 - `userId` ASC, `date` DESC
 
 ##### users/{userId}/step_tracker
-Daily step count tracking.
+Daily step count tracking with individual step entries.
 
 **Document ID**: Date in format `YYYY-MM-DD`
 
 **Fields**:
 - `userId` (string): User ID
 - `date` (timestamp): Date
-- `steps` (number): Step count
+- `totalSteps` (number): Total step count for the day
+- `totalDuration` (number): Total duration in minutes
+- `totalCalories` (number): Total calories burned
+- `totalDistance` (number): Total distance in kilometers
 - `goal` (number): Daily step goal
 - `progress` (number): Progress percentage (0.0 to 1.0)
 - `updatedAt` (timestamp)
 
+**Subcollection**: `steps`
+Individual step entries for the day.
+
+**Document ID**: Auto-generated
+
+**Fields**:
+- `userId` (string): User ID
+- `steps` (number): Step count for this entry
+- `duration` (number): Duration in minutes
+- `calories` (number): Calories burned (calculated)
+- `distance` (number): Distance in kilometers (calculated)
+- `timestamp` (timestamp): Entry timestamp
+- `createdAt` (timestamp)
+- `updatedAt` (timestamp, optional)
+
 **Indexes**:
 - `userId` ASC, `date` DESC
+- `timestamp` DESC (for subcollection)
 
 ##### users/{userId}/goals
 User health and fitness goals.
