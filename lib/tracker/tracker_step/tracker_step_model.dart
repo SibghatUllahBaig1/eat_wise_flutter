@@ -20,6 +20,8 @@ class TrackerStepModel extends FlutterFlowModel<TrackerStepWidget> {
   // Model for zStepHistoryList component.
   late ZStepHistoryListModel zStepHistoryListModel;
 
+  DateTime? lastLoadedDate;
+
   @override
   void initState(BuildContext context) {
     zStepCalendarModel = createModel(context, () => ZStepCalendarModel());

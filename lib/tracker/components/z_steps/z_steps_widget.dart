@@ -15,15 +15,17 @@ class ZStepsWidget extends StatefulWidget {
   const ZStepsWidget({
     super.key,
     required this.step,
-    required this.time,
     required this.burning,
     required this.distance,
+    this.stepId,
+    this.onDelete,
   });
 
   final int? step;
-  final String? time;
   final int? burning;
   final double? distance;
+  final String? stepId;
+  final Future<void> Function(String)? onDelete;
 
   @override
   State<ZStepsWidget> createState() => _ZStepsWidgetState();
@@ -75,39 +77,7 @@ class _ZStepsWidgetState extends State<ZStepsWidget> {
                   padding: EdgeInsetsDirectional.fromSTEB(4.0, 0.0, 0.0, 0.0),
                   child: Text(
                     valueOrDefault<String>(
-                      widget!.step?.toString(),
-                      'null',
-                    ),
-                    style: FlutterFlowTheme.of(context).bodyMedium.override(
-                          font: GoogleFonts.inter(
-                            fontWeight: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .fontWeight,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .fontStyle,
-                          ),
-                          letterSpacing: 0.0,
-                          fontWeight: FlutterFlowTheme.of(context)
-                              .bodyMedium
-                              .fontWeight,
-                          fontStyle:
-                              FlutterFlowTheme.of(context).bodyMedium.fontStyle,
-                        ),
-                  ),
-                ),
-              ),
-              Icon(
-                FFIcons.kclock,
-                color: FlutterFlowTheme.of(context).success,
-                size: 18.0,
-              ),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(4.0, 0.0, 0.0, 0.0),
-                  child: Text(
-                    valueOrDefault<String>(
-                      widget!.time,
+                      widget.step?.toString(),
                       'null',
                     ),
                     style: FlutterFlowTheme.of(context).bodyMedium.override(
@@ -139,7 +109,7 @@ class _ZStepsWidgetState extends State<ZStepsWidget> {
                   padding: EdgeInsetsDirectional.fromSTEB(4.0, 0.0, 0.0, 0.0),
                   child: Text(
                     valueOrDefault<String>(
-                      widget!.burning?.toString(),
+                      widget.burning?.toString(),
                       'null',
                     ),
                     style: FlutterFlowTheme.of(context).bodyMedium.override(
@@ -171,7 +141,7 @@ class _ZStepsWidgetState extends State<ZStepsWidget> {
                   padding: EdgeInsetsDirectional.fromSTEB(4.0, 0.0, 0.0, 0.0),
                   child: Text(
                     valueOrDefault<String>(
-                      widget!.distance?.toString(),
+                      widget.distance?.toString(),
                       'null',
                     ),
                     style: FlutterFlowTheme.of(context).bodyMedium.override(
@@ -193,38 +163,43 @@ class _ZStepsWidgetState extends State<ZStepsWidget> {
                   ),
                 ),
               ),
-              Builder(
-                builder: (context) => FlutterFlowIconButton(
-                  borderRadius: 22.0,
-                  buttonSize: 44.0,
-                  fillColor: FlutterFlowTheme.of(context).transparent,
-                  icon: Icon(
-                    FFIcons.kdotsVertical,
-                    color: FlutterFlowTheme.of(context).primaryText,
-                    size: 24.0,
+              if (widget.onDelete != null && widget.stepId != null)
+                Builder(
+                  builder: (context) => FlutterFlowIconButton(
+                    borderRadius: 22.0,
+                    buttonSize: 44.0,
+                    fillColor: FlutterFlowTheme.of(context).transparent,
+                    icon: Icon(
+                      FFIcons.kdotsVertical,
+                      color: FlutterFlowTheme.of(context).primaryText,
+                      size: 24.0,
+                    ),
+                    onPressed: () async {
+                      await showAlignedDialog(
+                        barrierColor: FlutterFlowTheme.of(context).transparent,
+                        context: context,
+                        isGlobal: false,
+                        avoidOverflow: false,
+                        targetAnchor: AlignmentDirectional(1.0, -1.0)
+                            .resolve(Directionality.of(context)),
+                        followerAnchor: AlignmentDirectional(1.0, -1.0)
+                            .resolve(Directionality.of(context)),
+                        builder: (dialogContext) {
+                          return Material(
+                            color: Colors.transparent,
+                            child: ZDrinksOptionalsWidget(
+                              trackerType: 1,
+                              drinkId: widget.stepId,
+                              onDelete: (String id) async {
+                                await widget.onDelete!(id);
+                              },
+                            ),
+                          );
+                        },
+                      );
+                    },
                   ),
-                  onPressed: () async {
-                    await showAlignedDialog(
-                      barrierColor: FlutterFlowTheme.of(context).transparent,
-                      context: context,
-                      isGlobal: false,
-                      avoidOverflow: false,
-                      targetAnchor: AlignmentDirectional(1.0, -1.0)
-                          .resolve(Directionality.of(context)),
-                      followerAnchor: AlignmentDirectional(1.0, -1.0)
-                          .resolve(Directionality.of(context)),
-                      builder: (dialogContext) {
-                        return Material(
-                          color: Colors.transparent,
-                          child: ZDrinksOptionalsWidget(
-                            trackerType: 1,
-                          ),
-                        );
-                      },
-                    );
-                  },
                 ),
-              ),
             ],
           ),
         ),

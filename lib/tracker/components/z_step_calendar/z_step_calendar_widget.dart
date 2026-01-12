@@ -173,10 +173,15 @@ class _ZStepCalendarWidgetState extends State<ZStepCalendarWidget>
                                 icon: Icon(
                                   FFIcons.kchevronRight,
                                   color:
-                                      FlutterFlowTheme.of(context).primaryText,
+                                      _model.selectedMonthAndYear!.month == FFAppState().tracker.currentDate!.month && _model.selectedMonthAndYear!.year == FFAppState().tracker.currentDate!.year
+                                          ? FlutterFlowTheme.of(context).secondaryText
+                                          : FlutterFlowTheme.of(context).primaryText,
                                   size: 22.0,
                                 ),
                                 onPressed: () async {
+                                  if (_model.selectedMonthAndYear!.month == FFAppState().tracker.currentDate!.month && _model.selectedMonthAndYear!.year == FFAppState().tracker.currentDate!.year) {
+                                    return;
+                                  }
                                   _model.selectedMonthAndYear =
                                       functions.getNextMonthDateTime(
                                           _model.selectedMonthAndYear!);
@@ -668,10 +673,15 @@ class _ZStepCalendarWidgetState extends State<ZStepCalendarWidget>
                                 hoverColor: Colors.transparent,
                                 highlightColor: Colors.transparent,
                                 onTap: () async {
-                                  FFAppState().updateTrackerStruct(
-                                    (e) => e..selectedDate = daysItem,
-                                  );
-                                  FFAppState().update(() {});
+                                  if (daysItem <=
+                                      FFAppState()
+                                          .tracker
+                                          .currentDate!) {
+                                    FFAppState().updateTrackerStruct(
+                                      (e) => e..selectedDate = daysItem,
+                                    );
+                                    FFAppState().update(() {});
+                                  }
                                 },
                                 child: Container(
                                   decoration: BoxDecoration(

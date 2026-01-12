@@ -36,18 +36,7 @@ class _ZStepTrackerEditWidgetState extends State<ZStepTrackerEditWidget> {
     super.initState();
     _model = createModel(context, () => ZStepTrackerEditModel());
 
-    _model.textController ??= TextEditingController(
-        text: valueOrDefault<String>(
-      FFAppState()
-          .tracker
-          .step
-          .where((e) => e.date == FFAppState().tracker.selectedDate)
-          .toList()
-          .firstOrNull
-          ?.value
-          ?.toString(),
-      '0',
-    ));
+    _model.textController ??= TextEditingController(text: '0');
     _model.textFieldFocusNode ??= FocusNode();
   }
 
@@ -83,7 +72,7 @@ class _ZStepTrackerEditWidgetState extends State<ZStepTrackerEditWidget> {
               child: Padding(
                 padding: EdgeInsetsDirectional.fromSTEB(16.0, 24.0, 16.0, 0.0),
                 child: Text(
-                  'Update Steps',
+                  'Add New Steps',
                   textAlign: TextAlign.center,
                   style: FlutterFlowTheme.of(context).headlineSmall.override(
                         font: GoogleFonts.inter(
@@ -129,6 +118,9 @@ class _ZStepTrackerEditWidgetState extends State<ZStepTrackerEditWidget> {
                           hoverColor: Colors.transparent,
                           highlightColor: Colors.transparent,
                           onTap: () async {
+                            if (daysItem.isAfter(FFAppState().tracker.currentDate!)) {
+                              return;
+                            }
                             FFAppState().updateTrackerStruct(
                               (e) => e..selectedDate = daysItem,
                             );
@@ -171,14 +163,16 @@ class _ZStepTrackerEditWidgetState extends State<ZStepTrackerEditWidget> {
                                                     .bodyMedium
                                                     .fontStyle,
                                           ),
-                                          color: daysItem ==
+                                          color: daysItem.isAfter(FFAppState().tracker.currentDate!)
+                                              ? FlutterFlowTheme.of(context).secondaryText
+                                              : (daysItem ==
                                                   FFAppState()
                                                       .tracker
                                                       .selectedDate
                                               ? FlutterFlowTheme.of(context)
                                                   .stepColor
                                               : FlutterFlowTheme.of(context)
-                                                  .primaryText,
+                                                  .primaryText),
                                           fontSize: 12.0,
                                           letterSpacing: 0.0,
                                           fontWeight:
@@ -203,14 +197,16 @@ class _ZStepTrackerEditWidgetState extends State<ZStepTrackerEditWidget> {
                                                     .bodySmall
                                                     .fontStyle,
                                           ),
-                                          color: daysItem ==
+                                          color: daysItem.isAfter(FFAppState().tracker.currentDate!)
+                                              ? FlutterFlowTheme.of(context).secondaryText
+                                              : (daysItem ==
                                                   FFAppState()
                                                       .tracker
                                                       .selectedDate
                                               ? FlutterFlowTheme.of(context)
                                                   .stepColor
                                               : FlutterFlowTheme.of(context)
-                                                  .primaryText,
+                                                  .primaryText),
                                           fontSize: 14.0,
                                           letterSpacing: 0.0,
                                           fontWeight: FontWeight.normal,
@@ -527,7 +523,7 @@ class _ZStepTrackerEditWidgetState extends State<ZStepTrackerEditWidget> {
                           );
                         }
                       },
-                      text: 'Save',
+                      text: 'Add',
                       options: FFButtonOptions(
                         height: 50.0,
                         padding: EdgeInsetsDirectional.fromSTEB(

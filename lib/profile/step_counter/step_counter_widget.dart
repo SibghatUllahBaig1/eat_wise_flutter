@@ -157,7 +157,7 @@ class _StepCounterWidgetState extends State<StepCounterWidget> {
                                   ),
                                 );
                               },
-                            );
+                            ).then((_) => safeSetState(() {}));
                           },
                           child: wrapWithModel(
                             model: _model.textTextRightModel1,

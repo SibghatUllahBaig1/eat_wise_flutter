@@ -31,6 +31,7 @@ class TrackerStepWidget extends StatefulWidget {
 class _TrackerStepWidgetState extends State<TrackerStepWidget> {
   late TrackerStepModel _model;
   final backend = BackendManager();
+  List<Map<String, dynamic>>? _stepEntries;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -38,11 +39,6 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => TrackerStepModel());
-
-    // Load step data when page loads
-    SchedulerBinding.instance.addPostFrameCallback((_) async {
-      await _loadStepData();
-    });
   }
 
   @override
@@ -50,6 +46,23 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
     _model.dispose();
 
     super.dispose();
+  }
+
+  Future<void> _onDeleteStep(String stepId) async {
+    if (currentUserUid.isEmpty) return;
+
+    try {
+      final selectedDate = FFAppState().tracker.selectedDate ?? DateTime.now();
+      // I'm assuming deleteStepEntry exists on the backend service.
+      await backend.stepTrackerService.deleteStepEntry(
+        userId: currentUserUid,
+        stepId: stepId,
+        date: selectedDate,
+      );
+      await _loadStepData();
+    } catch (e) {
+      print('Error deleting step entry: $e');
+    }
   }
 
   /// Load step data from Firestore and update FFAppState
@@ -64,6 +77,13 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
         userId: currentUserUid,
         date: selectedDate,
       );
+
+      final entries = await backend.stepTrackerService.getStepsForDate(
+        userId: currentUserUid,
+        date: selectedDate,
+      );
+
+      _stepEntries = entries;
 
       if (summary != null) {
         // Update FFAppState with real data
@@ -118,6 +138,16 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
   @override
   Widget build(BuildContext context) {
     context.watch<FFAppState>();
+
+    // Reload data when selected date changes
+    final selectedDate = FFAppState().tracker.selectedDate ?? DateTime.now();
+    if (_model.lastLoadedDate != selectedDate) {
+      _model.lastLoadedDate = selectedDate;
+      _stepEntries = null;
+      SchedulerBinding.instance.addPostFrameCallback((_) async {
+        await _loadStepData();
+      });
+    }
 
     return GestureDetector(
       onTap: () {
@@ -398,7 +428,7 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
                                           ),
                                         );
                                       },
-                                    ).then((value) => safeSetState(() {}));
+                                    ).then((value) => _loadStepData());
                                   },
                                   child: Container(
                                     width: 44.0,
@@ -458,52 +488,7 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
                                 ),
                           ),
                         ),
-                        InkWell(
-                          splashColor: Colors.transparent,
-                          focusColor: Colors.transparent,
-                          hoverColor: Colors.transparent,
-                          highlightColor: Colors.transparent,
-                          onTap: () async {
-                            context
-                                .pushNamed(StepIntakeHistoryWidget.routeName);
-                          },
-                          child: Row(
-                            mainAxisSize: MainAxisSize.max,
-                            children: [
-                              Padding(
-                                padding: EdgeInsetsDirectional.fromSTEB(
-                                    0.0, 0.0, 6.0, 0.0),
-                                child: Text(
-                                  'View All',
-                                  style: FlutterFlowTheme.of(context)
-                                      .titleSmall
-                                      .override(
-                                        font: GoogleFonts.inter(
-                                          fontWeight: FontWeight.normal,
-                                          fontStyle:
-                                              FlutterFlowTheme.of(context)
-                                                  .titleSmall
-                                                  .fontStyle,
-                                        ),
-                                        color: FlutterFlowTheme.of(context)
-                                            .stepColor,
-                                        fontSize: 14.0,
-                                        letterSpacing: 0.0,
-                                        fontWeight: FontWeight.normal,
-                                        fontStyle: FlutterFlowTheme.of(context)
-                                            .titleSmall
-                                            .fontStyle,
-                                      ),
-                                ),
-                              ),
-                              Icon(
-                                FFIcons.karrowRight,
-                                color: FlutterFlowTheme.of(context).stepColor,
-                                size: 20.0,
-                              ),
-                            ],
-                          ),
-                        ),
+
                       ],
                     ),
                   ),
@@ -539,7 +524,10 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
                     child: wrapWithModel(
                       model: _model.zStepHistoryListModel,
                       updateCallback: () => safeSetState(() {}),
-                      child: ZStepHistoryListWidget(),
+                      child: ZStepHistoryListWidget(
+                        stepEntries: _stepEntries,
+                        onDelete: _onDeleteStep,
+                      ),
                     ),
                   ),
                 ],

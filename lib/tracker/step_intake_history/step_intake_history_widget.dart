@@ -143,7 +143,6 @@ class _StepIntakeHistoryWidgetState extends State<StepIntakeHistoryWidget> {
                       updateCallback: () => safeSetState(() {}),
                       child: ZStepsWidget(
                         step: 850,
-                        time: '8m',
                         burning: 40,
                         distance: 0.7,
                       ),
@@ -153,7 +152,6 @@ class _StepIntakeHistoryWidgetState extends State<StepIntakeHistoryWidget> {
                       updateCallback: () => safeSetState(() {}),
                       child: ZStepsWidget(
                         step: 950,
-                        time: '9m',
                         burning: 45,
                         distance: 0.8,
                       ),
@@ -163,7 +161,6 @@ class _StepIntakeHistoryWidgetState extends State<StepIntakeHistoryWidget> {
                       updateCallback: () => safeSetState(() {}),
                       child: ZStepsWidget(
                         step: 1200,
-                        time: '12m',
                         burning: 60,
                         distance: 1.0,
                       ),
@@ -173,7 +170,6 @@ class _StepIntakeHistoryWidgetState extends State<StepIntakeHistoryWidget> {
                       updateCallback: () => safeSetState(() {}),
                       child: ZStepsWidget(
                         step: 900,
-                        time: '8m',
                         burning: 60,
                         distance: 0.5,
                       ),
@@ -183,7 +179,6 @@ class _StepIntakeHistoryWidgetState extends State<StepIntakeHistoryWidget> {
                       updateCallback: () => safeSetState(() {}),
                       child: ZStepsWidget(
                         step: 1000,
-                        time: '11m',
                         burning: 55,
                         distance: 1.0,
                       ),
@@ -193,7 +188,6 @@ class _StepIntakeHistoryWidgetState extends State<StepIntakeHistoryWidget> {
                       updateCallback: () => safeSetState(() {}),
                       child: ZStepsWidget(
                         step: 400,
-                        time: '5m',
                         burning: 30,
                         distance: 0.3,
                       ),
@@ -203,7 +197,6 @@ class _StepIntakeHistoryWidgetState extends State<StepIntakeHistoryWidget> {
                       updateCallback: () => safeSetState(() {}),
                       child: ZStepsWidget(
                         step: 2000,
-                        time: '18m',
                         burning: 45,
                         distance: 1.7,
                       ),
@@ -213,7 +206,6 @@ class _StepIntakeHistoryWidgetState extends State<StepIntakeHistoryWidget> {
                       updateCallback: () => safeSetState(() {}),
                       child: ZStepsWidget(
                         step: 1200,
-                        time: '12m',
                         burning: 60,
                         distance: 1.1,
                       ),
@@ -223,7 +215,6 @@ class _StepIntakeHistoryWidgetState extends State<StepIntakeHistoryWidget> {
                       updateCallback: () => safeSetState(() {}),
                       child: ZStepsWidget(
                         step: 1350,
-                        time: '9m',
                         burning: 55,
                         distance: 1.1,
                       ),
@@ -233,7 +224,6 @@ class _StepIntakeHistoryWidgetState extends State<StepIntakeHistoryWidget> {
                       updateCallback: () => safeSetState(() {}),
                       child: ZStepsWidget(
                         step: 1050,
-                        time: '10m',
                         burning: 65,
                         distance: 1.0,
                       ),
@@ -276,7 +266,6 @@ class _StepIntakeHistoryWidgetState extends State<StepIntakeHistoryWidget> {
                       updateCallback: () => safeSetState(() {}),
                       child: ZStepsWidget(
                         step: 850,
-                        time: '8m',
                         burning: 40,
                         distance: 0.7,
                       ),
@@ -286,7 +275,6 @@ class _StepIntakeHistoryWidgetState extends State<StepIntakeHistoryWidget> {
                       updateCallback: () => safeSetState(() {}),
                       child: ZStepsWidget(
                         step: 950,
-                        time: '9m',
                         burning: 45,
                         distance: 0.8,
                       ),
@@ -296,7 +284,6 @@ class _StepIntakeHistoryWidgetState extends State<StepIntakeHistoryWidget> {
                       updateCallback: () => safeSetState(() {}),
                       child: ZStepsWidget(
                         step: 1200,
-                        time: '12m',
                         burning: 60,
                         distance: 1.0,
                       ),
@@ -306,7 +293,6 @@ class _StepIntakeHistoryWidgetState extends State<StepIntakeHistoryWidget> {
                       updateCallback: () => safeSetState(() {}),
                       child: ZStepsWidget(
                         step: 900,
-                        time: '8m',
                         burning: 60,
                         distance: 0.5,
                       ),
@@ -316,7 +302,6 @@ class _StepIntakeHistoryWidgetState extends State<StepIntakeHistoryWidget> {
                       updateCallback: () => safeSetState(() {}),
                       child: ZStepsWidget(
                         step: 1000,
-                        time: '11m',
                         burning: 55,
                         distance: 1.0,
                       ),
@@ -326,7 +311,6 @@ class _StepIntakeHistoryWidgetState extends State<StepIntakeHistoryWidget> {
                       updateCallback: () => safeSetState(() {}),
                       child: ZStepsWidget(
                         step: 400,
-                        time: '5m',
                         burning: 30,
                         distance: 0.3,
                       ),
@@ -336,7 +320,6 @@ class _StepIntakeHistoryWidgetState extends State<StepIntakeHistoryWidget> {
                       updateCallback: () => safeSetState(() {}),
                       child: ZStepsWidget(
                         step: 2000,
-                        time: '18m',
                         burning: 45,
                         distance: 1.7,
                       ),
@@ -346,7 +329,6 @@ class _StepIntakeHistoryWidgetState extends State<StepIntakeHistoryWidget> {
                       updateCallback: () => safeSetState(() {}),
                       child: ZStepsWidget(
                         step: 1200,
-                        time: '12m',
                         burning: 60,
                         distance: 1.1,
                       ),
@@ -356,7 +338,6 @@ class _StepIntakeHistoryWidgetState extends State<StepIntakeHistoryWidget> {
                       updateCallback: () => safeSetState(() {}),
                       child: ZStepsWidget(
                         step: 1350,
-                        time: '9m',
                         burning: 55,
                         distance: 1.1,
                       ),
@@ -366,7 +347,6 @@ class _StepIntakeHistoryWidgetState extends State<StepIntakeHistoryWidget> {
                       updateCallback: () => safeSetState(() {}),
                       child: ZStepsWidget(
                         step: 1050,
-                        time: '10m',
                         burning: 65,
                         distance: 1.0,
                       ),

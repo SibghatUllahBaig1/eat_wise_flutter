@@ -13,7 +13,14 @@ import 'z_step_history_list_model.dart';
 export 'z_step_history_list_model.dart';
 
 class ZStepHistoryListWidget extends StatefulWidget {
-  const ZStepHistoryListWidget({super.key});
+  const ZStepHistoryListWidget({
+    super.key,
+    this.stepEntries,
+    this.onDelete,
+  });
+
+  final List<Map<String, dynamic>>? stepEntries;
+  final Future<void> Function(String)? onDelete;
 
   @override
   State<ZStepHistoryListWidget> createState() => _ZStepHistoryListWidgetState();
@@ -21,9 +28,6 @@ class ZStepHistoryListWidget extends StatefulWidget {
 
 class _ZStepHistoryListWidgetState extends State<ZStepHistoryListWidget> {
   late ZStepHistoryListModel _model;
-  final backend = BackendManager();
-  List<Map<String, dynamic>> _stepEntries = [];
-  bool _isLoading = true;
 
   @override
   void setState(VoidCallback callback) {
@@ -35,11 +39,6 @@ class _ZStepHistoryListWidgetState extends State<ZStepHistoryListWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => ZStepHistoryListModel());
-
-    // Load step entries when component loads
-    SchedulerBinding.instance.addPostFrameCallback((_) async {
-      await _loadStepEntries();
-    });
   }
 
   @override
@@ -49,40 +48,11 @@ class _ZStepHistoryListWidgetState extends State<ZStepHistoryListWidget> {
     super.dispose();
   }
 
-  /// Load step entries from Firestore
-  Future<void> _loadStepEntries() async {
-    if (currentUserUid.isEmpty) {
-      setState(() {
-        _isLoading = false;
-      });
-      return;
-    }
-
-    try {
-      final selectedDate = FFAppState().tracker.selectedDate ?? DateTime.now();
-
-      final entries = await backend.stepTrackerService.getStepsForDate(
-        userId: currentUserUid,
-        date: selectedDate,
-      );
-
-      setState(() {
-        _stepEntries = entries;
-        _isLoading = false;
-      });
-    } catch (e) {
-      print('Error loading step entries: $e');
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     context.watch<FFAppState>();
 
-    if (_isLoading) {
+    if (widget.stepEntries == null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -93,7 +63,7 @@ class _ZStepHistoryListWidgetState extends State<ZStepHistoryListWidget> {
       );
     }
 
-    if (_stepEntries.isEmpty) {
+    if (widget.stepEntries!.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(24.0),
         child: Text(
@@ -109,21 +79,19 @@ class _ZStepHistoryListWidgetState extends State<ZStepHistoryListWidget> {
 
     return Column(
       mainAxisSize: MainAxisSize.min,
-      children: _stepEntries
+      children: widget.stepEntries!
           .map((entry) {
             final steps = entry['steps'] as int? ?? 0;
-            final duration = entry['duration'] as int? ?? 0;
             final calories = entry['calories'] as int? ?? 0;
             final distance = entry['distance'] as double? ?? 0.0;
-
-            // Format duration as "Xm"
-            final timeStr = '${duration}m';
+            final stepId = entry['id'] as String;
 
             return ZStepsWidget(
               step: steps,
-              time: timeStr,
               burning: calories,
               distance: distance,
+              stepId: stepId,
+              onDelete: widget.onDelete!,
             );
           })
           .toList()
