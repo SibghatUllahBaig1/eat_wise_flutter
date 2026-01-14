@@ -1,6 +1,8 @@
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
+import '/backend/schema/structs/index.dart';
+import '/app_state.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -29,10 +31,27 @@ class _ZBMITrackerEditWidgetState extends State<ZBMITrackerEditWidget> {
     super.initState();
     _model = createModel(context, () => ZBMITrackerEditModel());
 
-    _model.textController1 ??= TextEditingController(text: '185.0');
+    // Load height from FFAppState (stored in cm)
+    final height = FFAppState().trackerSettings.weight.height;
+    _model.textController1 ??= TextEditingController(
+      text: height > 0 ? height.toString() : '',
+    );
     _model.textFieldFocusNode1 ??= FocusNode();
 
-    _model.textController2 ??= TextEditingController(text: '78.4');
+    // Load latest weight from FFAppState
+    final weightList = FFAppState().tracker.weight;
+    final latestWeight = weightList.isNotEmpty
+        ? weightList.reduce((a, b) =>
+            (a.date?.isAfter(b.date ?? DateTime(1970)) ?? false) ? a : b)
+        : null;
+
+    _model.textController2 ??= TextEditingController(
+      text: latestWeight != null &&
+              latestWeight.value != null &&
+              latestWeight.value! > 0
+          ? latestWeight.value.toString()
+          : '',
+    );
     _model.textFieldFocusNode2 ??= FocusNode();
   }
 
@@ -419,6 +438,46 @@ class _ZBMITrackerEditWidgetState extends State<ZBMITrackerEditWidget> {
                   Expanded(
                     child: FFButtonWidget(
                       onPressed: () async {
+                        // Parse height and weight
+                        final heightText = _model.textController1.text.trim();
+                        final weightText = _model.textController2.text.trim();
+
+                        if (heightText.isNotEmpty) {
+                          final height = int.tryParse(heightText);
+                          if (height != null && height > 0) {
+                            // Save height to FFAppState
+                            FFAppState().updateTrackerSettingsStruct(
+                              (e) => e..updateWeight((w) => w..height = height),
+                            );
+                          }
+                        }
+
+                        if (weightText.isNotEmpty) {
+                          final weight = int.tryParse(weightText);
+                          if (weight != null && weight > 0) {
+                            // Update or add weight entry for today
+                            final today = DateTime.now();
+                            final todayDate =
+                                DateTime(today.year, today.month, today.day);
+
+                            FFAppState().updateTrackerStruct((tracker) {
+                              // Remove existing weight entry for today
+                              tracker.weight.removeWhere((w) {
+                                if (w.date == null) return false;
+                                return w.date!.year == todayDate.year &&
+                                    w.date!.month == todayDate.month &&
+                                    w.date!.day == todayDate.day;
+                              });
+
+                              // Add new weight entry
+                              tracker.weight.add(TrackerValueStruct(
+                                date: todayDate,
+                                value: weight,
+                              ));
+                            });
+                          }
+                        }
+
                         Navigator.pop(context);
                       },
                       text: 'Save',

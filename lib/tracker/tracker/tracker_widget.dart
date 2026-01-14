@@ -45,6 +45,11 @@ class _TrackerWidgetState extends State<TrackerWidget>
     // On page load action.
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       FFAppState().NavBar = 1;
+
+      // Load tracker data from Firestore BEFORE building widgets
+      await _model.loadTrackerData(context);
+
+      // Force UI rebuild after loading data
       safeSetState(() {});
     });
 
@@ -108,45 +113,7 @@ class _TrackerWidgetState extends State<TrackerWidget>
                   fontStyle: FlutterFlowTheme.of(context).titleLarge.fontStyle,
                 ),
           ),
-          actions: [
-            Builder(
-              builder: (context) => Padding(
-                padding: EdgeInsetsDirectional.fromSTEB(0.0, 6.0, 6.0, 6.0),
-                child: FlutterFlowIconButton(
-                  borderRadius: 22.0,
-                  buttonSize: 44.0,
-                  fillColor: FlutterFlowTheme.of(context).transparent,
-                  icon: Icon(
-                    FFIcons.kcalendarEvent,
-                    color: FlutterFlowTheme.of(context).primaryText,
-                    size: 24.0,
-                  ),
-                  onPressed: () async {
-                    await showDialog(
-                      barrierColor: FlutterFlowTheme.of(context).barrier,
-                      context: context,
-                      builder: (dialogContext) {
-                        return Dialog(
-                          elevation: 0,
-                          insetPadding: EdgeInsets.zero,
-                          backgroundColor: Colors.transparent,
-                          alignment: AlignmentDirectional(0.0, 0.0)
-                              .resolve(Directionality.of(context)),
-                          child: GestureDetector(
-                            onTap: () {
-                              FocusScope.of(dialogContext).unfocus();
-                              FocusManager.instance.primaryFocus?.unfocus();
-                            },
-                            child: ZCalendarWidget(),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-            ),
-          ],
+          actions: [],
           flexibleSpace: FlexibleSpaceBar(
             background: Container(
               width: double.infinity,
@@ -173,7 +140,7 @@ class _TrackerWidgetState extends State<TrackerWidget>
                           EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
                       child: Text(
                         dateTimeFormat(
-                            "yMMMd", FFAppState().tracker.selectedDate!),
+                            "yMMMd", FFAppState().tracker.currentDate!),
                         style:
                             FlutterFlowTheme.of(context).labelMedium.override(
                                   font: GoogleFonts.inter(

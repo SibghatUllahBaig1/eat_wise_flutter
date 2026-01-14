@@ -1,4 +1,6 @@
 import '/backend/schema/structs/index.dart';
+import '/backend/firestore/weight_tracker_service.dart';
+import '/auth/firebase_auth/auth_util.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -34,6 +36,42 @@ class _TrackerWeightWidgetState extends State<TrackerWeightWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => TrackerWeightModel());
+
+    // Load weight data from Firestore
+    _loadWeightData();
+  }
+
+  Future<void> _loadWeightData() async {
+    final userId = currentUserUid;
+    if (userId.isEmpty) return;
+
+    try {
+      final service = WeightTrackerService();
+
+      // Load last 30 days of weight data
+      final history = await service
+          .streamWeightHistory(
+            userId: userId,
+            limit: 30,
+          )
+          .first;
+
+      if (history.isNotEmpty && mounted) {
+        // Update FFAppState with loaded data
+        FFAppState().updateTrackerStruct((e) => e
+          ..weight = history.map((entry) {
+            return TrackerValueStruct(
+              date: entry['date'] as DateTime,
+              value: (entry['weight'] as double).toInt(),
+              unit: entry['unit'] as String? ?? 'kg',
+              progress: entry['progress'] as double? ?? 0.0,
+            );
+          }).toList());
+        FFAppState().update(() {});
+      }
+    } catch (e) {
+      debugPrint('Error loading weight data: $e');
+    }
   }
 
   @override
@@ -175,245 +213,379 @@ class _TrackerWeightWidgetState extends State<TrackerWeightWidget> {
                                   mainAxisSize: MainAxisSize.max,
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    RichText(
-                                      textScaler:
-                                          MediaQuery.of(context).textScaler,
-                                      text: TextSpan(
-                                        children: [
-                                          TextSpan(
-                                            text: valueOrDefault<String>(
-                                              FFAppState()
-                                                  .tracker
-                                                  .weight
-                                                  .where((e) =>
-                                                      e.date ==
-                                                      FFAppState()
-                                                          .tracker
-                                                          .currentDate)
-                                                  .toList()
-                                                  .firstOrNull
-                                                  ?.value
-                                                  ?.toString(),
-                                              '75',
-                                            ),
+                                    Builder(
+                                      builder: (context) {
+                                        // Get latest weight (most recent entry)
+                                        final weightList =
+                                            FFAppState().tracker.weight;
+                                        final latestWeight = weightList
+                                                .isNotEmpty
+                                            ? weightList.reduce((a, b) =>
+                                                (a.date?.isAfter(b.date ??
+                                                            DateTime(1970)) ??
+                                                        false)
+                                                    ? a
+                                                    : b)
+                                            : null;
+
+                                        final currentWeightValue =
+                                            latestWeight?.value?.toString() ??
+                                                '';
+
+                                        return RichText(
+                                          textScaler:
+                                              MediaQuery.of(context).textScaler,
+                                          text: TextSpan(
+                                            children: [
+                                              TextSpan(
+                                                text: currentWeightValue.isEmpty
+                                                    ? '--'
+                                                    : currentWeightValue,
+                                                style:
+                                                    FlutterFlowTheme.of(context)
+                                                        .headlineMedium
+                                                        .override(
+                                                          font:
+                                                              GoogleFonts.inter(
+                                                            fontWeight:
+                                                                FlutterFlowTheme.of(
+                                                                        context)
+                                                                    .headlineMedium
+                                                                    .fontWeight,
+                                                            fontStyle:
+                                                                FlutterFlowTheme.of(
+                                                                        context)
+                                                                    .headlineMedium
+                                                                    .fontStyle,
+                                                          ),
+                                                          fontSize: 24.0,
+                                                          letterSpacing: 0.0,
+                                                          fontWeight:
+                                                              FlutterFlowTheme.of(
+                                                                      context)
+                                                                  .headlineMedium
+                                                                  .fontWeight,
+                                                          fontStyle:
+                                                              FlutterFlowTheme.of(
+                                                                      context)
+                                                                  .headlineMedium
+                                                                  .fontStyle,
+                                                        ),
+                                              ),
+                                              TextSpan(
+                                                text: ' ',
+                                                style: TextStyle(),
+                                              ),
+                                              TextSpan(
+                                                text: 'kg',
+                                                style: TextStyle(),
+                                              )
+                                            ],
                                             style: FlutterFlowTheme.of(context)
-                                                .headlineMedium
+                                                .bodyMedium
                                                 .override(
                                                   font: GoogleFonts.inter(
                                                     fontWeight:
                                                         FlutterFlowTheme.of(
                                                                 context)
-                                                            .headlineMedium
+                                                            .bodyMedium
                                                             .fontWeight,
                                                     fontStyle:
                                                         FlutterFlowTheme.of(
                                                                 context)
-                                                            .headlineMedium
+                                                            .bodyMedium
                                                             .fontStyle,
                                                   ),
-                                                  fontSize: 24.0,
                                                   letterSpacing: 0.0,
                                                   fontWeight:
                                                       FlutterFlowTheme.of(
                                                               context)
-                                                          .headlineMedium
+                                                          .bodyMedium
                                                           .fontWeight,
                                                   fontStyle:
                                                       FlutterFlowTheme.of(
                                                               context)
-                                                          .headlineMedium
+                                                          .bodyMedium
                                                           .fontStyle,
+                                                  lineHeight: 1.0,
                                                 ),
                                           ),
-                                          TextSpan(
-                                            text: ' ',
-                                            style: TextStyle(),
-                                          ),
-                                          TextSpan(
-                                            text: 'kg',
-                                            style: TextStyle(),
-                                          )
-                                        ],
-                                        style: FlutterFlowTheme.of(context)
-                                            .bodyMedium
-                                            .override(
-                                              font: GoogleFonts.inter(
-                                                fontWeight:
-                                                    FlutterFlowTheme.of(context)
-                                                        .bodyMedium
-                                                        .fontWeight,
-                                                fontStyle:
-                                                    FlutterFlowTheme.of(context)
-                                                        .bodyMedium
-                                                        .fontStyle,
-                                              ),
-                                              letterSpacing: 0.0,
-                                              fontWeight:
-                                                  FlutterFlowTheme.of(context)
-                                                      .bodyMedium
-                                                      .fontWeight,
-                                              fontStyle:
-                                                  FlutterFlowTheme.of(context)
-                                                      .bodyMedium
-                                                      .fontStyle,
-                                              lineHeight: 1.0,
-                                            ),
-                                      ),
+                                        );
+                                      },
                                     ),
-                                    Padding(
-                                      padding: EdgeInsetsDirectional.fromSTEB(
-                                          12.0, 0.0, 0.0, 0.0),
-                                      child: Icon(
-                                        Icons.expand_circle_down,
-                                        color: FlutterFlowTheme.of(context)
-                                            .success,
-                                        size: 18.0,
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: EdgeInsetsDirectional.fromSTEB(
-                                          6.0, 0.0, 0.0, 0.0),
-                                      child: Text(
-                                        '+0.2kg',
-                                        style: FlutterFlowTheme.of(context)
-                                            .bodyMedium
-                                            .override(
-                                              font: GoogleFonts.inter(
-                                                fontWeight:
-                                                    FlutterFlowTheme.of(context)
-                                                        .bodyMedium
-                                                        .fontWeight,
-                                                fontStyle:
-                                                    FlutterFlowTheme.of(context)
-                                                        .bodyMedium
-                                                        .fontStyle,
+                                    Builder(
+                                      builder: (context) {
+                                        // Calculate weight change from previous entry
+                                        final weightList =
+                                            FFAppState().tracker.weight;
+                                        if (weightList.length < 2) {
+                                          return SizedBox.shrink();
+                                        }
+
+                                        // Get latest and second latest weights
+                                        final sortedWeights = weightList
+                                            .toList()
+                                          ..sort((a, b) => (b.date ??
+                                                  DateTime(1970))
+                                              .compareTo(
+                                                  a.date ?? DateTime(1970)));
+
+                                        final latest = sortedWeights[0]
+                                                .value
+                                                ?.toDouble() ??
+                                            0.0;
+                                        final previous = sortedWeights[1]
+                                                .value
+                                                ?.toDouble() ??
+                                            0.0;
+                                        final change = latest - previous;
+
+                                        if (change == 0) {
+                                          return SizedBox.shrink();
+                                        }
+
+                                        final isIncrease = change > 0;
+
+                                        return Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Padding(
+                                              padding: EdgeInsetsDirectional
+                                                  .fromSTEB(
+                                                      12.0, 0.0, 0.0, 0.0),
+                                              child: Icon(
+                                                isIncrease
+                                                    ? Icons.expand_circle_down
+                                                    : Icons.expand_less,
+                                                color: isIncrease
+                                                    ? FlutterFlowTheme.of(
+                                                            context)
+                                                        .error
+                                                    : FlutterFlowTheme.of(
+                                                            context)
+                                                        .success,
+                                                size: 18.0,
                                               ),
-                                              color:
-                                                  FlutterFlowTheme.of(context)
-                                                      .success,
-                                              letterSpacing: 0.0,
-                                              fontWeight:
-                                                  FlutterFlowTheme.of(context)
-                                                      .bodyMedium
-                                                      .fontWeight,
-                                              fontStyle:
-                                                  FlutterFlowTheme.of(context)
-                                                      .bodyMedium
-                                                      .fontStyle,
                                             ),
-                                      ),
+                                            Padding(
+                                              padding: EdgeInsetsDirectional
+                                                  .fromSTEB(6.0, 0.0, 0.0, 0.0),
+                                              child: Text(
+                                                '${isIncrease ? '+' : ''}${change.toStringAsFixed(1)}kg',
+                                                style: FlutterFlowTheme.of(
+                                                        context)
+                                                    .bodyMedium
+                                                    .override(
+                                                      font: GoogleFonts.inter(
+                                                        fontWeight:
+                                                            FlutterFlowTheme.of(
+                                                                    context)
+                                                                .bodyMedium
+                                                                .fontWeight,
+                                                        fontStyle:
+                                                            FlutterFlowTheme.of(
+                                                                    context)
+                                                                .bodyMedium
+                                                                .fontStyle,
+                                                      ),
+                                                      color: isIncrease
+                                                          ? FlutterFlowTheme.of(
+                                                                  context)
+                                                              .error
+                                                          : FlutterFlowTheme.of(
+                                                                  context)
+                                                              .success,
+                                                      letterSpacing: 0.0,
+                                                      fontWeight:
+                                                          FlutterFlowTheme.of(
+                                                                  context)
+                                                              .bodyMedium
+                                                              .fontWeight,
+                                                      fontStyle:
+                                                          FlutterFlowTheme.of(
+                                                                  context)
+                                                              .bodyMedium
+                                                              .fontStyle,
+                                                    ),
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      },
                                     ),
                                   ],
                                 ),
                               ),
-                              Padding(
-                                padding: EdgeInsetsDirectional.fromSTEB(
-                                    0.0, 24.0, 0.0, 0.0),
-                                child: LinearPercentIndicator(
-                                  percent: valueOrDefault<double>(
-                                    FFAppState()
-                                        .tracker
-                                        .weight
-                                        .where((e) =>
-                                            e.date ==
-                                            FFAppState().tracker.currentDate)
-                                        .toList()
-                                        .firstOrNull
-                                        ?.progress,
-                                    0.72,
-                                  ),
-                                  width: MediaQuery.sizeOf(context).width - 96,
-                                  lineHeight: 16.0,
-                                  animation: true,
-                                  animateFromLastPercent: true,
-                                  progressColor:
-                                      FlutterFlowTheme.of(context).weightColor,
-                                  backgroundColor:
-                                      FlutterFlowTheme.of(context).divider,
-                                  barRadius: Radius.circular(16.0),
-                                  padding: EdgeInsets.zero,
-                                ),
-                              ),
-                              Row(
-                                mainAxisSize: MainAxisSize.max,
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        0.0, 12.0, 0.0, 0.0),
-                                    child: Text(
-                                      'Starting: ${valueOrDefault<String>(
-                                        FFAppState()
-                                            .tracker
-                                            .weight
-                                            .firstOrNull
-                                            ?.value
-                                            ?.toString(),
-                                        '72',
-                                      )}',
-                                      style: FlutterFlowTheme.of(context)
-                                          .bodyMedium
-                                          .override(
-                                            font: GoogleFonts.inter(
-                                              fontWeight:
+                              Builder(
+                                builder: (context) {
+                                  // Get weight data
+                                  final weightList =
+                                      FFAppState().tracker.weight;
+
+                                  // Get oldest weight (starting weight)
+                                  final startingWeight = weightList.isNotEmpty
+                                      ? weightList.reduce((a, b) => (a.date
+                                                  ?.isBefore(b.date ??
+                                                      DateTime.now()) ??
+                                              false)
+                                          ? a
+                                          : b)
+                                      : null;
+
+                                  // Get latest weight (current weight)
+                                  final latestWeight = weightList.isNotEmpty
+                                      ? weightList.reduce((a, b) => (a.date
+                                                  ?.isAfter(b.date ??
+                                                      DateTime(1970)) ??
+                                              false)
+                                          ? a
+                                          : b)
+                                      : null;
+
+                                  // Get goal weight from settings
+                                  final goalWeight = FFAppState()
+                                      .trackerSettings
+                                      .weight
+                                      .goalWeight;
+
+                                  // Calculate progress
+                                  double progress = 0.0;
+                                  if (startingWeight != null &&
+                                      latestWeight != null &&
+                                      goalWeight > 0) {
+                                    final start =
+                                        startingWeight.value?.toDouble() ?? 0.0;
+                                    final current =
+                                        latestWeight.value?.toDouble() ?? 0.0;
+                                    final goal = goalWeight.toDouble();
+
+                                    if (start != goal) {
+                                      progress =
+                                          ((current - start) / (goal - start))
+                                              .clamp(0.0, 1.0);
+                                    }
+                                  }
+
+                                  return Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Padding(
+                                        padding: EdgeInsetsDirectional.fromSTEB(
+                                            0.0, 24.0, 0.0, 0.0),
+                                        child: LinearPercentIndicator(
+                                          percent: progress,
+                                          width:
+                                              MediaQuery.sizeOf(context).width -
+                                                  96,
+                                          lineHeight: 16.0,
+                                          animation: true,
+                                          animateFromLastPercent: true,
+                                          progressColor:
+                                              FlutterFlowTheme.of(context)
+                                                  .weightColor,
+                                          backgroundColor:
+                                              FlutterFlowTheme.of(context)
+                                                  .divider,
+                                          barRadius: Radius.circular(16.0),
+                                          padding: EdgeInsets.zero,
+                                        ),
+                                      ),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.max,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Padding(
+                                            padding:
+                                                EdgeInsetsDirectional.fromSTEB(
+                                                    0.0, 12.0, 0.0, 0.0),
+                                            child: Text(
+                                              startingWeight != null
+                                                  ? 'Starting: ${startingWeight.value}'
+                                                  : 'Starting: --',
+                                              style:
                                                   FlutterFlowTheme.of(context)
                                                       .bodyMedium
-                                                      .fontWeight,
-                                              fontStyle:
-                                                  FlutterFlowTheme.of(context)
-                                                      .bodyMedium
-                                                      .fontStyle,
+                                                      .override(
+                                                        font: GoogleFonts.inter(
+                                                          fontWeight:
+                                                              FlutterFlowTheme.of(
+                                                                      context)
+                                                                  .bodyMedium
+                                                                  .fontWeight,
+                                                          fontStyle:
+                                                              FlutterFlowTheme.of(
+                                                                      context)
+                                                                  .bodyMedium
+                                                                  .fontStyle,
+                                                        ),
+                                                        color:
+                                                            FlutterFlowTheme.of(
+                                                                    context)
+                                                                .secondaryText,
+                                                        letterSpacing: 0.0,
+                                                        fontWeight:
+                                                            FlutterFlowTheme.of(
+                                                                    context)
+                                                                .bodyMedium
+                                                                .fontWeight,
+                                                        fontStyle:
+                                                            FlutterFlowTheme.of(
+                                                                    context)
+                                                                .bodyMedium
+                                                                .fontStyle,
+                                                        lineHeight: 1.0,
+                                                      ),
                                             ),
-                                            color: FlutterFlowTheme.of(context)
-                                                .secondaryText,
-                                            letterSpacing: 0.0,
-                                            fontWeight:
-                                                FlutterFlowTheme.of(context)
-                                                    .bodyMedium
-                                                    .fontWeight,
-                                            fontStyle:
-                                                FlutterFlowTheme.of(context)
-                                                    .bodyMedium
-                                                    .fontStyle,
-                                            lineHeight: 1.0,
                                           ),
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        0.0, 12.0, 0.0, 0.0),
-                                    child: Text(
-                                      'Goal: 85 kg',
-                                      style: FlutterFlowTheme.of(context)
-                                          .bodyMedium
-                                          .override(
-                                            font: GoogleFonts.inter(
-                                              fontWeight:
+                                          Padding(
+                                            padding:
+                                                EdgeInsetsDirectional.fromSTEB(
+                                                    0.0, 12.0, 0.0, 0.0),
+                                            child: Text(
+                                              goalWeight > 0
+                                                  ? 'Goal: $goalWeight kg'
+                                                  : 'Goal: --',
+                                              style:
                                                   FlutterFlowTheme.of(context)
                                                       .bodyMedium
-                                                      .fontWeight,
-                                              fontStyle:
-                                                  FlutterFlowTheme.of(context)
-                                                      .bodyMedium
-                                                      .fontStyle,
+                                                      .override(
+                                                        font: GoogleFonts.inter(
+                                                          fontWeight:
+                                                              FlutterFlowTheme.of(
+                                                                      context)
+                                                                  .bodyMedium
+                                                                  .fontWeight,
+                                                          fontStyle:
+                                                              FlutterFlowTheme.of(
+                                                                      context)
+                                                                  .bodyMedium
+                                                                  .fontStyle,
+                                                        ),
+                                                        color:
+                                                            FlutterFlowTheme.of(
+                                                                    context)
+                                                                .secondaryText,
+                                                        letterSpacing: 0.0,
+                                                        fontWeight:
+                                                            FlutterFlowTheme.of(
+                                                                    context)
+                                                                .bodyMedium
+                                                                .fontWeight,
+                                                        fontStyle:
+                                                            FlutterFlowTheme.of(
+                                                                    context)
+                                                                .bodyMedium
+                                                                .fontStyle,
+                                                        lineHeight: 1.0,
+                                                      ),
                                             ),
-                                            color: FlutterFlowTheme.of(context)
-                                                .secondaryText,
-                                            letterSpacing: 0.0,
-                                            fontWeight:
-                                                FlutterFlowTheme.of(context)
-                                                    .bodyMedium
-                                                    .fontWeight,
-                                            fontStyle:
-                                                FlutterFlowTheme.of(context)
-                                                    .bodyMedium
-                                                    .fontStyle,
-                                            lineHeight: 1.0,
                                           ),
-                                    ),
-                                  ),
-                                ],
+                                        ],
+                                      ),
+                                    ],
+                                  );
+                                },
                               ),
                             ],
                           ),
@@ -509,154 +681,109 @@ class _TrackerWeightWidgetState extends State<TrackerWeightWidget> {
                             ),
                       ),
                     ),
-                    Padding(
-                      padding:
-                          EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 10.0, 0.0),
-                      child: InkWell(
-                        splashColor: Colors.transparent,
-                        focusColor: Colors.transparent,
-                        hoverColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap: () async {
-                          context
-                              .pushNamed(WeightIntakeHistoryWidget.routeName);
-                        },
-                        child: Row(
-                          mainAxisSize: MainAxisSize.max,
-                          children: [
-                            Padding(
-                              padding: EdgeInsetsDirectional.fromSTEB(
-                                  0.0, 0.0, 6.0, 0.0),
-                              child: Text(
-                                'View All',
-                                style: FlutterFlowTheme.of(context)
-                                    .titleSmall
-                                    .override(
-                                      font: GoogleFonts.inter(
-                                        fontWeight: FontWeight.normal,
-                                        fontStyle: FlutterFlowTheme.of(context)
-                                            .titleSmall
-                                            .fontStyle,
-                                      ),
-                                      color: FlutterFlowTheme.of(context)
-                                          .weightColor,
-                                      fontSize: 14.0,
-                                      letterSpacing: 0.0,
-                                      fontWeight: FontWeight.normal,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .titleSmall
-                                          .fontStyle,
-                                    ),
-                              ),
-                            ),
-                            Icon(
-                              FFIcons.karrowRight,
-                              color: FlutterFlowTheme.of(context).weightColor,
-                              size: 20.0,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
               Padding(
                 padding: EdgeInsetsDirectional.fromSTEB(0.0, 16.0, 0.0, 0.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    wrapWithModel(
-                      model: _model.zWeightCardModel1,
-                      updateCallback: () => safeSetState(() {}),
-                      child: ZWeightCardWidget(
-                        weight: 78.5,
-                        time: 'Yesterday, Apr 28, 2025',
-                        plus: false,
-                        value: 0.2,
-                      ),
-                    ),
-                    wrapWithModel(
-                      model: _model.zWeightCardModel2,
-                      updateCallback: () => safeSetState(() {}),
-                      child: ZWeightCardWidget(
-                        weight: 78.7,
-                        time: 'Apr 27, 2025',
-                        plus: true,
-                        value: 0.2,
-                      ),
-                    ),
-                    wrapWithModel(
-                      model: _model.zWeightCardModel3,
-                      updateCallback: () => safeSetState(() {}),
-                      child: ZWeightCardWidget(
-                        weight: 78.5,
-                        time: 'Apr 26, 2025',
-                        plus: false,
-                        value: 0.2,
-                      ),
-                    ),
-                    wrapWithModel(
-                      model: _model.zWeightCardModel4,
-                      updateCallback: () => safeSetState(() {}),
-                      child: ZWeightCardWidget(
-                        weight: 78.7,
-                        time: 'Apr 25, 2025',
-                        plus: true,
-                        value: 0.2,
-                      ),
-                    ),
-                    wrapWithModel(
-                      model: _model.zWeightCardModel5,
-                      updateCallback: () => safeSetState(() {}),
-                      child: ZWeightCardWidget(
-                        weight: 78.5,
-                        time: 'Apr 24, 2025',
-                        plus: false,
-                        value: 0.3,
-                      ),
-                    ),
-                    wrapWithModel(
-                      model: _model.zWeightCardModel6,
-                      updateCallback: () => safeSetState(() {}),
-                      child: ZWeightCardWidget(
-                        weight: 78.0,
-                        time: 'Apr 23, 2025',
-                        plus: false,
-                        value: 0.5,
-                      ),
-                    ),
-                    wrapWithModel(
-                      model: _model.zWeightCardModel7,
-                      updateCallback: () => safeSetState(() {}),
-                      child: ZWeightCardWidget(
-                        weight: 78.2,
-                        time: 'Apr 22, 2025',
-                        plus: true,
-                        value: 0.2,
-                      ),
-                    ),
-                    wrapWithModel(
-                      model: _model.zWeightCardModel8,
-                      updateCallback: () => safeSetState(() {}),
-                      child: ZWeightCardWidget(
-                        weight: 77.9,
-                        time: 'Apr 21, 2025',
-                        plus: false,
-                        value: 0.3,
-                      ),
-                    ),
-                    wrapWithModel(
-                      model: _model.zWeightCardModel9,
-                      updateCallback: () => safeSetState(() {}),
-                      child: ZWeightCardWidget(
-                        weight: 77.9,
-                        time: 'Apr 20, 2025',
-                        plus: false,
-                        value: 0.0,
-                      ),
-                    ),
-                  ].divide(SizedBox(height: 16.0)),
+                child: StreamBuilder<List<Map<String, dynamic>>>(
+                  stream: currentUserUid.isNotEmpty
+                      ? WeightTrackerService().streamWeightHistory(
+                          userId: currentUserUid,
+                          limit: 9,
+                        )
+                      : Stream.value([]),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24.0),
+                          child: CircularProgressIndicator(
+                            color: FlutterFlowTheme.of(context).weightColor,
+                          ),
+                        ),
+                      );
+                    }
+
+                    final weightHistory = snapshot.data!;
+
+                    if (weightHistory.isEmpty) {
+                      return Padding(
+                        padding: EdgeInsets.all(24.0),
+                        child: Text(
+                          'No weight entries yet. Tap "Update" to add your first entry!',
+                          textAlign: TextAlign.center,
+                          style: FlutterFlowTheme.of(context)
+                              .bodyMedium
+                              .override(
+                                font: GoogleFonts.inter(
+                                  fontWeight: FlutterFlowTheme.of(context)
+                                      .bodyMedium
+                                      .fontWeight,
+                                  fontStyle: FlutterFlowTheme.of(context)
+                                      .bodyMedium
+                                      .fontStyle,
+                                ),
+                                color:
+                                    FlutterFlowTheme.of(context).secondaryText,
+                                letterSpacing: 0.0,
+                                fontWeight: FlutterFlowTheme.of(context)
+                                    .bodyMedium
+                                    .fontWeight,
+                                fontStyle: FlutterFlowTheme.of(context)
+                                    .bodyMedium
+                                    .fontStyle,
+                              ),
+                        ),
+                      );
+                    }
+
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: List.generate(weightHistory.length, (index) {
+                        final entry = weightHistory[index];
+                        final weight = entry['weight'] as double;
+                        final date = entry['date'] as DateTime;
+
+                        // Calculate weight change from previous entry
+                        double? weightChange;
+                        bool isIncrease = false;
+
+                        if (index < weightHistory.length - 1) {
+                          final previousWeight =
+                              weightHistory[index + 1]['weight'] as double;
+                          weightChange = weight - previousWeight;
+                          isIncrease = weightChange > 0;
+                        }
+
+                        // Format date
+                        final now = DateTime.now();
+                        final yesterday =
+                            DateTime(now.year, now.month, now.day - 1);
+                        final entryDate =
+                            DateTime(date.year, date.month, date.day);
+
+                        String timeText;
+                        if (entryDate ==
+                            DateTime(now.year, now.month, now.day)) {
+                          timeText =
+                              'Today, ${dateTimeFormat("MMM d, y", date)}';
+                        } else if (entryDate == yesterday) {
+                          timeText =
+                              'Yesterday, ${dateTimeFormat("MMM d, y", date)}';
+                        } else {
+                          timeText = dateTimeFormat("MMM d, y", date);
+                        }
+
+                        return ZWeightCardWidget(
+                          weight: weight,
+                          time: timeText,
+                          plus: isIncrease,
+                          value: weightChange?.abs() ?? 0.0,
+                        );
+                      }).divide(SizedBox(height: 16.0)),
+                    );
+                  },
                 ),
               ),
               Padding(

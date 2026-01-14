@@ -389,7 +389,12 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
         FFRoute(
           name: ActivityDetailsWidget.routeName,
           path: ActivityDetailsWidget.routePath,
-          builder: (context, params) => ActivityDetailsWidget(),
+          builder: (context, params) => ActivityDetailsWidget(
+            activityData: params.getParam(
+              'activityData',
+              ParamType.JSON,
+            ),
+          ),
         ),
         FFRoute(
           name: NotificationWidget.routeName,

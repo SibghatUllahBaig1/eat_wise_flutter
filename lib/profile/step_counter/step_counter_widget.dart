@@ -75,13 +75,6 @@ class _StepCounterWidgetState extends State<StepCounterWidget> {
                 size: 24.0,
               ),
               onPressed: () async {
-                FFAppState().updateTrackerSettingsStruct(
-                  (e) => e
-                    ..updateStep(
-                      (e) => e..soundVolume = _model.sliderValue,
-                    ),
-                );
-                safeSetState(() {});
                 context.pop();
               },
             ),
@@ -536,51 +529,6 @@ class _StepCounterWidgetState extends State<StepCounterWidget> {
                               ),
                             ),
                           ),
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsetsDirectional.fromSTEB(
-                            16.0, 0.0, 16.0, 0.0),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.max,
-                          children: [
-                            Icon(
-                              FFIcons.kvolumeX,
-                              color: FlutterFlowTheme.of(context).primaryText,
-                              size: 24.0,
-                            ),
-                            Expanded(
-                              child: SliderTheme(
-                                data: SliderThemeData(
-                                  showValueIndicator: ShowValueIndicator.always,
-                                ),
-                                child: Slider(
-                                  activeColor:
-                                      FlutterFlowTheme.of(context).primary,
-                                  inactiveColor:
-                                      FlutterFlowTheme.of(context).alternate,
-                                  min: 0.0,
-                                  max: 10.0,
-                                  value: _model.sliderValue ??= FFAppState()
-                                      .trackerSettings
-                                      .step
-                                      .soundVolume,
-                                  label: _model.sliderValue?.toStringAsFixed(2),
-                                  onChanged: (newValue) {
-                                    newValue = double.parse(
-                                        newValue.toStringAsFixed(2));
-                                    safeSetState(
-                                        () => _model.sliderValue = newValue);
-                                  },
-                                ),
-                              ),
-                            ),
-                            Icon(
-                              FFIcons.kvolumeMax,
-                              color: FlutterFlowTheme.of(context).primaryText,
-                              size: 24.0,
-                            ),
-                          ],
                         ),
                       ),
                       InkWell(

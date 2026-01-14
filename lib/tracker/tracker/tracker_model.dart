@@ -9,6 +9,8 @@ import '/tracker/components/z_calendar/z_calendar_widget.dart';
 import '/tracker/components/z_step_tracker/z_step_tracker_widget.dart';
 import '/tracker/components/z_water_tracker/z_water_tracker_widget.dart';
 import '/tracker/components/z_weight_tracker/z_weight_tracker_widget.dart';
+import '/backend/firestore/sync_service.dart';
+import '/auth/firebase_auth/auth_util.dart';
 import 'dart:math';
 import 'dart:ui';
 import 'tracker_widget.dart' show TrackerWidget;
@@ -19,6 +21,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 class TrackerModel extends FlutterFlowModel<TrackerWidget> {
+  ///  Local state fields for this page.
+
+  bool isDataLoaded = false;
+
   ///  State fields for stateful widgets in this page.
 
   // Model for zWaterTracker component.
@@ -48,5 +54,31 @@ class TrackerModel extends FlutterFlowModel<TrackerWidget> {
     zWeightTrackerModel.dispose();
     zBMITrackerModel.dispose();
     zNawBarModel.dispose();
+  }
+
+  /// Load tracker data from Firestore
+  Future<void> loadTrackerData(BuildContext context) async {
+    if (currentUserUid.isEmpty) return;
+
+    try {
+      final appState = FFAppState();
+      final syncService = SyncService();
+
+      // Use currentDate (today) for main tracker screen
+      // The main tracker screen always shows today's data
+      final dateToLoad = appState.tracker.currentDate ?? DateTime.now();
+
+      debugPrint('Loading tracker data for date: $dateToLoad');
+
+      await syncService.loadTrackerData(
+        userId: currentUserUid,
+        date: dateToLoad,
+      );
+      isDataLoaded = true;
+
+      debugPrint('Tracker data loaded successfully');
+    } catch (e) {
+      debugPrint('Error loading tracker data: $e');
+    }
   }
 }

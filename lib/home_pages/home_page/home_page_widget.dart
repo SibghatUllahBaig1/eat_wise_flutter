@@ -1,5 +1,4 @@
 import '/flutter_flow/flutter_flow_animations.dart';
-import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/home_pages/components/z_activities/z_activities_widget.dart';
@@ -103,25 +102,7 @@ class _HomePageWidgetState extends State<HomePageWidget>
               alignment: Alignment(-1.0, 0.0),
             ),
           ),
-          actions: [
-            Padding(
-              padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 6.0, 0.0),
-              child: FlutterFlowIconButton(
-                borderColor: Colors.transparent,
-                borderRadius: 24.0,
-                borderWidth: 1.0,
-                buttonSize: 44.0,
-                icon: Icon(
-                  FFIcons.kbell01,
-                  color: FlutterFlowTheme.of(context).primaryText,
-                  size: 24.0,
-                ),
-                onPressed: () async {
-                  context.pushNamed(NotificationWidget.routeName);
-                },
-              ),
-            ),
-          ],
+          actions: const [],
           centerTitle: false,
           elevation: 0.0,
         ),

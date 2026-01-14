@@ -41,6 +41,44 @@ class _ZBMITrackerWidgetState extends State<ZBMITrackerWidget> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<FFAppState>();
+
+    // Calculate BMI from height and weight
+    final height = FFAppState().trackerSettings.weight.height;
+    final weightList = FFAppState().tracker.weight;
+    final latestWeight = weightList.isNotEmpty
+        ? weightList.reduce((a, b) =>
+            (a.date?.isAfter(b.date ?? DateTime(1970)) ?? false) ? a : b)
+        : null;
+
+    double? bmi;
+    String bmiCategory = '';
+
+    if (height > 0 && latestWeight != null && latestWeight.value > 0) {
+      // BMI = weight (kg) / (height (m))^2
+      final heightInMeters = height / 100.0;
+      bmi = latestWeight.value / (heightInMeters * heightInMeters);
+
+      // Determine BMI category
+      if (bmi < 15) {
+        bmiCategory = 'Very Severely Underweight';
+      } else if (bmi < 16) {
+        bmiCategory = 'Severely Underweight';
+      } else if (bmi < 18.5) {
+        bmiCategory = 'Underweight';
+      } else if (bmi < 25) {
+        bmiCategory = 'Normal';
+      } else if (bmi < 30) {
+        bmiCategory = 'Overweight';
+      } else if (bmi < 35) {
+        bmiCategory = 'Obese Class I';
+      } else if (bmi < 40) {
+        bmiCategory = 'Obese Class II';
+      } else {
+        bmiCategory = 'Obese Class III';
+      }
+    }
+
     return Padding(
       padding: EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
       child: InkWell(
@@ -143,7 +181,9 @@ class _ZBMITrackerWidgetState extends State<ZBMITrackerWidget> {
                             text: TextSpan(
                               children: [
                                 TextSpan(
-                                  text: '28.9',
+                                  text: bmi != null
+                                      ? bmi.toStringAsFixed(1)
+                                      : '--',
                                   style: FlutterFlowTheme.of(context)
                                       .headlineSmall
                                       .override(
@@ -171,7 +211,7 @@ class _ZBMITrackerWidgetState extends State<ZBMITrackerWidget> {
                                   style: TextStyle(),
                                 ),
                                 TextSpan(
-                                  text: 'Normal',
+                                  text: bmiCategory,
                                   style: TextStyle(),
                                 )
                               ],
@@ -554,19 +594,41 @@ class _ZBMITrackerWidgetState extends State<ZBMITrackerWidget> {
                                       ].divide(SizedBox(width: 2.0)),
                                     ),
                                   ),
-                                  Align(
-                                    alignment: AlignmentDirectional(0.0, -1.0),
-                                    child: Padding(
-                                      padding: EdgeInsetsDirectional.fromSTEB(
-                                          0.0, 0.0, 100.0, 0.0),
-                                      child: Icon(
-                                        FFIcons.ktriangleInvertedFilled,
-                                        color: FlutterFlowTheme.of(context)
-                                            .primaryText,
-                                        size: 16.0,
-                                      ),
+                                  if (bmi != null)
+                                    Builder(
+                                      builder: (context) {
+                                        // Calculate indicator position based on BMI
+                                        // BMI scale: 15 to 40
+                                        // Position from left edge as percentage
+                                        final bmiValue = bmi!;
+                                        double position = 0.0;
+
+                                        if (bmiValue < 15) {
+                                          position = 0.0;
+                                        } else if (bmiValue >= 40) {
+                                          position = 1.0;
+                                        } else {
+                                          // Linear interpolation between 15 and 40
+                                          position =
+                                              (bmiValue - 15) / (40 - 15);
+                                        }
+
+                                        return Align(
+                                          alignment: AlignmentDirectional(
+                                            -1.0 +
+                                                (position *
+                                                    2.0), // Convert 0-1 to -1 to 1
+                                            -1.0,
+                                          ),
+                                          child: Icon(
+                                            FFIcons.ktriangleInvertedFilled,
+                                            color: FlutterFlowTheme.of(context)
+                                                .primaryText,
+                                            size: 16.0,
+                                          ),
+                                        );
+                                      },
                                     ),
-                                  ),
                                 ],
                               ),
                             ),

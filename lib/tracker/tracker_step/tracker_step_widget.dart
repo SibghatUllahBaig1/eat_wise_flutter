@@ -32,6 +32,7 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
   late TrackerStepModel _model;
   final backend = BackendManager();
   List<Map<String, dynamic>>? _stepEntries;
+  bool _isLoading = false;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -46,6 +47,13 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
     _model.dispose();
 
     super.dispose();
+  }
+
+  /// Helper to check if two dates are the same day
+  bool _isSameDay(DateTime date1, DateTime date2) {
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
   }
 
   Future<void> _onDeleteStep(String stepId) async {
@@ -67,7 +75,17 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
 
   /// Load step data from Firestore and update FFAppState
   Future<void> _loadStepData() async {
-    if (currentUserUid.isEmpty) return;
+    if (currentUserUid.isEmpty) {
+      setState(() {
+        _stepEntries = [];
+        _isLoading = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
       final selectedDate = FFAppState().tracker.selectedDate ?? DateTime.now();
@@ -82,8 +100,6 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
         userId: currentUserUid,
         date: selectedDate,
       );
-
-      _stepEntries = entries;
 
       if (summary != null) {
         // Update FFAppState with real data
@@ -125,13 +141,22 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
             settings.step.goal = goal;
           });
         }
+      }
 
-        if (mounted) {
-          setState(() {});
-        }
+      if (mounted) {
+        setState(() {
+          _stepEntries = entries;
+          _isLoading = false;
+        });
       }
     } catch (e) {
       print('Error loading step data: $e');
+      if (mounted) {
+        setState(() {
+          _stepEntries = [];
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -141,7 +166,11 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
 
     // Reload data when selected date changes
     final selectedDate = FFAppState().tracker.selectedDate ?? DateTime.now();
-    if (_model.lastLoadedDate != selectedDate) {
+    final needsReload = (_model.lastLoadedDate == null ||
+            !_isSameDay(_model.lastLoadedDate!, selectedDate)) &&
+        !_isLoading;
+
+    if (needsReload) {
       _model.lastLoadedDate = selectedDate;
       _stepEntries = null;
       SchedulerBinding.instance.addPostFrameCallback((_) async {
@@ -488,7 +517,6 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
                                 ),
                           ),
                         ),
-
                       ],
                     ),
                   ),

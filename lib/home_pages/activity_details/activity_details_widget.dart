@@ -35,10 +35,11 @@ class _ActivityDetailsWidgetState extends State<ActivityDetailsWidget> {
     super.initState();
     _model = createModel(context, () => ActivityDetailsModel());
 
-    // Prefill form if editing existing activity
+    // Prefill form if using template (activityData passed but will be used to create new activity)
     if (widget.activityData != null) {
       final data = widget.activityData!;
-      _model.activityId = data['id'] as String?;
+      // Don't set activityId - we're using this as a template to create a new activity
+      _model.activityId = null;
       _model.activityName = data['activityName'] as String? ?? '';
       _model.duration = data['duration'] as int? ?? 0;
       _model.favorite = data['isFavorite'] as bool? ?? false;
@@ -296,11 +297,11 @@ class _ActivityDetailsWidgetState extends State<ActivityDetailsWidget> {
                           }
                         },
                       );
-                    }
-                  },
+                      }
+                    },
+                  ),
                 ),
               ),
-            ),
           ],
           flexibleSpace: FlexibleSpaceBar(
             background: Container(
@@ -479,6 +480,8 @@ class _ActivityDetailsWidgetState extends State<ActivityDetailsWidget> {
                                       },
                                     ),
                                     autofocus: false,
+                                    readOnly: _model.activityId !=
+                                        null, // Read-only when viewing existing activity
                                     obscureText: false,
                                     decoration: InputDecoration(
                                       isDense: true,
@@ -631,6 +634,8 @@ class _ActivityDetailsWidgetState extends State<ActivityDetailsWidget> {
                                     controller: _model.textController2,
                                     focusNode: _model.textFieldFocusNode2,
                                     autofocus: false,
+                                    readOnly: _model.activityId !=
+                                        null, // Read-only when viewing existing activity
                                     obscureText: false,
                                     decoration: InputDecoration(
                                       isDense: true,
@@ -764,131 +769,136 @@ class _ActivityDetailsWidgetState extends State<ActivityDetailsWidget> {
                 ),
               ),
             ),
-            Padding(
-              padding: EdgeInsets.all(16.0),
-              child: FFButtonWidget(
-                onPressed: () async {
-                  // Validate inputs
-                  final duration =
-                      int.tryParse(_model.textController1.text.trim());
+            // Only show Add button when creating a new activity (not viewing existing)
+            if (_model.activityId == null)
+              Padding(
+                padding: EdgeInsets.all(16.0),
+                child: FFButtonWidget(
+                  onPressed: () async {
+                    // Validate inputs
+                    final duration =
+                        int.tryParse(_model.textController1.text.trim());
 
-                  if (duration == null || duration <= 0) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Please enter a valid duration'),
-                        backgroundColor: FlutterFlowTheme.of(context).error,
-                      ),
-                    );
-                    return;
-                  }
-
-                  if (backend.currentUserId == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Please sign in to add activities'),
-                        backgroundColor: FlutterFlowTheme.of(context).error,
-                      ),
-                    );
-                    return;
-                  }
-
-                  try {
-                    final notes = _model.textController2.text.trim();
-                    // Use the calculated calories from the model (based on template's rate)
-                    final calories = _model.caloriesBurned ?? 0;
-
-                    // Get the selected date from app state or use today
-                    final selectedDate =
-                        FFAppState().tracker.selectedDate ?? DateTime.now();
-
-                    // Add new activity history entry
-                    await backend.activityService.addActivity(
-                      userId: backend.currentUserId!,
-                      date: selectedDate,
-                      activityType: 'template',
-                      activityName: _model.activityName.isNotEmpty
-                          ? _model.activityName
-                          : 'Activity',
-                      duration: duration,
-                      caloriesBurned: calories,
-                      notes: notes.isNotEmpty ? notes : null,
-                      iconName: _model.iconName,
-                    );
-
-                    if (!context.mounted) return;
-
-                    // Navigate back to activity history screen
-                    // Pop the activity details screen and the bottom sheet, then navigate to activity history
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-
-                    // Navigate to activity history screen with the selected date
-                    context.pushNamed(
-                      'ActivityHistory',
-                      queryParameters: {
-                        'selectedDate': serializeParam(
-                          selectedDate,
-                          ParamType.DateTime,
+                    if (duration == null || duration <= 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Please enter a valid duration'),
+                          backgroundColor: FlutterFlowTheme.of(context).error,
                         ),
-                      }.withoutNulls,
-                    );
+                      );
+                      return;
+                    }
 
-                    // Show success message after navigation
-                    Future.delayed(Duration(milliseconds: 500), () {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Activity added successfully!'),
-                            backgroundColor:
-                                FlutterFlowTheme.of(context).success,
+                    if (backend.currentUserId == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Please sign in to add activities'),
+                          backgroundColor: FlutterFlowTheme.of(context).error,
+                        ),
+                      );
+                      return;
+                    }
+
+                    try {
+                      final notes = _model.textController2.text.trim();
+                      // Use the calculated calories from the model (based on template's rate)
+                      final calories = _model.caloriesBurned ?? 0;
+
+                      // Get the selected date from app state or use today
+                      final selectedDate =
+                          FFAppState().tracker.selectedDate ?? DateTime.now();
+
+                      // Add new activity history entry
+                      await backend.activityService.addActivity(
+                        userId: backend.currentUserId!,
+                        date: selectedDate,
+                        activityType: 'template',
+                        activityName: _model.activityName.isNotEmpty
+                            ? _model.activityName
+                            : 'Activity',
+                        duration: duration,
+                        caloriesBurned: calories,
+                        notes: notes.isNotEmpty ? notes : null,
+                        iconName: _model.iconName,
+                      );
+
+                      if (!context.mounted) return;
+
+                      // Navigate back to activity history screen
+                      // Pop the activity details screen and the bottom sheet, then navigate to activity history
+                      Navigator.of(context).popUntil((route) => route.isFirst);
+
+                      // Navigate to activity history screen with the selected date
+                      context.pushNamed(
+                        'ActivityHistory',
+                        queryParameters: {
+                          'selectedDate': serializeParam(
+                            selectedDate,
+                            ParamType.DateTime,
                           ),
-                        );
-                      }
-                    });
-                  } catch (e) {
-                    if (!context.mounted) return;
+                        }.withoutNulls,
+                      );
 
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content:
-                            Text('Failed to add activity: ${e.toString()}'),
-                        backgroundColor: FlutterFlowTheme.of(context).error,
-                      ),
-                    );
-                  }
-                },
-                text: 'Add',
-                icon: Icon(
-                  FFIcons.kplus,
-                  size: 20.0,
-                ),
-                options: FFButtonOptions(
-                  width: double.infinity,
-                  height: 50.0,
-                  padding: EdgeInsetsDirectional.fromSTEB(24.0, 0.0, 24.0, 0.0),
-                  iconPadding:
-                      EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 0.0),
-                  iconColor: FlutterFlowTheme.of(context).info,
-                  color: FlutterFlowTheme.of(context).primary,
-                  textStyle: FlutterFlowTheme.of(context).titleSmall.override(
-                        font: GoogleFonts.inter(
+                      // Show success message after navigation
+                      Future.delayed(Duration(milliseconds: 500), () {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Activity added successfully!'),
+                              backgroundColor:
+                                  FlutterFlowTheme.of(context).success,
+                            ),
+                          );
+                        }
+                      });
+                    } catch (e) {
+                      if (!context.mounted) return;
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content:
+                              Text('Failed to add activity: ${e.toString()}'),
+                          backgroundColor: FlutterFlowTheme.of(context).error,
+                        ),
+                      );
+                    }
+                  },
+                  text: 'Add',
+                  icon: Icon(
+                    FFIcons.kplus,
+                    size: 20.0,
+                  ),
+                  options: FFButtonOptions(
+                    width: double.infinity,
+                    height: 50.0,
+                    padding:
+                        EdgeInsetsDirectional.fromSTEB(24.0, 0.0, 24.0, 0.0),
+                    iconPadding:
+                        EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 0.0),
+                    iconColor: FlutterFlowTheme.of(context).info,
+                    color: FlutterFlowTheme.of(context).primary,
+                    textStyle: FlutterFlowTheme.of(context).titleSmall.override(
+                          font: GoogleFonts.inter(
+                            fontWeight: FlutterFlowTheme.of(context)
+                                .titleSmall
+                                .fontWeight,
+                            fontStyle: FlutterFlowTheme.of(context)
+                                .titleSmall
+                                .fontStyle,
+                          ),
+                          color: FlutterFlowTheme.of(context).info,
+                          letterSpacing: 0.0,
                           fontWeight: FlutterFlowTheme.of(context)
                               .titleSmall
                               .fontWeight,
                           fontStyle:
                               FlutterFlowTheme.of(context).titleSmall.fontStyle,
                         ),
-                        color: FlutterFlowTheme.of(context).info,
-                        letterSpacing: 0.0,
-                        fontWeight:
-                            FlutterFlowTheme.of(context).titleSmall.fontWeight,
-                        fontStyle:
-                            FlutterFlowTheme.of(context).titleSmall.fontStyle,
-                      ),
-                  elevation: 0.0,
-                  borderRadius: BorderRadius.circular(12.0),
+                    elevation: 0.0,
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),

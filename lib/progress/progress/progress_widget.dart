@@ -48,6 +48,10 @@ class _ProgressWidgetState extends State<ProgressWidget>
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       FFAppState().NavBar = 2;
       safeSetState(() {});
+
+      // Load chart data from Firestore
+      await _model.loadChartData(context);
+      safeSetState(() {});
     });
 
     animationsMap.addAll({
@@ -110,44 +114,7 @@ class _ProgressWidgetState extends State<ProgressWidget>
                   fontStyle: FlutterFlowTheme.of(context).titleLarge.fontStyle,
                 ),
           ),
-          actions: [
-            Builder(
-              builder: (context) => Padding(
-                padding: EdgeInsetsDirectional.fromSTEB(0.0, 6.0, 16.0, 6.0),
-                child: FlutterFlowIconButton(
-                  borderRadius: 22.0,
-                  buttonSize: 44.0,
-                  icon: Icon(
-                    FFIcons.kcalendarEvent,
-                    color: FlutterFlowTheme.of(context).primaryText,
-                    size: 24.0,
-                  ),
-                  onPressed: () async {
-                    await showDialog(
-                      barrierColor: FlutterFlowTheme.of(context).barrier,
-                      context: context,
-                      builder: (dialogContext) {
-                        return Dialog(
-                          elevation: 0,
-                          insetPadding: EdgeInsets.zero,
-                          backgroundColor: Colors.transparent,
-                          alignment: AlignmentDirectional(0.0, 0.0)
-                              .resolve(Directionality.of(context)),
-                          child: GestureDetector(
-                            onTap: () {
-                              FocusScope.of(dialogContext).unfocus();
-                              FocusManager.instance.primaryFocus?.unfocus();
-                            },
-                            child: ZCalendarWidget(),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-            ),
-          ],
+          actions: [],
           flexibleSpace: FlexibleSpaceBar(
             background: Container(
               width: double.infinity,
@@ -371,72 +338,6 @@ class _ProgressWidgetState extends State<ProgressWidget>
                       ),
                     ),
                   ),
-                  Padding(
-                    padding: EdgeInsetsDirectional.fromSTEB(6.0, 6.0, 6.0, 6.0),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.max,
-                      children: [
-                        FlutterFlowIconButton(
-                          borderRadius: 22.0,
-                          buttonSize: 44.0,
-                          fillColor: FlutterFlowTheme.of(context).transparent,
-                          icon: Icon(
-                            FFIcons.kchevronLeft,
-                            color: FlutterFlowTheme.of(context).primaryText,
-                            size: 22.0,
-                          ),
-                          onPressed: () async {
-                            FFAppState().updateTrackerStruct(
-                              (e) => e
-                                ..selectedDate = functions.getLastDate(
-                                    FFAppState().tracker.selectedDate!),
-                            );
-                            FFAppState().update(() {});
-                          },
-                        ),
-                        Expanded(
-                          child: Text(
-                            dateTimeFormat(
-                                "yMMMd", FFAppState().tracker.selectedDate!),
-                            textAlign: TextAlign.center,
-                            style: FlutterFlowTheme.of(context)
-                                .titleSmall
-                                .override(
-                                  font: GoogleFonts.inter(
-                                    fontWeight: FontWeight.w500,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .fontStyle,
-                                  ),
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.w500,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .titleSmall
-                                      .fontStyle,
-                                ),
-                          ),
-                        ),
-                        FlutterFlowIconButton(
-                          borderRadius: 22.0,
-                          buttonSize: 44.0,
-                          fillColor: FlutterFlowTheme.of(context).transparent,
-                          icon: Icon(
-                            FFIcons.kchevronRight,
-                            color: FlutterFlowTheme.of(context).primaryText,
-                            size: 22.0,
-                          ),
-                          onPressed: () async {
-                            FFAppState().updateTrackerStruct(
-                              (e) => e
-                                ..selectedDate = functions.getNextDate(
-                                    FFAppState().tracker.selectedDate!),
-                            );
-                            FFAppState().update(() {});
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -448,7 +349,8 @@ class _ProgressWidgetState extends State<ProgressWidget>
                   controller: _model.pageViewController ??=
                       PageController(initialPage: 0),
                   onPageChanged: (_) async {
-                    _model.dayType = _model.pageViewCurrentIndex;
+                    await _model.onPeriodTypeChanged(
+                        context, _model.pageViewCurrentIndex);
                     safeSetState(() {});
                   },
                   scrollDirection: Axis.horizontal,

@@ -135,64 +135,142 @@ class _ZWaterTrackerWidgetState extends State<ZWaterTrackerWidget> {
                               mainAxisAlignment: MainAxisAlignment.start,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                RichText(
-                                  textScaler: MediaQuery.of(context).textScaler,
-                                  text: TextSpan(
-                                    children: [
-                                      TextSpan(
-                                        text: valueOrDefault<String>(
-                                          FFAppState()
-                                              .tracker
-                                              .water
-                                              .where((e) =>
-                                                  e.date ==
-                                                  FFAppState()
-                                                      .tracker
-                                                      .currentDate)
-                                              .toList()
-                                              .firstOrNull
-                                              ?.value
-                                              ?.toString(),
-                                          '1250',
-                                        ),
+                                Builder(
+                                  builder: (context) {
+                                    // Get current date water data (always show today's data on main tracker screen)
+                                    final currentDate =
+                                        FFAppState().tracker.currentDate;
+
+                                    debugPrint('=== Water Tracker Widget ===');
+                                    debugPrint('currentDate: $currentDate');
+                                    debugPrint(
+                                        'water list length: ${FFAppState().tracker.water.length}');
+                                    debugPrint(
+                                        'water entries: ${FFAppState().tracker.water.map((w) => 'date=${w.date}, value=${w.value}').join(', ')}');
+
+                                    final currentWater = FFAppState()
+                                        .tracker
+                                        .water
+                                        .where((e) {
+                                          if (e.date == null ||
+                                              currentDate == null) return false;
+                                          final matches = e.date!.year ==
+                                                  currentDate.year &&
+                                              e.date!.month ==
+                                                  currentDate.month &&
+                                              e.date!.day == currentDate.day;
+                                          debugPrint(
+                                              'Checking water entry: date=${e.date}, matches=$matches');
+                                          return matches;
+                                        })
+                                        .toList()
+                                        .firstOrNull;
+
+                                    final waterAmount =
+                                        currentWater?.value ?? 0;
+
+                                    debugPrint('currentWater: $currentWater');
+                                    debugPrint('waterAmount: $waterAmount');
+
+                                    return RichText(
+                                      textScaler:
+                                          MediaQuery.of(context).textScaler,
+                                      text: TextSpan(
+                                        children: [
+                                          TextSpan(
+                                            text: waterAmount.toString(),
+                                            style: FlutterFlowTheme.of(context)
+                                                .headlineMedium
+                                                .override(
+                                                  font: GoogleFonts.inter(
+                                                    fontWeight:
+                                                        FlutterFlowTheme.of(
+                                                                context)
+                                                            .headlineMedium
+                                                            .fontWeight,
+                                                    fontStyle:
+                                                        FlutterFlowTheme.of(
+                                                                context)
+                                                            .headlineMedium
+                                                            .fontStyle,
+                                                  ),
+                                                  fontSize: 24.0,
+                                                  letterSpacing: 0.0,
+                                                  fontWeight:
+                                                      FlutterFlowTheme.of(
+                                                              context)
+                                                          .headlineMedium
+                                                          .fontWeight,
+                                                  fontStyle:
+                                                      FlutterFlowTheme.of(
+                                                              context)
+                                                          .headlineMedium
+                                                          .fontStyle,
+                                                ),
+                                          ),
+                                          TextSpan(
+                                            text: ' ',
+                                            style: TextStyle(),
+                                          ),
+                                          TextSpan(
+                                            text: 'mL',
+                                            style: TextStyle(),
+                                          )
+                                        ],
                                         style: FlutterFlowTheme.of(context)
-                                            .headlineMedium
+                                            .bodyMedium
                                             .override(
                                               font: GoogleFonts.inter(
                                                 fontWeight:
                                                     FlutterFlowTheme.of(context)
-                                                        .headlineMedium
+                                                        .bodyMedium
                                                         .fontWeight,
                                                 fontStyle:
                                                     FlutterFlowTheme.of(context)
-                                                        .headlineMedium
+                                                        .bodyMedium
                                                         .fontStyle,
                                               ),
-                                              fontSize: 24.0,
                                               letterSpacing: 0.0,
                                               fontWeight:
                                                   FlutterFlowTheme.of(context)
-                                                      .headlineMedium
+                                                      .bodyMedium
                                                       .fontWeight,
                                               fontStyle:
                                                   FlutterFlowTheme.of(context)
-                                                      .headlineMedium
+                                                      .bodyMedium
                                                       .fontStyle,
+                                              lineHeight: 1.0,
                                             ),
                                       ),
-                                      TextSpan(
-                                        text: ' ',
-                                        style: TextStyle(),
-                                      ),
-                                      TextSpan(
-                                        text: 'mL',
-                                        style: TextStyle(),
-                                      )
-                                    ],
-                                    style: FlutterFlowTheme.of(context)
-                                        .bodyMedium
-                                        .override(
-                                          font: GoogleFonts.inter(
+                                    );
+                                  },
+                                ),
+                                Builder(
+                                  builder: (context) {
+                                    // Get water goal from settings
+                                    final waterGoal =
+                                        FFAppState().trackerSettings.water.goal;
+
+                                    return Text(
+                                      waterGoal > 0
+                                          ? 'Goal: ${(waterGoal / 1000).toStringAsFixed(3)} mL'
+                                          : 'Goal: --',
+                                      style: FlutterFlowTheme.of(context)
+                                          .bodyMedium
+                                          .override(
+                                            font: GoogleFonts.inter(
+                                              fontWeight:
+                                                  FlutterFlowTheme.of(context)
+                                                      .bodyMedium
+                                                      .fontWeight,
+                                              fontStyle:
+                                                  FlutterFlowTheme.of(context)
+                                                      .bodyMedium
+                                                      .fontStyle,
+                                            ),
+                                            color: FlutterFlowTheme.of(context)
+                                                .secondaryText,
+                                            letterSpacing: 0.0,
                                             fontWeight:
                                                 FlutterFlowTheme.of(context)
                                                     .bodyMedium
@@ -201,108 +279,77 @@ class _ZWaterTrackerWidgetState extends State<ZWaterTrackerWidget> {
                                                 FlutterFlowTheme.of(context)
                                                     .bodyMedium
                                                     .fontStyle,
+                                            lineHeight: 1.0,
                                           ),
-                                          letterSpacing: 0.0,
-                                          fontWeight:
-                                              FlutterFlowTheme.of(context)
-                                                  .bodyMedium
-                                                  .fontWeight,
-                                          fontStyle:
-                                              FlutterFlowTheme.of(context)
-                                                  .bodyMedium
-                                                  .fontStyle,
-                                          lineHeight: 1.0,
-                                        ),
-                                  ),
-                                ),
-                                Text(
-                                  'Goal: 3.500 mL',
-                                  style: FlutterFlowTheme.of(context)
-                                      .bodyMedium
-                                      .override(
-                                        font: GoogleFonts.inter(
-                                          fontWeight:
-                                              FlutterFlowTheme.of(context)
-                                                  .bodyMedium
-                                                  .fontWeight,
-                                          fontStyle:
-                                              FlutterFlowTheme.of(context)
-                                                  .bodyMedium
-                                                  .fontStyle,
-                                        ),
-                                        color: FlutterFlowTheme.of(context)
-                                            .secondaryText,
-                                        letterSpacing: 0.0,
-                                        fontWeight: FlutterFlowTheme.of(context)
-                                            .bodyMedium
-                                            .fontWeight,
-                                        fontStyle: FlutterFlowTheme.of(context)
-                                            .bodyMedium
-                                            .fontStyle,
-                                        lineHeight: 1.0,
-                                      ),
+                                    );
+                                  },
                                 ),
                               ].divide(SizedBox(height: 16.0)),
                             ),
                           ),
-                          CircularPercentIndicator(
-                            percent: valueOrDefault<double>(
-                              FFAppState()
+                          Builder(
+                            builder: (context) {
+                              // Get current date water data (always show today's data on main tracker screen)
+                              final currentDate =
+                                  FFAppState().tracker.currentDate;
+                              final currentWater = FFAppState()
                                   .tracker
                                   .water
-                                  .where((e) =>
-                                      e.date ==
-                                      FFAppState().tracker.currentDate)
+                                  .where((e) {
+                                    if (e.date == null || currentDate == null)
+                                      return false;
+                                    return e.date!.year == currentDate.year &&
+                                        e.date!.month == currentDate.month &&
+                                        e.date!.day == currentDate.day;
+                                  })
                                   .toList()
-                                  .firstOrNull
-                                  ?.progress,
-                              0.45,
-                            ),
-                            radius: 32.0,
-                            lineWidth: 7.0,
-                            animation: true,
-                            animateFromLastPercent: true,
-                            progressColor:
-                                FlutterFlowTheme.of(context).waterColor,
-                            backgroundColor:
-                                FlutterFlowTheme.of(context).divider,
-                            center: Text(
-                              valueOrDefault<String>(
-                                '${valueOrDefault<String>(
-                                  ((FFAppState()
-                                                  .tracker
-                                                  .water
-                                                  .where((e) =>
-                                                      e.date ==
-                                                      FFAppState()
-                                                          .tracker
-                                                          .currentDate)
-                                                  .toList()
-                                                  .firstOrNull
-                                                  ?.progress ??
-                                              0.0) *
-                                          100)
-                                      .toStringAsFixed(0),
-                                  '0',
-                                )}%',
-                                '0%',
-                              ),
-                              style: FlutterFlowTheme.of(context)
-                                  .bodyMedium
-                                  .override(
-                                    font: GoogleFonts.inter(
-                                      fontWeight: FontWeight.w600,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .bodyMedium
-                                          .fontStyle,
-                                    ),
-                                    letterSpacing: 0.0,
-                                    fontWeight: FontWeight.w600,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .bodyMedium
-                                        .fontStyle,
-                                  ),
-                            ),
+                                  .firstOrNull;
+
+                              final waterAmount = currentWater?.value ?? 0;
+                              final waterGoal =
+                                  FFAppState().trackerSettings.water.goal;
+
+                              // Calculate progress
+                              double progress = 0.0;
+                              if (waterGoal > 0) {
+                                progress =
+                                    (waterAmount / waterGoal).clamp(0.0, 1.0);
+                              }
+
+                              final percentage =
+                                  (progress * 100).toStringAsFixed(0);
+
+                              return CircularPercentIndicator(
+                                percent: progress,
+                                radius: 32.0,
+                                lineWidth: 7.0,
+                                animation: true,
+                                animateFromLastPercent: true,
+                                progressColor:
+                                    FlutterFlowTheme.of(context).waterColor,
+                                backgroundColor:
+                                    FlutterFlowTheme.of(context).divider,
+                                center: Text(
+                                  '$percentage%',
+                                  style: FlutterFlowTheme.of(context)
+                                      .bodyMedium
+                                      .override(
+                                        font: GoogleFonts.inter(
+                                          fontWeight: FontWeight.w600,
+                                          fontStyle:
+                                              FlutterFlowTheme.of(context)
+                                                  .bodyMedium
+                                                  .fontStyle,
+                                        ),
+                                        letterSpacing: 0.0,
+                                        fontWeight: FontWeight.w600,
+                                        fontStyle: FlutterFlowTheme.of(context)
+                                            .bodyMedium
+                                            .fontStyle,
+                                      ),
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),

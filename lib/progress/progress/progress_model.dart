@@ -1,4 +1,6 @@
 import '/backend/schema/structs/index.dart';
+import '/backend/firestore/chart_data_service.dart';
+import '/auth/firebase_auth/auth_util.dart';
 import '/flutter_flow/flutter_flow_animations.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -26,6 +28,13 @@ class ProgressModel extends FlutterFlowModel<ProgressWidget> {
   int? dayType = 0;
 
   ///  State fields for stateful widgets in this page.
+
+  // Chart data service
+  final ChartDataService _chartDataService = ChartDataService();
+
+  // Loading state
+  bool _isLoadingChartData = false;
+  bool get isLoadingChartData => _isLoadingChartData;
 
   // State field(s) for PageView widget.
   PageController? pageViewController;
@@ -77,6 +86,49 @@ class ProgressModel extends FlutterFlowModel<ProgressWidget> {
     chartStepModel3 = createModel(context, () => ChartStepModel());
     chartWeightModel3 = createModel(context, () => ChartWeightModel());
     zNawBarModel = createModel(context, () => ZNawBarModel());
+  }
+
+  /// Load chart data from Firestore
+  Future<void> loadChartData(BuildContext context) async {
+    final userId = currentUserUid;
+    if (userId.isEmpty) {
+      debugPrint('Cannot load chart data: User not authenticated');
+      return;
+    }
+
+    _isLoadingChartData = true;
+
+    try {
+      final selectedDate = FFAppState().tracker.selectedDate ?? DateTime.now();
+      final periodType = dayType ?? 0;
+
+      debugPrint(
+          'Loading chart data for period: $periodType, date: $selectedDate');
+
+      final chartData = await _chartDataService.loadChartData(
+        userId: userId,
+        selectedDate: selectedDate,
+        periodType: periodType,
+      );
+
+      // Update FFAppState with the loaded chart data
+      FFAppState().update(() {
+        FFAppState().chart = chartData;
+      });
+
+      debugPrint('Chart data loaded successfully');
+    } catch (e) {
+      debugPrint('Error loading chart data: $e');
+    } finally {
+      _isLoadingChartData = false;
+    }
+  }
+
+  /// Reload chart data when period type changes
+  Future<void> onPeriodTypeChanged(
+      BuildContext context, int newPeriodType) async {
+    dayType = newPeriodType;
+    await loadChartData(context);
   }
 
   @override

@@ -32,12 +32,14 @@ void main() async {
   await appState.initializePersistedState();
 
   // Clear old hardcoded tracker data to ensure fresh start
+  final today = DateTime.now();
+  final normalizedToday = DateTime(today.year, today.month, today.day);
   appState.updateTrackerStruct((e) => e
     ..step = []
     ..water = []
     ..weight = []
-    ..currentDate = DateTime.now()
-    ..selectedDate = DateTime.now());
+    ..currentDate = normalizedToday
+    ..selectedDate = normalizedToday);
 
   runApp(ChangeNotifierProvider(
     create: (context) => appState,

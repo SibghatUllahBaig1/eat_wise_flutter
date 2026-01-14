@@ -174,11 +174,11 @@ class TrackerController extends ChangeNotifier {
     }
   }
 
-  /// Add weight entry
-  Future<bool> addWeightEntry({
+  /// Add or update weight entry
+  Future<bool> addOrUpdateWeight({
     required double weight,
-    required String unit,
-    String? notes,
+    double? startWeight,
+    double? goalWeight,
   }) async {
     if (currentUserId == null) return false;
 
@@ -186,12 +186,12 @@ class TrackerController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _backend.weightTrackerService.addWeightEntry(
+      await _backend.weightTrackerService.addOrUpdateWeight(
         userId: currentUserId!,
         date: _selectedDate,
         weight: weight,
-        unit: unit,
-        notes: notes,
+        startWeight: startWeight,
+        goalWeight: goalWeight,
       );
 
       // Reload weight data

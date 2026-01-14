@@ -2,73 +2,129 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firestore_service.dart';
 
 /// Service for managing weight tracking
+/// Uses a simple structure similar to step tracker: one document per date
 class WeightTrackerService extends FirestoreService {
-  /// Add weight entry
-  Future<String> addWeightEntry({
+  /// Add or update weight for a specific date
+  Future<void> addOrUpdateWeight({
     required String userId,
     required DateTime date,
     required double weight,
-    required String unit, // kg or lbs
-    String? notes,
+    double? startWeight,
+    double? goalWeight,
   }) async {
     try {
-      final weightCollection = usersCollection.doc(userId).collection('weight_tracker');
-      
+      final weightCollection =
+          usersCollection.doc(userId).collection('weight_tracker');
+
+      // Use date as document ID to ensure one entry per day
+      final dateKey =
+          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+
+      // Calculate progress if we have start and goal weights
+      double? progress;
+      if (startWeight != null &&
+          goalWeight != null &&
+          startWeight != goalWeight) {
+        final totalChange = goalWeight - startWeight;
+        final currentChange = weight - startWeight;
+        progress = totalChange != 0
+            ? (currentChange / totalChange).clamp(0.0, 1.0)
+            : 0.0;
+      }
+
       final data = {
         'userId': userId,
         'date': dateTimeToTimestamp(date),
         'weight': weight,
-        'unit': unit,
-        'notes': notes,
-        'createdAt': FieldValue.serverTimestamp(),
+        'unit': 'kg',
+        'progress': progress,
+        'startWeight': startWeight,
+        'goalWeight': goalWeight,
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
-      final docRef = await weightCollection.add(data);
-      return docRef.id;
+      await weightCollection.doc(dateKey).set(data, SetOptions(merge: true));
     } catch (e) {
       throw Exception(handleFirestoreError(e));
     }
   }
 
-  /// Update weight entry
-  Future<void> updateWeightEntry({
+  /// Get weight for a specific date
+  Future<Map<String, dynamic>?> getWeightForDate({
     required String userId,
-    required String entryId,
-    double? weight,
-    String? unit,
-    String? notes,
+    required DateTime date,
   }) async {
     try {
-      final weightDoc = usersCollection.doc(userId).collection('weight_tracker').doc(entryId);
-      
-      final data = <String, dynamic>{
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
+      final dateKey =
+          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
-      if (weight != null) data['weight'] = weight;
-      if (unit != null) data['unit'] = unit;
-      if (notes != null) data['notes'] = notes;
+      final doc = await usersCollection
+          .doc(userId)
+          .collection('weight_tracker')
+          .doc(dateKey)
+          .get();
 
-      await weightDoc.update(data);
+      if (!doc.exists) return null;
+
+      final data = doc.data()!;
+      data['id'] = doc.id;
+      data['date'] = timestampToDateTime(data['date']);
+      data['updatedAt'] = timestampToDateTime(data['updatedAt']);
+
+      return data;
     } catch (e) {
       throw Exception(handleFirestoreError(e));
     }
   }
 
-  /// Delete weight entry
+  /// Delete weight entry for a specific date
   Future<void> deleteWeightEntry({
     required String userId,
-    required String entryId,
+    required DateTime date,
   }) async {
     try {
-      await usersCollection.doc(userId).collection('weight_tracker').doc(entryId).delete();
+      final dateKey =
+          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      await usersCollection
+          .doc(userId)
+          .collection('weight_tracker')
+          .doc(dateKey)
+          .delete();
     } catch (e) {
       throw Exception(handleFirestoreError(e));
     }
   }
 
-  /// Get weight entries for a date range
+  /// Get the most recent weight entry before a specific date
+  Future<Map<String, dynamic>?> getLastWeightBefore({
+    required String userId,
+    required DateTime beforeDate,
+  }) async {
+    try {
+      final snapshot = await usersCollection
+          .doc(userId)
+          .collection('weight_tracker')
+          .where('date', isLessThan: dateTimeToTimestamp(beforeDate))
+          .orderBy('date', descending: true)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isEmpty) return null;
+
+      final doc = snapshot.docs.first;
+      final data = doc.data();
+      data['id'] = doc.id;
+      data['date'] = timestampToDateTime(data['date']);
+      data['createdAt'] = timestampToDateTime(data['createdAt']);
+      data['updatedAt'] = timestampToDateTime(data['updatedAt']);
+
+      return data;
+    } catch (e) {
+      throw Exception(handleFirestoreError(e));
+    }
+  }
+
+  /// Get weight history for a date range
   Future<List<Map<String, dynamic>>> getWeightHistory({
     required String userId,
     required DateTime startDate,
@@ -87,7 +143,6 @@ class WeightTrackerService extends FirestoreService {
         final data = doc.data();
         data['id'] = doc.id;
         data['date'] = timestampToDateTime(data['date']);
-        data['createdAt'] = timestampToDateTime(data['createdAt']);
         data['updatedAt'] = timestampToDateTime(data['updatedAt']);
         return data;
       }).toList();
@@ -96,7 +151,7 @@ class WeightTrackerService extends FirestoreService {
     }
   }
 
-  /// Stream weight history
+  /// Stream weight history (last N entries)
   Stream<List<Map<String, dynamic>>> streamWeightHistory({
     required String userId,
     int limit = 30,
@@ -112,7 +167,6 @@ class WeightTrackerService extends FirestoreService {
         final data = doc.data();
         data['id'] = doc.id;
         data['date'] = timestampToDateTime(data['date']);
-        data['createdAt'] = timestampToDateTime(data['createdAt']);
         data['updatedAt'] = timestampToDateTime(data['updatedAt']);
         return data;
       }).toList();
@@ -132,53 +186,47 @@ class WeightTrackerService extends FirestoreService {
           .get();
 
       if (snapshot.docs.isEmpty) return null;
-      
+
       final doc = snapshot.docs.first;
       final data = doc.data();
       data['id'] = doc.id;
       data['date'] = timestampToDateTime(data['date']);
-      data['createdAt'] = timestampToDateTime(data['createdAt']);
       data['updatedAt'] = timestampToDateTime(data['updatedAt']);
-      
+
       return data;
     } catch (e) {
       throw Exception(handleFirestoreError(e));
     }
   }
 
-  /// Calculate weight progress
-  Future<Map<String, dynamic>> getWeightProgress({
+  /// Get starting weight (first entry)
+  Future<Map<String, dynamic>?> getStartingWeight({
     required String userId,
-    required double targetWeight,
-    required String unit,
   }) async {
     try {
-      final latest = await getLatestWeight(userId: userId);
-      if (latest == null) {
-        return {
-          'currentWeight': 0.0,
-          'targetWeight': targetWeight,
-          'difference': 0.0,
-          'progress': 0.0,
-          'unit': unit,
-        };
-      }
+      final snapshot = await usersCollection
+          .doc(userId)
+          .collection('weight_tracker')
+          .orderBy('date', descending: false)
+          .limit(1)
+          .get();
 
-      final currentWeight = latest['weight'] as double;
-      final difference = currentWeight - targetWeight;
-      final progress = difference.abs() / currentWeight;
+      if (snapshot.docs.isEmpty) return null;
 
-      return {
-        'currentWeight': currentWeight,
-        'targetWeight': targetWeight,
-        'difference': difference,
-        'progress': progress,
-        'unit': unit,
-        'lastUpdated': latest['date'],
-      };
+      final doc = snapshot.docs.first;
+      final data = doc.data();
+      data['id'] = doc.id;
+      data['date'] = timestampToDateTime(data['date']);
+      data['updatedAt'] = timestampToDateTime(data['updatedAt']);
+
+      return data;
     } catch (e) {
       throw Exception(handleFirestoreError(e));
     }
   }
-}
 
+  /// Calculate weight change between two entries
+  double calculateWeightChange(double currentWeight, double previousWeight) {
+    return currentWeight - previousWeight;
+  }
+}

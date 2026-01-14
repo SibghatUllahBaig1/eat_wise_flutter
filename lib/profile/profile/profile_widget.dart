@@ -284,16 +284,17 @@ class _ProfileWidgetState extends State<ProfileWidget>
                                   width: 50.0,
                                   height: 50.0,
                                   decoration: BoxDecoration(
-                                    color: FlutterFlowTheme.of(context).divider,
-                                    image: DecorationImage(
-                                      fit: BoxFit.cover,
-                                      image: Image.network(
-                                        FFAppConstants.user,
-                                      ).image,
-                                    ),
+                                    color: FlutterFlowTheme.of(context)
+                                        .secondaryBackground,
                                     shape: BoxShape.circle,
                                   ),
                                   alignment: AlignmentDirectional(0.0, 0.0),
+                                  child: Icon(
+                                    Icons.person,
+                                    size: 30.0,
+                                    color: FlutterFlowTheme.of(context)
+                                        .secondaryText,
+                                  ),
                                 ),
                                 Expanded(
                                   child: Padding(

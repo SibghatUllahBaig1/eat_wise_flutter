@@ -1,4 +1,6 @@
 import '/backend/schema/structs/index.dart';
+import '/backend/firestore/weight_tracker_service.dart';
+import '/auth/firebase_auth/auth_util.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -567,7 +569,129 @@ class _ZWeightTrackerEditWidgetState extends State<ZWeightTrackerEditWidget> {
                   Expanded(
                     child: FFButtonWidget(
                       onPressed: () async {
-                        Navigator.pop(context);
+                        // Parse weight from text field
+                        final weightText = _model.textController.text.trim();
+                        if (weightText.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Please enter a weight value'),
+                              backgroundColor:
+                                  FlutterFlowTheme.of(context).error,
+                            ),
+                          );
+                          return;
+                        }
+
+                        final weight = double.tryParse(weightText);
+                        if (weight == null || weight <= 0) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Please enter a valid weight'),
+                              backgroundColor:
+                                  FlutterFlowTheme.of(context).error,
+                            ),
+                          );
+                          return;
+                        }
+
+                        // Get user ID
+                        final userId = currentUserUid;
+                        if (userId.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('User not logged in'),
+                              backgroundColor:
+                                  FlutterFlowTheme.of(context).error,
+                            ),
+                          );
+                          return;
+                        }
+
+                        // Get start and goal weights
+                        final weightList = FFAppState().tracker.weight;
+
+                        // Get oldest weight as starting weight
+                        final startWeight = weightList.isNotEmpty
+                            ? weightList
+                                .reduce((a, b) => (a.date?.isBefore(
+                                            b.date ?? DateTime.now()) ??
+                                        false)
+                                    ? a
+                                    : b)
+                                .value
+                                ?.toDouble()
+                            : null;
+
+                        // Get goal weight from settings
+                        final goalWeight = FFAppState()
+                            .trackerSettings
+                            .weight
+                            .goalWeight
+                            .toDouble();
+
+                        // Save to Firestore
+                        try {
+                          final service = WeightTrackerService();
+                          await service.addOrUpdateWeight(
+                            userId: userId,
+                            date: FFAppState().tracker.selectedDate ??
+                                DateTime.now(),
+                            weight: weight,
+                            startWeight: startWeight,
+                            goalWeight: goalWeight,
+                          );
+
+                          // Update local state
+                          FFAppState().updateTrackerStruct((e) => e
+                            ..updateWeight((weightList) {
+                              // Find if entry exists for selected date
+                              final selectedDate =
+                                  FFAppState().tracker.selectedDate;
+                              final existingIndex = weightList.indexWhere(
+                                (w) => w.date == selectedDate,
+                              );
+
+                              final newEntry = TrackerValueStruct(
+                                date: selectedDate,
+                                value: weight.toInt(),
+                                unit: 'kg',
+                                progress:
+                                    startWeight != null && goalWeight != null
+                                        ? ((weight - startWeight) /
+                                                (goalWeight - startWeight))
+                                            .clamp(0.0, 1.0)
+                                        : 0.0,
+                              );
+
+                              if (existingIndex >= 0) {
+                                weightList[existingIndex] = newEntry;
+                              } else {
+                                weightList.add(newEntry);
+                              }
+                            }));
+                          FFAppState().update(() {});
+
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Weight saved successfully'),
+                                backgroundColor:
+                                    FlutterFlowTheme.of(context).success,
+                              ),
+                            );
+                            Navigator.pop(context);
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Failed to save weight: $e'),
+                                backgroundColor:
+                                    FlutterFlowTheme.of(context).error,
+                              ),
+                            );
+                          }
+                        }
                       },
                       text: 'Save',
                       options: FFButtonOptions(

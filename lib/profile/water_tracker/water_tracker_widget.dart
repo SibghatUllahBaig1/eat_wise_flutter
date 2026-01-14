@@ -12,7 +12,6 @@ import '/profile/components/z_ringtone/z_ringtone_widget.dart';
 import 'dart:ui';
 import '/flutter_flow/custom_functions.dart' as functions;
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'water_tracker_model.dart';
@@ -38,28 +37,11 @@ class _WaterTrackerWidgetState extends State<WaterTrackerWidget> {
     super.initState();
     _model = createModel(context, () => WaterTrackerModel());
 
-    // On page load action.
-    SchedulerBinding.instance.addPostFrameCallback((_) async {
-      _model.soundVolume = FFAppState().trackerSettings.water.soundVolume;
-      safeSetState(() {});
-    });
-
     WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
   }
 
   @override
   void dispose() {
-    // On page dispose action.
-    () async {
-      FFAppState().updateTrackerSettingsStruct(
-        (e) => e
-          ..updateWater(
-            (e) => e..soundVolume = _model.sliderValue,
-          ),
-      );
-      safeSetState(() {});
-    }();
-
     _model.dispose();
 
     super.dispose();
@@ -93,13 +75,6 @@ class _WaterTrackerWidgetState extends State<WaterTrackerWidget> {
                 size: 24.0,
               ),
               onPressed: () async {
-                FFAppState().updateTrackerSettingsStruct(
-                  (e) => e
-                    ..updateWater(
-                      (e) => e..soundVolume = _model.sliderValue,
-                    ),
-                );
-                safeSetState(() {});
                 context.pop();
               },
             ),
@@ -603,51 +578,6 @@ class _WaterTrackerWidgetState extends State<WaterTrackerWidget> {
                               ),
                             ),
                           ),
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsetsDirectional.fromSTEB(
-                            16.0, 0.0, 16.0, 0.0),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.max,
-                          children: [
-                            Icon(
-                              FFIcons.kvolumeX,
-                              color: FlutterFlowTheme.of(context).primaryText,
-                              size: 24.0,
-                            ),
-                            Expanded(
-                              child: SliderTheme(
-                                data: SliderThemeData(
-                                  showValueIndicator: ShowValueIndicator.always,
-                                ),
-                                child: Slider(
-                                  activeColor:
-                                      FlutterFlowTheme.of(context).primary,
-                                  inactiveColor:
-                                      FlutterFlowTheme.of(context).alternate,
-                                  min: 0.0,
-                                  max: 10.0,
-                                  value: _model.sliderValue ??= FFAppState()
-                                      .trackerSettings
-                                      .water
-                                      .soundVolume,
-                                  label: _model.sliderValue?.toStringAsFixed(2),
-                                  onChanged: (newValue) {
-                                    newValue = double.parse(
-                                        newValue.toStringAsFixed(2));
-                                    safeSetState(
-                                        () => _model.sliderValue = newValue);
-                                  },
-                                ),
-                              ),
-                            ),
-                            Icon(
-                              FFIcons.kvolumeMax,
-                              color: FlutterFlowTheme.of(context).primaryText,
-                              size: 24.0,
-                            ),
-                          ],
                         ),
                       ),
                       InkWell(

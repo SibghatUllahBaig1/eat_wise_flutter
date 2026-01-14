@@ -132,64 +132,127 @@ class _ZStepTrackerWidgetState extends State<ZStepTrackerWidget> {
                               mainAxisAlignment: MainAxisAlignment.start,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                RichText(
-                                  textScaler: MediaQuery.of(context).textScaler,
-                                  text: TextSpan(
-                                    children: [
-                                      TextSpan(
-                                        text: valueOrDefault<String>(
-                                          FFAppState()
-                                              .tracker
-                                              .step
-                                              .where((e) =>
-                                                  e.date ==
-                                                  FFAppState()
-                                                      .tracker
-                                                      .currentDate)
-                                              .toList()
-                                              .firstOrNull
-                                              ?.value
-                                              ?.toString(),
-                                          '3840',
-                                        ),
+                                Builder(
+                                  builder: (context) {
+                                    // Get current date step data (always show today's data on main tracker screen)
+                                    final currentDate =
+                                        FFAppState().tracker.currentDate;
+                                    final currentStep = FFAppState()
+                                        .tracker
+                                        .step
+                                        .where((e) {
+                                          if (e.date == null ||
+                                              currentDate == null) return false;
+                                          return e.date!.year ==
+                                                  currentDate.year &&
+                                              e.date!.month ==
+                                                  currentDate.month &&
+                                              e.date!.day == currentDate.day;
+                                        })
+                                        .toList()
+                                        .firstOrNull;
+
+                                    final stepCount = currentStep?.value ?? 0;
+
+                                    return RichText(
+                                      textScaler:
+                                          MediaQuery.of(context).textScaler,
+                                      text: TextSpan(
+                                        children: [
+                                          TextSpan(
+                                            text: stepCount.toString(),
+                                            style: FlutterFlowTheme.of(context)
+                                                .headlineMedium
+                                                .override(
+                                                  font: GoogleFonts.inter(
+                                                    fontWeight:
+                                                        FlutterFlowTheme.of(
+                                                                context)
+                                                            .headlineMedium
+                                                            .fontWeight,
+                                                    fontStyle:
+                                                        FlutterFlowTheme.of(
+                                                                context)
+                                                            .headlineMedium
+                                                            .fontStyle,
+                                                  ),
+                                                  fontSize: 24.0,
+                                                  letterSpacing: 0.0,
+                                                  fontWeight:
+                                                      FlutterFlowTheme.of(
+                                                              context)
+                                                          .headlineMedium
+                                                          .fontWeight,
+                                                  fontStyle:
+                                                      FlutterFlowTheme.of(
+                                                              context)
+                                                          .headlineMedium
+                                                          .fontStyle,
+                                                ),
+                                          ),
+                                          TextSpan(
+                                            text: ' ',
+                                            style: TextStyle(),
+                                          ),
+                                          TextSpan(
+                                            text: 'steps',
+                                            style: TextStyle(),
+                                          )
+                                        ],
                                         style: FlutterFlowTheme.of(context)
-                                            .headlineMedium
+                                            .bodyMedium
                                             .override(
                                               font: GoogleFonts.inter(
                                                 fontWeight:
                                                     FlutterFlowTheme.of(context)
-                                                        .headlineMedium
+                                                        .bodyMedium
                                                         .fontWeight,
                                                 fontStyle:
                                                     FlutterFlowTheme.of(context)
-                                                        .headlineMedium
+                                                        .bodyMedium
                                                         .fontStyle,
                                               ),
-                                              fontSize: 24.0,
                                               letterSpacing: 0.0,
                                               fontWeight:
                                                   FlutterFlowTheme.of(context)
-                                                      .headlineMedium
+                                                      .bodyMedium
                                                       .fontWeight,
                                               fontStyle:
                                                   FlutterFlowTheme.of(context)
-                                                      .headlineMedium
+                                                      .bodyMedium
                                                       .fontStyle,
+                                              lineHeight: 1.0,
                                             ),
                                       ),
-                                      TextSpan(
-                                        text: ' ',
-                                        style: TextStyle(),
-                                      ),
-                                      TextSpan(
-                                        text: 'steps',
-                                        style: TextStyle(),
-                                      )
-                                    ],
-                                    style: FlutterFlowTheme.of(context)
-                                        .bodyMedium
-                                        .override(
-                                          font: GoogleFonts.inter(
+                                    );
+                                  },
+                                ),
+                                Builder(
+                                  builder: (context) {
+                                    // Get step goal from settings
+                                    final stepGoal =
+                                        FFAppState().trackerSettings.step.goal;
+
+                                    return Text(
+                                      stepGoal > 0
+                                          ? 'Goal: ${(stepGoal / 1000).toStringAsFixed(3)} steps'
+                                          : 'Goal: --',
+                                      style: FlutterFlowTheme.of(context)
+                                          .bodyMedium
+                                          .override(
+                                            font: GoogleFonts.inter(
+                                              fontWeight:
+                                                  FlutterFlowTheme.of(context)
+                                                      .bodyMedium
+                                                      .fontWeight,
+                                              fontStyle:
+                                                  FlutterFlowTheme.of(context)
+                                                      .bodyMedium
+                                                      .fontStyle,
+                                            ),
+                                            color: FlutterFlowTheme.of(context)
+                                                .secondaryText,
+                                            letterSpacing: 0.0,
                                             fontWeight:
                                                 FlutterFlowTheme.of(context)
                                                     .bodyMedium
@@ -198,108 +261,77 @@ class _ZStepTrackerWidgetState extends State<ZStepTrackerWidget> {
                                                 FlutterFlowTheme.of(context)
                                                     .bodyMedium
                                                     .fontStyle,
+                                            lineHeight: 1.0,
                                           ),
-                                          letterSpacing: 0.0,
-                                          fontWeight:
-                                              FlutterFlowTheme.of(context)
-                                                  .bodyMedium
-                                                  .fontWeight,
-                                          fontStyle:
-                                              FlutterFlowTheme.of(context)
-                                                  .bodyMedium
-                                                  .fontStyle,
-                                          lineHeight: 1.0,
-                                        ),
-                                  ),
-                                ),
-                                Text(
-                                  'Goal: 6.000 steps',
-                                  style: FlutterFlowTheme.of(context)
-                                      .bodyMedium
-                                      .override(
-                                        font: GoogleFonts.inter(
-                                          fontWeight:
-                                              FlutterFlowTheme.of(context)
-                                                  .bodyMedium
-                                                  .fontWeight,
-                                          fontStyle:
-                                              FlutterFlowTheme.of(context)
-                                                  .bodyMedium
-                                                  .fontStyle,
-                                        ),
-                                        color: FlutterFlowTheme.of(context)
-                                            .secondaryText,
-                                        letterSpacing: 0.0,
-                                        fontWeight: FlutterFlowTheme.of(context)
-                                            .bodyMedium
-                                            .fontWeight,
-                                        fontStyle: FlutterFlowTheme.of(context)
-                                            .bodyMedium
-                                            .fontStyle,
-                                        lineHeight: 1.0,
-                                      ),
+                                    );
+                                  },
                                 ),
                               ].divide(SizedBox(height: 16.0)),
                             ),
                           ),
-                          CircularPercentIndicator(
-                            percent: valueOrDefault<double>(
-                              FFAppState()
+                          Builder(
+                            builder: (context) {
+                              // Get current date step data (always show today's data on main tracker screen)
+                              final currentDate =
+                                  FFAppState().tracker.currentDate;
+                              final currentStep = FFAppState()
                                   .tracker
                                   .step
-                                  .where((e) =>
-                                      e.date ==
-                                      FFAppState().tracker.currentDate)
+                                  .where((e) {
+                                    if (e.date == null || currentDate == null)
+                                      return false;
+                                    return e.date!.year == currentDate.year &&
+                                        e.date!.month == currentDate.month &&
+                                        e.date!.day == currentDate.day;
+                                  })
                                   .toList()
-                                  .firstOrNull
-                                  ?.progress,
-                              0.64,
-                            ),
-                            radius: 32.0,
-                            lineWidth: 7.0,
-                            animation: true,
-                            animateFromLastPercent: true,
-                            progressColor:
-                                FlutterFlowTheme.of(context).stepColor,
-                            backgroundColor:
-                                FlutterFlowTheme.of(context).divider,
-                            center: Text(
-                              valueOrDefault<String>(
-                                '${valueOrDefault<String>(
-                                  ((FFAppState()
-                                                  .tracker
-                                                  .step
-                                                  .where((e) =>
-                                                      e.date ==
-                                                      FFAppState()
-                                                          .tracker
-                                                          .currentDate)
-                                                  .toList()
-                                                  .firstOrNull
-                                                  ?.progress ??
-                                              0.0) *
-                                          100)
-                                      .toStringAsFixed(0),
-                                  '0',
-                                )}%',
-                                '0%',
-                              ),
-                              style: FlutterFlowTheme.of(context)
-                                  .bodyMedium
-                                  .override(
-                                    font: GoogleFonts.inter(
-                                      fontWeight: FontWeight.w600,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .bodyMedium
-                                          .fontStyle,
-                                    ),
-                                    letterSpacing: 0.0,
-                                    fontWeight: FontWeight.w600,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .bodyMedium
-                                        .fontStyle,
-                                  ),
-                            ),
+                                  .firstOrNull;
+
+                              final stepCount = currentStep?.value ?? 0;
+                              final stepGoal =
+                                  FFAppState().trackerSettings.step.goal;
+
+                              // Calculate progress
+                              double progress = 0.0;
+                              if (stepGoal > 0) {
+                                progress =
+                                    (stepCount / stepGoal).clamp(0.0, 1.0);
+                              }
+
+                              final percentage =
+                                  (progress * 100).toStringAsFixed(0);
+
+                              return CircularPercentIndicator(
+                                percent: progress,
+                                radius: 32.0,
+                                lineWidth: 7.0,
+                                animation: true,
+                                animateFromLastPercent: true,
+                                progressColor:
+                                    FlutterFlowTheme.of(context).stepColor,
+                                backgroundColor:
+                                    FlutterFlowTheme.of(context).divider,
+                                center: Text(
+                                  '$percentage%',
+                                  style: FlutterFlowTheme.of(context)
+                                      .bodyMedium
+                                      .override(
+                                        font: GoogleFonts.inter(
+                                          fontWeight: FontWeight.w600,
+                                          fontStyle:
+                                              FlutterFlowTheme.of(context)
+                                                  .bodyMedium
+                                                  .fontStyle,
+                                        ),
+                                        letterSpacing: 0.0,
+                                        fontWeight: FontWeight.w600,
+                                        fontStyle: FlutterFlowTheme.of(context)
+                                            .bodyMedium
+                                            .fontStyle,
+                                      ),
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),
