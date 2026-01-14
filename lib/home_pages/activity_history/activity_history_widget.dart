@@ -3,6 +3,7 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/home_pages/components/z_activity_templates/z_activity_templates_widget.dart';
+import '/home_pages/activity_view/activity_view_widget.dart';
 import '/backend/backend_manager.dart';
 import '/auth/firebase_auth/auth_util.dart';
 import 'dart:ui';
@@ -415,16 +416,18 @@ class _ActivityHistoryWidgetState extends State<ActivityHistoryWidget> {
                           hoverColor: Colors.transparent,
                           highlightColor: Colors.transparent,
                           onTap: () async {
-                            // Navigate to Activity Details with the activity data
-                            context.pushNamed(
-                              ActivityDetailsWidget.routeName,
-                              queryParameters: {
-                                'activityData': serializeParam(
-                                  activity,
-                                  ParamType.JSON,
+                            // Navigate to Activity View to view the activity
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ActivityViewWidget(
+                                  activityData: activity,
                                 ),
-                              }.withoutNulls,
+                              ),
                             );
+                            // Reload activities after returning
+                            await _loadActivities();
+                            setState(() {});
                           },
                           child: Container(
                             decoration: BoxDecoration(
