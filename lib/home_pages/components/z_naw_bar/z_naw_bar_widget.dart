@@ -265,72 +265,71 @@ class _ZNawBarWidgetState extends State<ZNawBarWidget> {
                 ),
               ),
             ),
-            // TODO: Recipes tab - Backend not implemented yet
-            // Expanded(
-            //   child: InkWell(
-            //     splashColor: Colors.transparent,
-            //     focusColor: Colors.transparent,
-            //     hoverColor: Colors.transparent,
-            //     highlightColor: Colors.transparent,
-            //     onTap: () async {
-            //       if (FFAppState().NavBar != 3) {
-            //         context.goNamed(
-            //           RecipesWidget.routeName,
-            //           extra: <String, dynamic>{
-            //             kTransitionInfoKey: TransitionInfo(
-            //               hasTransition: true,
-            //               transitionType: PageTransitionType.fade,
-            //               duration: Duration(milliseconds: 0),
-            //             ),
-            //           },
-            //         );
-            //       }
-            //     },
-            //     child: Column(
-            //       mainAxisSize: MainAxisSize.min,
-            //       mainAxisAlignment: MainAxisAlignment.center,
-            //       crossAxisAlignment: CrossAxisAlignment.center,
-            //       children: [
-            //         Icon(
-            //           FFIcons.kchefHat,
-            //           color: FFAppState().NavBar == 3
-            //               ? FlutterFlowTheme.of(context).primary
-            //               : FlutterFlowTheme.of(context).iconColor,
-            //           size: 26.0,
-            //         ),
-            //         Padding(
-            //           padding:
-            //               EdgeInsetsDirectional.fromSTEB(0.0, 8.0, 0.0, 0.0),
-            //           child: Text(
-            //             'Recipes',
-            //             textAlign: TextAlign.center,
-            //             style: FlutterFlowTheme.of(context).labelSmall.override(
-            //                   font: GoogleFonts.inter(
-            //                     fontWeight: FlutterFlowTheme.of(context)
-            //                         .labelSmall
-            //                         .fontWeight,
-            //                     fontStyle: FlutterFlowTheme.of(context)
-            //                         .labelSmall
-            //                         .fontStyle,
-            //                   ),
-            //                   color: FFAppState().NavBar == 3
-            //                       ? FlutterFlowTheme.of(context).primary
-            //                       : FlutterFlowTheme.of(context).secondaryText,
-            //                   letterSpacing: 0.0,
-            //                   fontWeight: FlutterFlowTheme.of(context)
-            //                       .labelSmall
-            //                       .fontWeight,
-            //                   fontStyle: FlutterFlowTheme.of(context)
-            //                       .labelSmall
-            //                       .fontStyle,
-            //                   lineHeight: 1.0,
-            //                 ),
-            //           ),
-            //         ),
-            //       ],
-            //     ),
-            //   ),
-            // ),
+            Expanded(
+              child: InkWell(
+                splashColor: Colors.transparent,
+                focusColor: Colors.transparent,
+                hoverColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+                onTap: () async {
+                  if (FFAppState().NavBar != 3) {
+                    context.goNamed(
+                      RecipesWidget.routeName,
+                      extra: <String, dynamic>{
+                        kTransitionInfoKey: TransitionInfo(
+                          hasTransition: true,
+                          transitionType: PageTransitionType.fade,
+                          duration: Duration(milliseconds: 0),
+                        ),
+                      },
+                    );
+                  }
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Icon(
+                      FFIcons.kchefHat,
+                      color: FFAppState().NavBar == 3
+                          ? FlutterFlowTheme.of(context).primary
+                          : FlutterFlowTheme.of(context).iconColor,
+                      size: 26.0,
+                    ),
+                    Padding(
+                      padding:
+                          EdgeInsetsDirectional.fromSTEB(0.0, 8.0, 0.0, 0.0),
+                      child: Text(
+                        'Recipes',
+                        textAlign: TextAlign.center,
+                        style: FlutterFlowTheme.of(context).labelSmall.override(
+                              font: GoogleFonts.inter(
+                                fontWeight: FlutterFlowTheme.of(context)
+                                    .labelSmall
+                                    .fontWeight,
+                                fontStyle: FlutterFlowTheme.of(context)
+                                    .labelSmall
+                                    .fontStyle,
+                              ),
+                              color: FFAppState().NavBar == 3
+                                  ? FlutterFlowTheme.of(context).primary
+                                  : FlutterFlowTheme.of(context).secondaryText,
+                              letterSpacing: 0.0,
+                              fontWeight: FlutterFlowTheme.of(context)
+                                  .labelSmall
+                                  .fontWeight,
+                              fontStyle: FlutterFlowTheme.of(context)
+                                  .labelSmall
+                                  .fontStyle,
+                              lineHeight: 1.0,
+                            ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             Expanded(
               child: InkWell(
                 splashColor: Colors.transparent,
