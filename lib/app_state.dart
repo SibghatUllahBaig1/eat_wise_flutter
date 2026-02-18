@@ -61,6 +61,17 @@ class FFAppState extends ChangeNotifier {
       }
     });
     _safeInit(() {
+      if (prefs.containsKey('ff_userProfile')) {
+        try {
+          final serializedData = prefs.getString('ff_userProfile') ?? '{}';
+          _userProfile =
+              UserProfileStruct.fromSerializableMap(jsonDecode(serializedData));
+        } catch (e) {
+          print("Can't decode persisted data type. Error: $e.");
+        }
+      }
+    });
+    _safeInit(() {
       _eventDay = prefs.containsKey('ff_eventDay')
           ? DateTime.fromMillisecondsSinceEpoch(prefs.getInt('ff_eventDay')!)
           : _eventDay;
@@ -332,6 +343,18 @@ class FFAppState extends ChangeNotifier {
   void updateNewWeightStruct(Function(WeightStruct) updateFn) {
     updateFn(_newWeight);
     prefs.setString('ff_newWeight', _newWeight.serialize());
+  }
+
+  UserProfileStruct _userProfile = UserProfileStruct();
+  UserProfileStruct get userProfile => _userProfile;
+  set userProfile(UserProfileStruct value) {
+    _userProfile = value;
+    prefs.setString('ff_userProfile', value.serialize());
+  }
+
+  void updateUserProfileStruct(Function(UserProfileStruct) updateFn) {
+    updateFn(_userProfile);
+    prefs.setString('ff_userProfile', _userProfile.serialize());
   }
 
   DateTime? _eventDay = DateTime.fromMillisecondsSinceEpoch(1271919600000);

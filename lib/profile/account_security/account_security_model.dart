@@ -14,6 +14,7 @@ class AccountSecurityModel extends FlutterFlowModel<AccountSecurityWidget> {
   ///  Local state fields for this page.
 
   bool mealtime = false;
+  bool isDeleting = false;
 
   ///  State fields for stateful widgets in this page.
 
@@ -25,6 +26,10 @@ class AccountSecurityModel extends FlutterFlowModel<AccountSecurityWidget> {
   late TextSwitchModel textSwitchModel3;
   // Model for TextSwitch component.
   late TextSwitchModel textSwitchModel4;
+
+  // Text controller for delete confirmation
+  TextEditingController? deleteConfirmationController;
+  FocusNode? deleteConfirmationFocusNode;
 
   @override
   void initState(BuildContext context) {
@@ -40,5 +45,7 @@ class AccountSecurityModel extends FlutterFlowModel<AccountSecurityWidget> {
     textSwitchModel2.dispose();
     textSwitchModel3.dispose();
     textSwitchModel4.dispose();
+    deleteConfirmationController?.dispose();
+    deleteConfirmationFocusNode?.dispose();
   }
 }

@@ -64,6 +64,8 @@ class ProfileModel extends FlutterFlowModel<ProfileWidget> {
   late IconTextRightModel iconTextRightModel12;
   // Model for IconTextRight component.
   late IconTextRightModel iconTextRightModel13;
+  // Model for IconTextRight component.
+  late IconTextRightModel iconTextRightModel14;
   // Model for zNawBar component.
   late ZNawBarModel zNawBarModel;
 
@@ -82,6 +84,7 @@ class ProfileModel extends FlutterFlowModel<ProfileWidget> {
     iconTextRightModel11 = createModel(context, () => IconTextRightModel());
     iconTextRightModel12 = createModel(context, () => IconTextRightModel());
     iconTextRightModel13 = createModel(context, () => IconTextRightModel());
+    iconTextRightModel14 = createModel(context, () => IconTextRightModel());
     zNawBarModel = createModel(context, () => ZNawBarModel());
   }
 
@@ -100,6 +103,7 @@ class ProfileModel extends FlutterFlowModel<ProfileWidget> {
     iconTextRightModel11.dispose();
     iconTextRightModel12.dispose();
     iconTextRightModel13.dispose();
+    iconTextRightModel14.dispose();
     zNawBarModel.dispose();
   }
 }

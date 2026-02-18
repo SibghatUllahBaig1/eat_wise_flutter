@@ -4,9 +4,9 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/home_pages/components/z_naw_bar/z_naw_bar_widget.dart';
+import '/home_pages/components/z_activities/z_activities_widget.dart';
 import '/tracker/components/z_b_m_i_tracker/z_b_m_i_tracker_widget.dart';
 import '/tracker/components/z_calendar/z_calendar_widget.dart';
-import '/tracker/components/z_step_tracker/z_step_tracker_widget.dart';
 import '/tracker/components/z_water_tracker/z_water_tracker_widget.dart';
 import '/tracker/components/z_weight_tracker/z_weight_tracker_widget.dart';
 import 'dart:math';
@@ -98,6 +98,21 @@ class _TrackerWidgetState extends State<TrackerWidget>
         appBar: AppBar(
           backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
           automaticallyImplyLeading: false,
+          leadingWidth: 120.0,
+          leading: Padding(
+            padding: EdgeInsetsDirectional.fromSTEB(0.0, 4.0, 0.0, 0.0),
+            child: SizedBox(
+              width: 80.0,
+              height: 80.0,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(0.0),
+                child: Image.asset(
+                  'assets/images/custom-images/logo.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+          ),
           title: Text(
             'Tracker',
             style: FlutterFlowTheme.of(context).titleLarge.override(
@@ -114,6 +129,7 @@ class _TrackerWidgetState extends State<TrackerWidget>
                 ),
           ),
           actions: [],
+          centerTitle: true,
           flexibleSpace: FlexibleSpaceBar(
             background: Container(
               width: double.infinity,
@@ -123,7 +139,6 @@ class _TrackerWidgetState extends State<TrackerWidget>
               ),
             ),
           ),
-          centerTitle: false,
           elevation: 2.0,
         ),
         body: Column(
@@ -170,9 +185,9 @@ class _TrackerWidgetState extends State<TrackerWidget>
                       padding:
                           EdgeInsetsDirectional.fromSTEB(0.0, 16.0, 0.0, 0.0),
                       child: wrapWithModel(
-                        model: _model.zStepTrackerModel,
+                        model: _model.zActivitiesModel,
                         updateCallback: () => safeSetState(() {}),
-                        child: ZStepTrackerWidget(),
+                        child: ZActivitiesWidget(),
                       ),
                     ),
                     Padding(

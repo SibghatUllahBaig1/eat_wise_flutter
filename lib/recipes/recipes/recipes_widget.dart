@@ -98,6 +98,21 @@ class _RecipesWidgetState extends State<RecipesWidget>
         appBar: AppBar(
           backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
           automaticallyImplyLeading: false,
+          leadingWidth: 120.0,
+          leading: Padding(
+            padding: EdgeInsetsDirectional.fromSTEB(0.0, 4.0, 0.0, 0.0),
+            child: SizedBox(
+              width: 80.0,
+              height: 80.0,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(0.0),
+                child: Image.asset(
+                  'assets/images/custom-images/logo.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+          ),
           title: Text(
             'Recipes',
             style: FlutterFlowTheme.of(context).titleLarge.override(
@@ -181,6 +196,7 @@ class _RecipesWidgetState extends State<RecipesWidget>
               ),
             ),
           ],
+          centerTitle: true,
           flexibleSpace: FlexibleSpaceBar(
             background: Container(
               width: double.infinity,
@@ -190,7 +206,6 @@ class _RecipesWidgetState extends State<RecipesWidget>
               ),
             ),
           ),
-          centerTitle: false,
           elevation: 0.0,
         ),
         body: Column(

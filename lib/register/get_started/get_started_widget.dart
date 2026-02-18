@@ -122,9 +122,9 @@ class _GetStartedWidgetState extends State<GetStartedWidget> {
                       return;
                     }
 
-                    // Navigate to onboarding
+                    // Navigate to new onboarding flow (Step 1)
                     context.goNamedAuth(
-                        OnboardingWidget.routeName, context.mounted);
+                        OnboardingStep1Widget.routeName, context.mounted);
                   },
                   child: Container(
                     width: double.infinity,
@@ -213,9 +213,9 @@ class _GetStartedWidgetState extends State<GetStartedWidget> {
                         return;
                       }
 
-                      // Navigate to onboarding
+                      // Navigate to new onboarding flow (Step 1)
                       context.goNamedAuth(
-                          OnboardingWidget.routeName, context.mounted);
+                          OnboardingStep1Widget.routeName, context.mounted);
                     },
                     child: Container(
                       width: double.infinity,

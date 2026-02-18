@@ -83,14 +83,17 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
       debugLogDiagnostics: true,
       refreshListenable: appStateNotifier,
       navigatorKey: appNavigatorKey,
-      errorBuilder: (context, state) =>
-          appStateNotifier.loggedIn ? HomePageWidget() : EntryPageWidget(),
+      errorBuilder: (context, state) => InitialRouteWidget(),
       routes: [
         FFRoute(
           name: '_initialize',
           path: '/',
-          builder: (context, _) =>
-              appStateNotifier.loggedIn ? HomePageWidget() : EntryPageWidget(),
+          builder: (context, _) => InitialRouteWidget(),
+        ),
+        FFRoute(
+          name: InitialRouteWidget.routeName,
+          path: InitialRouteWidget.routePath,
+          builder: (context, params) => InitialRouteWidget(),
         ),
         FFRoute(
           name: HomePageWidget.routeName,
@@ -151,6 +154,41 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           name: OnboardingWidget.routeName,
           path: OnboardingWidget.routePath,
           builder: (context, params) => OnboardingWidget(),
+        ),
+        FFRoute(
+          name: OnboardingStep1Widget.routeName,
+          path: OnboardingStep1Widget.routePath,
+          builder: (context, params) => OnboardingStep1Widget(),
+        ),
+        FFRoute(
+          name: OnboardingStep2Widget.routeName,
+          path: OnboardingStep2Widget.routePath,
+          builder: (context, params) => OnboardingStep2Widget(),
+        ),
+        FFRoute(
+          name: OnboardingStep3Widget.routeName,
+          path: OnboardingStep3Widget.routePath,
+          builder: (context, params) => OnboardingStep3Widget(),
+        ),
+        FFRoute(
+          name: OnboardingStep4Widget.routeName,
+          path: OnboardingStep4Widget.routePath,
+          builder: (context, params) => OnboardingStep4Widget(),
+        ),
+        FFRoute(
+          name: OnboardingStep5Widget.routeName,
+          path: OnboardingStep5Widget.routePath,
+          builder: (context, params) => OnboardingStep5Widget(),
+        ),
+        FFRoute(
+          name: OnboardingStep6Widget.routeName,
+          path: OnboardingStep6Widget.routePath,
+          builder: (context, params) => OnboardingStep6Widget(),
+        ),
+        FFRoute(
+          name: OnboardingStep7Widget.routeName,
+          path: OnboardingStep7Widget.routePath,
+          builder: (context, params) => OnboardingStep7Widget(),
         ),
         FFRoute(
           name: PlanWidget.routeName,
@@ -277,6 +315,16 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           name: PrivacyPolicyWidget.routeName,
           path: PrivacyPolicyWidget.routePath,
           builder: (context, params) => PrivacyPolicyWidget(),
+        ),
+        FFRoute(
+          name: AboutUsWidget.routeName,
+          path: AboutUsWidget.routePath,
+          builder: (context, params) => AboutUsWidget(),
+        ),
+        FFRoute(
+          name: ContactUsWidget.routeName,
+          path: ContactUsWidget.routePath,
+          builder: (context, params) => ContactUsWidget(),
         ),
         FFRoute(
           name: SocilaMediaWidget.routeName,

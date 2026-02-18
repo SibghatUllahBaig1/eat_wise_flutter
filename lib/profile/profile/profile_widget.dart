@@ -5,6 +5,7 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/home_pages/components/z_naw_bar/z_naw_bar_widget.dart';
+import '/profile/components/delete_account/delete_account_widget.dart';
 import '/profile/components/log_out/log_out_widget.dart';
 import '/profile/components/rate_us/rate_us_widget.dart';
 // import '/profile/components/upgrade_plan/upgrade_plan_widget.dart'; // NOTE: Upgrade Plan has been hidden
@@ -94,6 +95,21 @@ class _ProfileWidgetState extends State<ProfileWidget>
         appBar: AppBar(
           backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
           automaticallyImplyLeading: false,
+          leadingWidth: 120.0,
+          leading: Padding(
+            padding: EdgeInsetsDirectional.fromSTEB(0.0, 4.0, 0.0, 0.0),
+            child: SizedBox(
+              width: 80.0,
+              height: 80.0,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(0.0),
+                child: Image.asset(
+                  'assets/images/custom-images/logo.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+          ),
           title: Text(
             'Profile',
             style: FlutterFlowTheme.of(context).titleLarge.override(
@@ -110,6 +126,7 @@ class _ProfileWidgetState extends State<ProfileWidget>
                 ),
           ),
           actions: [],
+          centerTitle: true,
           flexibleSpace: FlexibleSpaceBar(
             background: Container(
               width: double.infinity,
@@ -119,7 +136,6 @@ class _ProfileWidgetState extends State<ProfileWidget>
               ),
             ),
           ),
-          centerTitle: false,
           elevation: 0.0,
         ),
         body: Column(
@@ -1025,7 +1041,7 @@ class _ProfileWidgetState extends State<ProfileWidget>
                                             FocusManager.instance.primaryFocus
                                                 ?.unfocus();
                                           },
-                                          child: LogOutWidget(),
+                                          child: DeleteAccountWidget(),
                                         ),
                                       );
                                     },
@@ -1033,6 +1049,55 @@ class _ProfileWidgetState extends State<ProfileWidget>
                                 },
                                 child: wrapWithModel(
                                   model: _model.iconTextRightModel13,
+                                  updateCallback: () => safeSetState(() {}),
+                                  child: IconTextRightWidget(
+                                    icon: Icon(
+                                      FFIcons.ktrash01,
+                                      color: FlutterFlowTheme.of(context).error,
+                                      size: 24.0,
+                                    ),
+                                    text: 'Delete Account',
+                                    textColor:
+                                        FlutterFlowTheme.of(context).error,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Builder(
+                              builder: (context) => InkWell(
+                                splashColor: Colors.transparent,
+                                focusColor: Colors.transparent,
+                                hoverColor: Colors.transparent,
+                                highlightColor: Colors.transparent,
+                                onTap: () async {
+                                  await showDialog(
+                                    barrierColor:
+                                        FlutterFlowTheme.of(context).barrier,
+                                    context: context,
+                                    builder: (dialogContext) {
+                                      return Dialog(
+                                        elevation: 0,
+                                        insetPadding: EdgeInsets.zero,
+                                        backgroundColor: Colors.transparent,
+                                        alignment:
+                                            AlignmentDirectional(0.0, 0.0)
+                                                .resolve(
+                                                    Directionality.of(context)),
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            FocusScope.of(dialogContext)
+                                                .unfocus();
+                                            FocusManager.instance.primaryFocus
+                                                ?.unfocus();
+                                          },
+                                          child: LogOutWidget(),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                                child: wrapWithModel(
+                                  model: _model.iconTextRightModel14,
                                   updateCallback: () => safeSetState(() {}),
                                   child: IconTextRightWidget(
                                     icon: Icon(

@@ -28,6 +28,7 @@ class ZStatisticsModel extends FlutterFlowModel<ZStatisticsWidget> {
 
   // Burned calories (placeholder - can be integrated with activity tracking)
   int burnedCalories = 0;
+  int stepCalories = 0;
 
   bool isLoading = false;
 
@@ -47,10 +48,12 @@ class ZStatisticsModel extends FlutterFlowModel<ZStatisticsWidget> {
     try {
       final selectedDate = FFAppState().tracker.selectedDate ?? DateTime.now();
 
-      // Get calorie goal from app state
-      calorieGoal = FFAppState().trackerSettings.calorie.goal > 0
-          ? FFAppState().trackerSettings.calorie.goal
-          : 2000;
+      // Get calorie goal from user profile (from onboarding) or tracker settings
+      calorieGoal = FFAppState().userProfile.dailyCalorieGoal > 0
+          ? FFAppState().userProfile.dailyCalorieGoal
+          : (FFAppState().trackerSettings.calorie.goal > 0
+              ? FFAppState().trackerSettings.calorie.goal
+              : 2000);
 
       // Calculate macros goals based on calorie goal (example ratios)
       // 50% carbs, 30% protein, 20% fat
@@ -83,11 +86,27 @@ class ZStatisticsModel extends FlutterFlowModel<ZStatisticsWidget> {
         date: selectedDate,
       );
 
-      // Calculate total burned calories
+      // Calculate total burned calories from activities
       burnedCalories = 0;
       for (final activity in activities) {
         burnedCalories += (activity['caloriesBurned'] as int?) ?? 0;
       }
+
+      // Load step data for the selected date to get step-based calories
+      final stepSummary = await _backend.stepTrackerService.getStepSummary(
+        userId: currentUserUid,
+        date: selectedDate,
+      );
+
+      // Calculate calories burned from steps (steps × 0.04)
+      stepCalories = 0;
+      if (stepSummary != null) {
+        final totalSteps = (stepSummary['totalSteps'] as int?) ?? 0;
+        stepCalories = (totalSteps * 0.04).round();
+      }
+
+      // Add step calories to total burned calories
+      burnedCalories += stepCalories;
 
       print(
           '📊 Nutrition Summary for ${selectedDate.toString().split(' ')[0]}:');
@@ -95,7 +114,9 @@ class ZStatisticsModel extends FlutterFlowModel<ZStatisticsWidget> {
       print('   Carbs: $totalCarbs / $carbsGoal g');
       print('   Protein: $totalProtein / $proteinGoal g');
       print('   Fat: $totalFat / $fatGoal g');
-      print('   Burned: $burnedCalories cal');
+      print('   Burned from activities: ${burnedCalories - stepCalories} cal');
+      print('   Burned from steps: $stepCalories cal');
+      print('   Total burned: $burnedCalories cal');
     } catch (e) {
       print('❌ Error loading nutrition data: $e');
     } finally {
@@ -105,7 +126,7 @@ class ZStatisticsModel extends FlutterFlowModel<ZStatisticsWidget> {
 
   // Helper methods for progress calculations
   double get calorieProgress =>
-      calorieGoal > 0 ? (totalCalories / calorieGoal).clamp(0.0, 1.0) : 0.0;
+      calorieGoal > 0 ? (totalCalories / calorieGoal) : 0.0;
   double get carbsProgress =>
       carbsGoal > 0 ? (totalCarbs / carbsGoal).clamp(0.0, 1.0) : 0.0;
   double get proteinProgress =>
@@ -113,6 +134,14 @@ class ZStatisticsModel extends FlutterFlowModel<ZStatisticsWidget> {
   double get fatProgress =>
       fatGoal > 0 ? (totalFat / fatGoal).clamp(0.0, 1.0) : 0.0;
 
+  // Check if calories are exceeded
+  bool get isCaloriesExceeded => (totalCalories - burnedCalories) > calorieGoal;
+
+  // Get calories left or excess
   int get caloriesLeft =>
       (calorieGoal - totalCalories + burnedCalories).clamp(0, calorieGoal * 2);
+
+  // Get excess calories (positive value when exceeded)
+  int get caloriesExceeded => ((totalCalories - burnedCalories) - calorieGoal)
+      .clamp(0, calorieGoal * 2);
 }

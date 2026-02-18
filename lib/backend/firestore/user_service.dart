@@ -19,7 +19,7 @@ class UserService extends FirestoreService {
   }) async {
     try {
       final userDoc = usersCollection.doc(userId);
-      
+
       final data = {
         'userId': userId,
         'displayName': displayName,
@@ -48,9 +48,9 @@ class UserService extends FirestoreService {
     try {
       final doc = await usersCollection.doc(userId).get();
       if (!doc.exists) return null;
-      
+
       final data = doc.data() as Map<String, dynamic>;
-      
+
       // Convert timestamps
       if (data['dateOfBirth'] != null) {
         data['dateOfBirth'] = timestampToDateTime(data['dateOfBirth']);
@@ -61,7 +61,7 @@ class UserService extends FirestoreService {
       if (data['updatedAt'] != null) {
         data['updatedAt'] = timestampToDateTime(data['updatedAt']);
       }
-      
+
       return data;
     } catch (e) {
       throw Exception(handleFirestoreError(e));
@@ -72,9 +72,9 @@ class UserService extends FirestoreService {
   Stream<Map<String, dynamic>?> streamUserProfile(String userId) {
     return usersCollection.doc(userId).snapshots().map((doc) {
       if (!doc.exists) return null;
-      
+
       final data = doc.data() as Map<String, dynamic>;
-      
+
       // Convert timestamps
       if (data['dateOfBirth'] != null) {
         data['dateOfBirth'] = timestampToDateTime(data['dateOfBirth']);
@@ -85,7 +85,7 @@ class UserService extends FirestoreService {
       if (data['updatedAt'] != null) {
         data['updatedAt'] = timestampToDateTime(data['updatedAt']);
       }
-      
+
       return data;
     });
   }
@@ -99,8 +99,9 @@ class UserService extends FirestoreService {
     Map<String, dynamic>? accountSecurity,
   }) async {
     try {
-      final settingsDoc = usersCollection.doc(userId).collection('settings').doc('preferences');
-      
+      final settingsDoc =
+          usersCollection.doc(userId).collection('settings').doc('preferences');
+
       final data = {
         'notifications': notifications,
         'darkMode': darkMode,
@@ -121,7 +122,11 @@ class UserService extends FirestoreService {
   /// Get user settings
   Future<Map<String, dynamic>?> getUserSettings(String userId) async {
     try {
-      final doc = await usersCollection.doc(userId).collection('settings').doc('preferences').get();
+      final doc = await usersCollection
+          .doc(userId)
+          .collection('settings')
+          .doc('preferences')
+          .get();
       if (!doc.exists) return null;
       return doc.data();
     } catch (e) {
@@ -139,18 +144,104 @@ class UserService extends FirestoreService {
         .map((doc) => doc.exists ? doc.data() : null);
   }
 
-  /// Delete user account and all data
-  Future<void> deleteUserAccount(String userId) async {
+  /// Save user profile data (new structure with calorie calculations)
+  Future<void> saveUserProfileData({
+    required String userId,
+    required UserProfileStruct profile,
+  }) async {
     try {
-      final batch = this.batch;
-      
-      // Delete user document
-      batch.delete(usersCollection.doc(userId));
-      
-      await batch.commit();
+      final profileDoc =
+          usersCollection.doc(userId).collection('profile').doc('data');
+
+      await profileDoc.set(profile.toMap(), SetOptions(merge: true));
     } catch (e) {
       throw Exception(handleFirestoreError(e));
     }
   }
-}
 
+  /// Get user profile data (new structure)
+  Future<UserProfileStruct?> getUserProfileData(String userId) async {
+    try {
+      final doc = await usersCollection
+          .doc(userId)
+          .collection('profile')
+          .doc('data')
+          .get();
+      if (!doc.exists) return null;
+
+      final data = doc.data() as Map<String, dynamic>;
+      return UserProfileStruct.fromMap(data);
+    } catch (e) {
+      throw Exception(handleFirestoreError(e));
+    }
+  }
+
+  /// Stream user profile data (new structure)
+  Stream<UserProfileStruct?> streamUserProfileData(String userId) {
+    return usersCollection
+        .doc(userId)
+        .collection('profile')
+        .doc('data')
+        .snapshots()
+        .map((doc) {
+      if (!doc.exists) return null;
+      final data = doc.data() as Map<String, dynamic>;
+      return UserProfileStruct.fromMap(data);
+    });
+  }
+
+  /// Delete user account and all data
+  /// This will permanently delete:
+  /// - All meals
+  /// - All activities
+  /// - All tracker data (water, steps, weight)
+  /// - User profile
+  /// - All uploaded images from Storage
+  /// - Firebase Auth account
+  Future<void> deleteUserAccount(String userId) async {
+    try {
+      // Delete all subcollections
+      await _deleteCollection(usersCollection.doc(userId).collection('meals'));
+      await _deleteCollection(
+          usersCollection.doc(userId).collection('activities'));
+      await _deleteCollection(
+          usersCollection.doc(userId).collection('profile'));
+      await _deleteCollection(
+          usersCollection.doc(userId).collection('water_tracker'));
+      await _deleteCollection(
+          usersCollection.doc(userId).collection('step_tracker'));
+      await _deleteCollection(
+          usersCollection.doc(userId).collection('weight_tracker'));
+
+      // Delete user document
+      await usersCollection.doc(userId).delete();
+
+      // Note: Firebase Storage files and Auth account deletion
+      // should be handled by the caller (widget) since they require
+      // different Firebase instances and may need re-authentication
+    } catch (e) {
+      throw Exception(handleFirestoreError(e));
+    }
+  }
+
+  /// Helper method to delete a collection
+  Future<void> _deleteCollection(CollectionReference collection) async {
+    final batchSize = 500;
+    var deleted = 0;
+
+    do {
+      deleted = 0;
+      final snapshot = await collection.limit(batchSize).get();
+
+      if (snapshot.docs.isEmpty) break;
+
+      final batch = this.batch;
+      for (var doc in snapshot.docs) {
+        batch.delete(doc.reference);
+        deleted++;
+      }
+
+      await batch.commit();
+    } while (deleted >= batchSize);
+  }
+}

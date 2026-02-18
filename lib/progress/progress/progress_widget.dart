@@ -99,6 +99,21 @@ class _ProgressWidgetState extends State<ProgressWidget>
         appBar: AppBar(
           backgroundColor: FlutterFlowTheme.of(context).secondaryBackground,
           automaticallyImplyLeading: false,
+          leadingWidth: 120.0,
+          leading: Padding(
+            padding: EdgeInsetsDirectional.fromSTEB(0.0, 4.0, 0.0, 0.0),
+            child: SizedBox(
+              width: 80.0,
+              height: 80.0,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(0.0),
+                child: Image.asset(
+                  'assets/images/custom-images/logo.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+          ),
           title: Text(
             'Progress',
             style: FlutterFlowTheme.of(context).titleLarge.override(
@@ -115,6 +130,7 @@ class _ProgressWidgetState extends State<ProgressWidget>
                 ),
           ),
           actions: [],
+          centerTitle: true,
           flexibleSpace: FlexibleSpaceBar(
             background: Container(
               width: double.infinity,
@@ -124,7 +140,6 @@ class _ProgressWidgetState extends State<ProgressWidget>
               ),
             ),
           ),
-          centerTitle: false,
           elevation: 0.0,
         ),
         body: Column(

@@ -25,6 +25,8 @@ class ZCreatActivityModel extends FlutterFlowModel<ZCreatActivityWidget> {
   String? Function(BuildContext, String?)? textController2Validator;
   // State field for selected icon
   String? selectedIconName;
+  // State field for calories per hour (for predefined activities)
+  int? caloriesPerHour;
 
   @override
   void initState(BuildContext context) {}

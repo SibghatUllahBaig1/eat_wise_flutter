@@ -1,4 +1,6 @@
 import '/backend/schema/structs/index.dart';
+import '/backend/backend_manager.dart';
+import '/constants/diet_categories.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -19,6 +21,9 @@ class DietsModel extends FlutterFlowModel<DietsWidget> {
 
   String? selectedDiet = 'Vegetarian';
 
+  List<Map<String, dynamic>> categoryRecipes = [];
+  bool isLoadingRecipes = false;
+
   ///  State fields for stateful widgets in this page.
 
   // State field(s) for PageView widget.
@@ -35,6 +40,20 @@ class DietsModel extends FlutterFlowModel<DietsWidget> {
   @override
   void initState(BuildContext context) {
     zRecipeCardModels = FlutterFlowDynamicModels(() => ZRecipeCardModel());
+  }
+
+  /// Load recipes for a specific diet category
+  Future<void> loadRecipesByCategory(String categoryKey) async {
+    isLoadingRecipes = true;
+    try {
+      final backend = BackendManager();
+      categoryRecipes = await backend.recipeService
+          .getRecipesByCategory(category: categoryKey);
+    } catch (e) {
+      debugPrint('Error loading recipes by category: $e');
+    } finally {
+      isLoadingRecipes = false;
+    }
   }
 
   @override

@@ -850,9 +850,9 @@ class _SignUpWidgetState extends State<SignUpWidget>
                         return;
                       }
 
-                      // Navigate to onboarding
+                      // Navigate to new onboarding flow (Step 1)
                       context.goNamedAuth(
-                          OnboardingWidget.routeName, context.mounted);
+                          OnboardingStep1Widget.routeName, context.mounted);
                     } else {
                       _model.checkBox = true;
                       safeSetState(() {});

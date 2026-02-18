@@ -192,11 +192,14 @@ class _ZHomeCalendarWidgetState extends State<ZHomeCalendarWidget> {
                                           .fontStyle,
                                     ),
                               ),
-                              FutureBuilder<double>(
-                                future: _model.getNutritionProgress(daysItem),
+                              FutureBuilder<Map<String, dynamic>>(
+                                future: _model.getNutritionData(daysItem),
                                 builder: (context, snapshot) {
                                   // Show loading or default state
-                                  final progress = snapshot.data ?? 0.0;
+                                  final data = snapshot.data ??
+                                      {'progress': 0.0, 'withinGoal': true};
+                                  final progress = data['progress'] as double;
+                                  final withinGoal = data['withinGoal'] as bool;
 
                                   return InkWell(
                                     splashColor: Colors.transparent,
@@ -218,8 +221,11 @@ class _ZHomeCalendarWidgetState extends State<ZHomeCalendarWidget> {
                                       lineWidth: 3.0,
                                       animation: true,
                                       animateFromLastPercent: true,
-                                      progressColor:
-                                          FlutterFlowTheme.of(context).primary,
+                                      progressColor: withinGoal
+                                          ? Color(
+                                              0xFF4CAF50) // Green for within goal
+                                          : Color(
+                                              0xFFF44336), // Red for exceeding goal
                                       backgroundColor:
                                           FlutterFlowTheme.of(context).accent1,
                                       center: Text(

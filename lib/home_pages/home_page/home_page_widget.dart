@@ -1,11 +1,11 @@
 import '/flutter_flow/flutter_flow_animations.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import '/home_pages/components/z_activities/z_activities_widget.dart';
 import '/home_pages/components/z_home_calendar/z_home_calendar_widget.dart';
 import '/home_pages/components/z_naw_bar/z_naw_bar_widget.dart';
 import '/home_pages/components/z_nutrition/z_nutrition_widget.dart';
 import '/home_pages/components/z_statistics/z_statistics_widget.dart';
+import '/tracker/components/z_step_tracker/z_step_tracker_widget.dart';
 import '/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -43,9 +43,6 @@ class _HomePageWidgetState extends State<HomePageWidget>
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       FFAppState().NavBar = 0;
       safeSetState(() {});
-      if (!FFAppState().authenticated) {
-        context.goNamed(OnboardingWidget.routeName);
-      }
     });
 
     animationsMap.addAll({
@@ -93,17 +90,38 @@ class _HomePageWidgetState extends State<HomePageWidget>
         appBar: AppBar(
           backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
           automaticallyImplyLeading: false,
-          title: ClipRRect(
-            borderRadius: BorderRadius.circular(0.0),
-            child: Image.asset(
-              'assets/images/custom-images/logo.png',
-              height: 32.0,
-              fit: BoxFit.contain,
-              alignment: Alignment(-1.0, 0.0),
+          leadingWidth: 120.0,
+          leading: Padding(
+            padding: EdgeInsetsDirectional.fromSTEB(0.0, 4.0, 0.0, 0.0),
+            child: SizedBox(
+              width: 80.0,
+              height: 80.0,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(0.0),
+                child: Image.asset(
+                  'assets/images/custom-images/logo.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
             ),
           ),
+          title: Text(
+            'Home',
+            style: FlutterFlowTheme.of(context).titleLarge.override(
+                  font: GoogleFonts.inter(
+                    fontWeight:
+                        FlutterFlowTheme.of(context).titleLarge.fontWeight,
+                    fontStyle:
+                        FlutterFlowTheme.of(context).titleLarge.fontStyle,
+                  ),
+                  letterSpacing: 0.0,
+                  fontWeight:
+                      FlutterFlowTheme.of(context).titleLarge.fontWeight,
+                  fontStyle: FlutterFlowTheme.of(context).titleLarge.fontStyle,
+                ),
+          ),
           actions: const [],
-          centerTitle: false,
+          centerTitle: true,
           elevation: 0.0,
         ),
         body: Column(
@@ -139,9 +157,9 @@ class _HomePageWidgetState extends State<HomePageWidget>
                         padding:
                             EdgeInsetsDirectional.fromSTEB(0.0, 16.0, 0.0, 0.0),
                         child: wrapWithModel(
-                          model: _model.zActivitiesModel,
+                          model: _model.zStepTrackerModel,
                           updateCallback: () => safeSetState(() {}),
-                          child: ZActivitiesWidget(),
+                          child: ZStepTrackerWidget(),
                         ),
                       ),
                       Padding(

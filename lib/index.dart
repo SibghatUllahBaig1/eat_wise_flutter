@@ -1,5 +1,7 @@
 // Export pages
 export '/home_pages/home_page/home_page_widget.dart' show HomePageWidget;
+export '/register/initial_route/initial_route_widget.dart'
+    show InitialRouteWidget;
 export '/register/entry_page/entry_page_widget.dart' show EntryPageWidget;
 export '/register/get_started/get_started_widget.dart' show GetStartedWidget;
 export '/register/log_in/log_in_widget.dart' show LogInWidget;
@@ -12,6 +14,20 @@ export '/register/verify_code/verify_code_widget.dart' show VerifyCodeWidget;
 export '/register/new_password/new_password_widget.dart' show NewPasswordWidget;
 export '/register/creat_plan/creat_plan_widget.dart' show CreatPlanWidget;
 export '/register/onboarding/onboarding_widget.dart' show OnboardingWidget;
+export '/register/new_onboarding/onboarding_step1_widget.dart'
+    show OnboardingStep1Widget;
+export '/register/new_onboarding/onboarding_step2_widget.dart'
+    show OnboardingStep2Widget;
+export '/register/new_onboarding/onboarding_step3_widget.dart'
+    show OnboardingStep3Widget;
+export '/register/new_onboarding/onboarding_step4_widget.dart'
+    show OnboardingStep4Widget;
+export '/register/new_onboarding/onboarding_step5_widget.dart'
+    show OnboardingStep5Widget;
+export '/register/new_onboarding/onboarding_step6_widget.dart'
+    show OnboardingStep6Widget;
+export '/register/new_onboarding/onboarding_step7_widget.dart'
+    show OnboardingStep7Widget;
 export '/register/plan/plan_widget.dart' show PlanWidget;
 export '/profile/profile/profile_widget.dart' show ProfileWidget;
 export '/profile/calorie_counter/calorie_counter_widget.dart'
@@ -47,6 +63,8 @@ export '/profile/faq/faq_widget.dart' show FaqWidget;
 export '/profile/support/support_widget.dart' show SupportWidget;
 export '/profile/privacy_policy/privacy_policy_widget.dart'
     show PrivacyPolicyWidget;
+export '/profile/about_us/about_us_widget.dart' show AboutUsWidget;
+export '/profile/contact_us/contact_us_widget.dart' show ContactUsWidget;
 export '/profile/socila_media/socila_media_widget.dart' show SocilaMediaWidget;
 export '/recipes/recipes/recipes_widget.dart' show RecipesWidget;
 export '/recipes/recipes_page/recipes_page_widget.dart' show RecipesPageWidget;
@@ -87,3 +105,5 @@ export '/recipes/all_categories/all_categories_widget.dart'
     show AllCategoriesWidget;
 export '/home_pages/home_page_copy/home_page_copy_widget.dart'
     show HomePageCopyWidget;
+export '/components/eatwise_logo_header/eatwise_logo_header_widget.dart'
+    show EatwiseLogoHeaderWidget;

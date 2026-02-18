@@ -12,6 +12,7 @@ class ActivityService extends FirestoreService {
     required String activityName,
     int? duration, // in minutes
     int? caloriesBurned,
+    int? caloriesPerHour, // calories per hour for predefined activities
     double? distance, // in km or miles
     String? distanceUnit,
     String? intensity, // low, moderate, high
@@ -30,6 +31,7 @@ class ActivityService extends FirestoreService {
         'activityName': activityName,
         'duration': duration,
         'caloriesBurned': caloriesBurned,
+        'caloriesPerHour': caloriesPerHour,
         'distance': distance,
         'distanceUnit': distanceUnit,
         'intensity': intensity,
@@ -58,6 +60,7 @@ class ActivityService extends FirestoreService {
     String? activityName,
     int? duration,
     int? caloriesBurned,
+    int? caloriesPerHour,
     double? distance,
     String? distanceUnit,
     String? intensity,
@@ -76,6 +79,7 @@ class ActivityService extends FirestoreService {
       if (activityName != null) data['activityName'] = activityName;
       if (duration != null) data['duration'] = duration;
       if (caloriesBurned != null) data['caloriesBurned'] = caloriesBurned;
+      if (caloriesPerHour != null) data['caloriesPerHour'] = caloriesPerHour;
       if (distance != null) data['distance'] = distance;
       if (distanceUnit != null) data['distanceUnit'] = distanceUnit;
       if (intensity != null) data['intensity'] = intensity;

@@ -3,7 +3,9 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/home_pages/components/z_activity_icons/z_activity_icons_widget.dart';
+import '/home_pages/components/z_predefined_activity_selector/z_predefined_activity_selector_widget.dart';
 import '/home_pages/components/z_activity_minuts2/z_activity_minuts2_widget.dart';
+import '/backend/data/predefined_activities.dart';
 import 'dart:ui';
 import '/custom_code/widgets/index.dart' as custom_widgets;
 import 'package:aligned_dialog/aligned_dialog.dart';
@@ -170,19 +172,28 @@ class _ZCreatActivityWidgetState extends State<ZCreatActivityWidget> {
                       hoverColor: Colors.transparent,
                       highlightColor: Colors.transparent,
                       onTap: () async {
-                        final selectedIcon = await showModalBottomSheet<String>(
+                        final selectedActivity =
+                            await showModalBottomSheet<Map<String, dynamic>>(
                           isScrollControlled: true,
                           backgroundColor: Colors.transparent,
                           context: context,
                           builder: (context) {
                             return Padding(
                               padding: MediaQuery.viewInsetsOf(context),
-                              child: ZActivityIconsWidget(),
+                              child: ZPredefinedActivitySelectorWidget(),
                             );
                           },
                         );
-                        if (selectedIcon != null) {
-                          _model.selectedIconName = selectedIcon;
+                        if (selectedActivity != null) {
+                          _model.selectedIconName =
+                              selectedActivity['iconName'] as String?;
+                          _model.caloriesPerHour =
+                              selectedActivity['caloriesPerHour'] as int?;
+                          // Auto-fill activity name if empty
+                          if (_model.textController1?.text.isEmpty ?? true) {
+                            _model.textController1?.text =
+                                selectedActivity['name'] as String? ?? '';
+                          }
                         }
                         safeSetState(() {});
                       },
@@ -642,12 +653,6 @@ class _ZCreatActivityWidgetState extends State<ZCreatActivityWidget> {
                   return;
                 }
 
-                // Parse calories (optional)
-                int? calories;
-                if (_model.textController2.text.isNotEmpty) {
-                  calories = int.tryParse(_model.textController2.text);
-                }
-
                 // Parse duration from app state (optional)
                 int? duration;
                 if (FFAppState().activityMinuts.isNotEmpty &&
@@ -659,6 +664,21 @@ class _ZCreatActivityWidgetState extends State<ZCreatActivityWidget> {
                   duration = int.tryParse(durationStr);
                 }
 
+                // Calculate or parse calories
+                int? calories;
+                if (_model.caloriesPerHour != null &&
+                    _model.caloriesPerHour! > 0 &&
+                    duration != null) {
+                  // Auto-calculate calories for predefined activities
+                  calories = PredefinedActivities.calculateCalories(
+                    caloriesPerHour: _model.caloriesPerHour!,
+                    durationMinutes: duration,
+                  );
+                } else if (_model.textController2.text.isNotEmpty) {
+                  // Manual entry for "Other" activities
+                  calories = int.tryParse(_model.textController2.text);
+                }
+
                 try {
                   // Save activity to Firestore
                   await backend.activityService.addActivity(
@@ -668,6 +688,7 @@ class _ZCreatActivityWidgetState extends State<ZCreatActivityWidget> {
                     activityName: _model.textController1.text,
                     duration: duration,
                     caloriesBurned: calories,
+                    caloriesPerHour: _model.caloriesPerHour,
                     iconName: _model.selectedIconName,
                   );
 

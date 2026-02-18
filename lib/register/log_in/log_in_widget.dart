@@ -1,5 +1,6 @@
 import '/auth/firebase_auth/auth_util.dart';
 import '/backend/auth/auth_handler.dart';
+import '/backend/services/credentials_storage_service.dart';
 import '/flutter_flow/flutter_flow_animations.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -47,6 +48,9 @@ class _LogInWidgetState extends State<LogInWidget>
     _model.passwordTextController ??= TextEditingController();
     _model.passwordFocusNode ??= FocusNode();
 
+    // Load saved credentials if Remember Me was enabled
+    _loadSavedCredentials();
+
     animationsMap.addAll({
       'containerOnActionTriggerAnimation': AnimationInfo(
         trigger: AnimationTrigger.onActionTrigger,
@@ -68,6 +72,25 @@ class _LogInWidgetState extends State<LogInWidget>
           !anim.applyInitialState),
       this,
     );
+  }
+
+  /// Load saved credentials if Remember Me was enabled
+  Future<void> _loadSavedCredentials() async {
+    final credentialsService = CredentialsStorageService();
+    final isRememberMe = await credentialsService.isRememberMeEnabled();
+
+    if (isRememberMe) {
+      final email = await credentialsService.getSavedEmail();
+      final password = await credentialsService.getSavedPassword();
+
+      if (email != null && password != null) {
+        setState(() {
+          _model.emailTextController.text = email;
+          _model.passwordTextController.text = password;
+          _model.rememberMe = true;
+        });
+      }
+    }
   }
 
   @override
@@ -620,9 +643,24 @@ class _LogInWidgetState extends State<LogInWidget>
                       return;
                     }
 
-                    // Navigate to home page (onboarding hidden)
+                    // Handle Remember Me
+                    final credentialsService = CredentialsStorageService();
+                    if (_model.rememberMe == true) {
+                      // Save credentials
+                      await credentialsService.saveCredentials(
+                        email: _model.emailTextController.text,
+                        password: _model.passwordTextController.text,
+                      );
+                    } else {
+                      // Clear saved credentials
+                      await credentialsService.clearCredentials();
+                    }
+
+                    if (!context.mounted) return;
+
+                    // Navigate to initial route (will check onboarding status)
                     context.goNamedAuth(
-                        HomePageWidget.routeName, context.mounted);
+                        InitialRouteWidget.routeName, context.mounted);
                   },
                   text: 'Log in',
                   options: FFButtonOptions(

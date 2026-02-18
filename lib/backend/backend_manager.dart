@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firestore/index.dart';
+import 'services/subscription_service.dart';
 
 /// Central backend manager that provides access to all backend services
 class BackendManager {
@@ -25,6 +26,7 @@ class BackendManager {
   final SupportService _supportService = SupportService();
   final NotificationService _notificationService = NotificationService();
   final ApiKeysService _apiKeysService = ApiKeysService();
+  final SubscriptionService _subscriptionService = SubscriptionService();
 
   // Getters for services
   UserService get userService => _userService;
@@ -40,6 +42,7 @@ class BackendManager {
   SupportService get supportService => _supportService;
   NotificationService get notificationService => _notificationService;
   ApiKeysService get apiKeysService => _apiKeysService;
+  SubscriptionService get subscriptionService => _subscriptionService;
 
   // Current user helpers
   String? get currentUserId => FirebaseAuth.instance.currentUser?.uid;

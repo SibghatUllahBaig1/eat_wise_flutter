@@ -10,6 +10,7 @@ import 'auth/firebase_auth/auth_util.dart';
 
 import 'backend/firebase/firebase_config.dart';
 import 'backend/api_requests/api_config.dart';
+import 'backend/services/pedometer_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import 'flutter_flow/flutter_flow_util.dart';
 import 'flutter_flow/nav/nav.dart';
@@ -85,6 +86,10 @@ class _MyAppState extends State<MyApp> {
     userStream = eatWiseFirebaseUserStream()
       ..listen((user) {
         _appStateNotifier.update(user);
+        // Initialize pedometer service when user logs in
+        if (user.loggedIn) {
+          PedometerService().initialize();
+        }
       });
     jwtTokenStream.listen((_) {});
     Future.delayed(

@@ -33,3 +33,4 @@ export 'macros_struct.dart';
 export 'macro_detail_struct.dart';
 export 'nutrient_struct.dart';
 export 'minerals_struct.dart';
+export 'user_profile_struct.dart';

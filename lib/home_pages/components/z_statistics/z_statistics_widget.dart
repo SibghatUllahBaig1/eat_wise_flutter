@@ -191,7 +191,9 @@ class _ZStatisticsWidgetState extends State<ZStatisticsWidget> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    '${_model.caloriesLeft}',
+                                    _model.isCaloriesExceeded
+                                        ? '+${_model.caloriesExceeded}'
+                                        : '${_model.caloriesLeft}',
                                     style: FlutterFlowTheme.of(context)
                                         .titleLarge
                                         .override(
@@ -205,8 +207,11 @@ class _ZStatisticsWidgetState extends State<ZStatisticsWidget> {
                                                     .titleLarge
                                                     .fontStyle,
                                           ),
-                                          color: FlutterFlowTheme.of(context)
-                                              .primaryText,
+                                          color: _model.isCaloriesExceeded
+                                              ? Color(
+                                                  0xFFF44336) // Red for exceeded
+                                              : FlutterFlowTheme.of(context)
+                                                  .primaryText,
                                           letterSpacing: 0.0,
                                           fontWeight:
                                               FlutterFlowTheme.of(context)
@@ -220,7 +225,9 @@ class _ZStatisticsWidgetState extends State<ZStatisticsWidget> {
                                         ),
                                   ),
                                   Text(
-                                    'kcal left',
+                                    _model.isCaloriesExceeded
+                                        ? 'kcal over'
+                                        : 'kcal left',
                                     style: FlutterFlowTheme.of(context)
                                         .bodyMedium
                                         .override(
@@ -234,8 +241,11 @@ class _ZStatisticsWidgetState extends State<ZStatisticsWidget> {
                                                     .bodyMedium
                                                     .fontStyle,
                                           ),
-                                          color: FlutterFlowTheme.of(context)
-                                              .primaryText,
+                                          color: _model.isCaloriesExceeded
+                                              ? Color(
+                                                  0xFFF44336) // Red for exceeded
+                                              : FlutterFlowTheme.of(context)
+                                                  .primaryText,
                                           letterSpacing: 0.0,
                                           fontWeight:
                                               FlutterFlowTheme.of(context)
@@ -248,7 +258,20 @@ class _ZStatisticsWidgetState extends State<ZStatisticsWidget> {
                                           lineHeight: 1.0,
                                         ),
                                   ),
-                                ].divide(SizedBox(height: 12.0)),
+                                  if (_model.stepCalories > 0)
+                                    Text(
+                                      '(${_model.totalCalories} eaten - ${_model.stepCalories} steps)',
+                                      style: FlutterFlowTheme.of(context)
+                                          .bodySmall
+                                          .override(
+                                            fontFamily: 'Readex Pro',
+                                            color: FlutterFlowTheme.of(context)
+                                                .secondaryText,
+                                            fontSize: 10.0,
+                                            letterSpacing: 0.0,
+                                          ),
+                                    ),
+                                ].divide(SizedBox(height: 4.0)),
                               ),
                             ),
                           ),

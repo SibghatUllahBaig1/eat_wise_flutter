@@ -1,4 +1,5 @@
 import '/backend/schema/structs/index.dart';
+import '/backend/backend_manager.dart';
 import '/flutter_flow/flutter_flow_animations.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -31,6 +32,9 @@ class RecipesModel extends FlutterFlowModel<RecipesWidget> {
   bool checkBox = false;
 
   int? pageItem = 0;
+
+  List<Map<String, dynamic>> allRecipes = [];
+  bool isLoadingRecipes = false;
 
   ///  State fields for stateful widgets in this page.
 
@@ -70,6 +74,35 @@ class RecipesModel extends FlutterFlowModel<RecipesWidget> {
     zRecipeCard1Models2 = FlutterFlowDynamicModels(() => ZRecipeCard1Model());
     zRecipeCardModels = FlutterFlowDynamicModels(() => ZRecipeCardModel());
     zNawBarModel = createModel(context, () => ZNawBarModel());
+
+    // Load recipes from Firestore
+    loadRecipes();
+  }
+
+  /// Load all recipes from Firestore
+  Future<void> loadRecipes() async {
+    isLoadingRecipes = true;
+    try {
+      final backend = BackendManager();
+      allRecipes = await backend.recipeService.getAllRecipes();
+    } catch (e) {
+      print('Error loading recipes: $e');
+    } finally {
+      isLoadingRecipes = false;
+    }
+  }
+
+  /// Load recipes by diet category
+  Future<List<Map<String, dynamic>>> loadRecipesByCategory(
+      String category) async {
+    try {
+      final backend = BackendManager();
+      return await backend.recipeService
+          .getRecipesByCategory(category: category);
+    } catch (e) {
+      print('Error loading recipes by category: $e');
+      return [];
+    }
   }
 
   @override

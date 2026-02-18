@@ -101,10 +101,16 @@ class AuthHandler extends ChangeNotifier {
     notifyListeners();
 
     try {
+      debugPrint('AuthHandler: Attempting sign in with email: $email');
       final credential = await _auth.signInWithEmailAndPassword(
         email: email.trim(),
         password: password,
       );
+
+      debugPrint(
+          'AuthHandler: Sign in successful! User: ${credential.user?.uid}');
+      debugPrint(
+          'AuthHandler: Current user after sign in: ${_auth.currentUser?.uid}');
 
       _isLoading = false;
       notifyListeners();
@@ -113,13 +119,13 @@ class AuthHandler extends ChangeNotifier {
       _isLoading = false;
       _error = _getErrorMessage(e);
       notifyListeners();
-      debugPrint('Sign in error: ${e.code} - ${e.message}');
+      debugPrint('AuthHandler: Sign in error: ${e.code} - ${e.message}');
       return null;
     } catch (e) {
       _isLoading = false;
       _error = 'An unexpected error occurred';
       notifyListeners();
-      debugPrint('Sign in error: $e');
+      debugPrint('AuthHandler: Sign in error: $e');
       return null;
     }
   }

@@ -80,13 +80,13 @@ class RecipeService extends FirestoreService {
   Future<Map<String, dynamic>?> getRecipeById(String recipeId) async {
     try {
       final doc = await firestore.collection('recipes').doc(recipeId).get();
-      
+
       if (!doc.exists) return null;
-      
+
       final data = doc.data()!;
       data['id'] = doc.id;
       data['createdAt'] = timestampToDateTime(data['createdAt']);
-      
+
       return data;
     } catch (e) {
       throw Exception(handleFirestoreError(e));
@@ -118,7 +118,11 @@ class RecipeService extends FirestoreService {
     required String recipeId,
   }) async {
     try {
-      await usersCollection.doc(userId).collection('favorite_recipes').doc(recipeId).set({
+      await usersCollection
+          .doc(userId)
+          .collection('favorite_recipes')
+          .doc(recipeId)
+          .set({
         'recipeId': recipeId,
         'addedAt': FieldValue.serverTimestamp(),
       });
@@ -133,7 +137,11 @@ class RecipeService extends FirestoreService {
     required String recipeId,
   }) async {
     try {
-      await usersCollection.doc(userId).collection('favorite_recipes').doc(recipeId).delete();
+      await usersCollection
+          .doc(userId)
+          .collection('favorite_recipes')
+          .doc(recipeId)
+          .delete();
     } catch (e) {
       throw Exception(handleFirestoreError(e));
     }
@@ -153,7 +161,7 @@ class RecipeService extends FirestoreService {
       if (favSnapshot.docs.isEmpty) return [];
 
       final recipeIds = favSnapshot.docs.map((doc) => doc.id).toList();
-      
+
       // Fetch actual recipe data
       final recipes = <Map<String, dynamic>>[];
       for (var recipeId in recipeIds) {
@@ -162,11 +170,92 @@ class RecipeService extends FirestoreService {
           recipes.add(recipe);
         }
       }
-      
+
       return recipes;
     } catch (e) {
       throw Exception(handleFirestoreError(e));
     }
   }
-}
 
+  /// Get recipes by diet category
+  Future<List<Map<String, dynamic>>> getRecipesByCategory({
+    required String category,
+    int limit = 50,
+  }) async {
+    try {
+      final snapshot = await firestore
+          .collection('recipes')
+          .where('dietCategory', isEqualTo: category)
+          .orderBy('createdAt', descending: true)
+          .limit(limit)
+          .get();
+
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        data['createdAt'] = timestampToDateTime(data['createdAt']);
+        return data;
+      }).toList();
+    } catch (e) {
+      throw Exception(handleFirestoreError(e));
+    }
+  }
+
+  /// Stream recipes by diet category
+  Stream<List<Map<String, dynamic>>> streamRecipesByCategory({
+    required String category,
+    int limit = 50,
+  }) {
+    return firestore
+        .collection('recipes')
+        .where('dietCategory', isEqualTo: category)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        data['createdAt'] = timestampToDateTime(data['createdAt']);
+        return data;
+      }).toList();
+    });
+  }
+
+  /// Add recipe to user's meal log for today
+  Future<void> addRecipeToMealLog({
+    required String userId,
+    required String recipeId,
+  }) async {
+    try {
+      // Get recipe details
+      final recipe = await getRecipeById(recipeId);
+      if (recipe == null) {
+        throw Exception('Recipe not found');
+      }
+
+      final today = DateTime.now();
+      final normalizedDate = DateTime(today.year, today.month, today.day);
+
+      // Create meal entry from recipe
+      final mealData = {
+        'name': recipe['name'] ?? 'Recipe',
+        'imageUrl': recipe['imageUrl'] ?? '',
+        'timestamp': FieldValue.serverTimestamp(),
+        'date': Timestamp.fromDate(normalizedDate),
+        'nutrition': {
+          'calories': recipe['calories'] ?? 0,
+          'carbs': recipe['carbs'] ?? 0,
+          'protein': recipe['protein'] ?? 0,
+          'fat': recipe['fat'] ?? 0,
+        },
+        'isFromRecipe': true,
+        'recipeId': recipeId,
+      };
+
+      await usersCollection.doc(userId).collection('meals').add(mealData);
+    } catch (e) {
+      throw Exception(handleFirestoreError(e));
+    }
+  }
+}

@@ -48,7 +48,7 @@ class _HomePageCopyWidgetState extends State<HomePageCopyWidget>
       FFAppState().NavBar = 0;
       safeSetState(() {});
       if (!FFAppState().authenticated) {
-        context.goNamed(OnboardingWidget.routeName);
+        context.goNamed(OnboardingStep1Widget.routeName);
       }
     });
 

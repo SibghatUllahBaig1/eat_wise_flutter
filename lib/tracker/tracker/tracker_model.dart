@@ -4,9 +4,9 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/home_pages/components/z_naw_bar/z_naw_bar_widget.dart';
+import '/home_pages/components/z_activities/z_activities_widget.dart';
 import '/tracker/components/z_b_m_i_tracker/z_b_m_i_tracker_widget.dart';
 import '/tracker/components/z_calendar/z_calendar_widget.dart';
-import '/tracker/components/z_step_tracker/z_step_tracker_widget.dart';
 import '/tracker/components/z_water_tracker/z_water_tracker_widget.dart';
 import '/tracker/components/z_weight_tracker/z_weight_tracker_widget.dart';
 import '/backend/firestore/sync_service.dart';
@@ -29,8 +29,8 @@ class TrackerModel extends FlutterFlowModel<TrackerWidget> {
 
   // Model for zWaterTracker component.
   late ZWaterTrackerModel zWaterTrackerModel;
-  // Model for zStepTracker component.
-  late ZStepTrackerModel zStepTrackerModel;
+  // Model for zActivities component.
+  late ZActivitiesModel zActivitiesModel;
   // Model for zWeightTracker component.
   late ZWeightTrackerModel zWeightTrackerModel;
   // Model for zBMITracker component.
@@ -41,7 +41,7 @@ class TrackerModel extends FlutterFlowModel<TrackerWidget> {
   @override
   void initState(BuildContext context) {
     zWaterTrackerModel = createModel(context, () => ZWaterTrackerModel());
-    zStepTrackerModel = createModel(context, () => ZStepTrackerModel());
+    zActivitiesModel = createModel(context, () => ZActivitiesModel());
     zWeightTrackerModel = createModel(context, () => ZWeightTrackerModel());
     zBMITrackerModel = createModel(context, () => ZBMITrackerModel());
     zNawBarModel = createModel(context, () => ZNawBarModel());
@@ -50,7 +50,7 @@ class TrackerModel extends FlutterFlowModel<TrackerWidget> {
   @override
   void dispose() {
     zWaterTrackerModel.dispose();
-    zStepTrackerModel.dispose();
+    zActivitiesModel.dispose();
     zWeightTrackerModel.dispose();
     zBMITrackerModel.dispose();
     zNawBarModel.dispose();
