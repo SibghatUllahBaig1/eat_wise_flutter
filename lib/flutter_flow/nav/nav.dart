@@ -106,6 +106,18 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           builder: (context, params) => EntryPageWidget(),
         ),
         FFRoute(
+          name: 'AccountStatus',
+          path: '/accountStatus',
+          builder: (context, params) => AccountStatusWidget(
+            status: params.getParam(
+                  'status',
+                  ParamType.String,
+                  isList: false,
+                ) ??
+                'suspended',
+          ),
+        ),
+        FFRoute(
           name: GetStartedWidget.routeName,
           path: GetStartedWidget.routePath,
           builder: (context, params) => GetStartedWidget(),

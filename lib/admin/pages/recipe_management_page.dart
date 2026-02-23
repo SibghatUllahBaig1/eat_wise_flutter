@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../../backend/firestore/recipe_service.dart';
-import '../../constants/diet_categories.dart';
+import '../theme/admin_theme.dart';
+import '../utils/upload_hardcoded_recipes.dart';
 
 class RecipeManagementPage extends StatefulWidget {
   const RecipeManagementPage({super.key});
@@ -25,87 +30,166 @@ class _RecipeManagementPageState extends State<RecipeManagementPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Recipe Management'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: ElevatedButton.icon(
-              onPressed: () => _showAddRecipeDialog(),
-              icon: const Icon(Icons.add),
-              label: const Text('Add Recipe'),
-            ),
-          ),
-        ],
-      ),
+      backgroundColor: AdminTheme.background,
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Search and filter
+          // Header
           Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
+            padding: const EdgeInsets.fromLTRB(32, 32, 32, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search recipes...',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Recipes',
+                              style: Theme.of(context).textTheme.headlineLarge),
+                          const SizedBox(height: 4),
+                          Text('Manage recipes and meal plans',
+                              style: Theme.of(context).textTheme.bodyMedium),
+                        ],
                       ),
                     ),
-                    onChanged: (value) {
-                      setState(() {
-                        _searchQuery = value.toLowerCase();
-                      });
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-                DropdownButton<String>(
-                  value: _selectedCategory,
-                  hint: const Text('All Categories'),
-                  items: [
-                    const DropdownMenuItem(
-                      value: null,
-                      child: Text('All Categories'),
+                    ElevatedButton(
+                      onPressed: _uploadHardcodedRecipes,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.upload_rounded, size: 20),
+                          SizedBox(width: 8),
+                          Text('Upload Hardcoded Recipes'),
+                        ],
+                      ),
                     ),
-                    ...DietCategories.all.map((category) {
-                      return DropdownMenuItem(
-                        value: category,
-                        child: Text(category),
-                      );
-                    }),
+                    const SizedBox(width: 12),
+                    ElevatedButton(
+                      onPressed: () => _showAddRecipeDialog(),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.add_rounded, size: 20),
+                          SizedBox(width: 8),
+                          Text('Add Recipe'),
+                        ],
+                      ),
+                    ),
                   ],
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedCategory = value;
-                    });
-                  },
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Search recipes...',
+                          prefixIcon: const Icon(Icons.search_rounded),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                                color: Color(0xFFB0B8C4), width: 1.5),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                                color: AdminTheme.primary, width: 2),
+                          ),
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            _searchQuery = value.toLowerCase();
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('diet_categories')
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        final categories = snapshot.data?.docs ?? [];
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          decoration: BoxDecoration(
+                            color: AdminTheme.background,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                                color: const Color(0xFFB0B8C4), width: 1.5),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _selectedCategory,
+                              hint: Text('All Categories',
+                                  style: GoogleFonts.inter(
+                                      fontSize: 14,
+                                      color: AdminTheme.textHint)),
+                              style: GoogleFonts.inter(
+                                  fontSize: 14, color: AdminTheme.textPrimary),
+                              items: [
+                                DropdownMenuItem(
+                                    value: null,
+                                    child: Text('All Categories',
+                                        style:
+                                            GoogleFonts.inter(fontSize: 14))),
+                                ...categories.map((doc) {
+                                  final data =
+                                      doc.data() as Map<String, dynamic>;
+                                  final categoryName = data['name'] ?? '';
+                                  return DropdownMenuItem(
+                                      value: categoryName,
+                                      child: Text(categoryName,
+                                          style:
+                                              GoogleFonts.inter(fontSize: 14)));
+                                }),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedCategory = value;
+                                });
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
+          const SizedBox(height: 16),
 
           // Recipe list
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('recipes')
-                  .snapshots(),
+              stream:
+                  FirebaseFirestore.instance.collection('recipes').snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(
+                      child:
+                          CircularProgressIndicator(color: AdminTheme.primary));
                 }
 
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text('No recipes found'));
+                  return Center(
+                      child: Text('No recipes found',
+                          style: GoogleFonts.inter(
+                              color: AdminTheme.textSecondary)));
                 }
 
                 var recipes = snapshot.data!.docs;
 
-                // Filter by search query
                 if (_searchQuery.isNotEmpty) {
                   recipes = recipes.where((doc) {
                     final data = doc.data() as Map<String, dynamic>;
@@ -114,36 +198,32 @@ class _RecipeManagementPageState extends State<RecipeManagementPage> {
                   }).toList();
                 }
 
-                // Filter by category
                 if (_selectedCategory != null) {
                   recipes = recipes.where((doc) {
                     final data = doc.data() as Map<String, dynamic>;
-                    final categories = List<String>.from(data['dietCategories'] ?? []);
+                    final categories =
+                        List<String>.from(data['dietCategories'] ?? []);
                     return categories.contains(_selectedCategory);
                   }).toList();
                 }
 
                 return GridView.builder(
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 300,
-                    childAspectRatio: 0.75,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
+                  padding: const EdgeInsets.fromLTRB(32, 8, 32, 32),
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 320,
+                    childAspectRatio: 0.78,
+                    crossAxisSpacing: 20,
+                    mainAxisSpacing: 20,
                   ),
                   itemCount: recipes.length,
                   itemBuilder: (context, index) {
                     final recipeDoc = recipes[index];
-                    final recipeData =
-                        recipeDoc.data() as Map<String, dynamic>;
-
+                    final recipeData = recipeDoc.data() as Map<String, dynamic>;
                     return _RecipeCard(
                       recipeId: recipeDoc.id,
                       recipeData: recipeData,
-                      onEdit: () => _showEditRecipeDialog(
-                        recipeDoc.id,
-                        recipeData,
-                      ),
+                      onEdit: () =>
+                          _showEditRecipeDialog(recipeDoc.id, recipeData),
                       onDelete: () => _deleteRecipe(recipeDoc.id),
                     );
                   },
@@ -154,6 +234,90 @@ class _RecipeManagementPageState extends State<RecipeManagementPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _uploadHardcodedRecipes() async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Upload Hardcoded Recipes'),
+        content: const Text(
+          'This will upload 10 hardcoded recipes to Firebase. This should only be done once. Continue?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Upload'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      // Show loading dialog
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(
+            child: Card(
+              child: Padding(
+                padding: EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text('Uploading recipes...'),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+
+      try {
+        final result = await uploadHardcodedRecipes();
+
+        if (mounted) {
+          Navigator.pop(context); // Close loading dialog
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Upload complete! Success: ${result['success']}, Errors: ${result['errors']}',
+              ),
+              backgroundColor:
+                  result['errors'] == 0 ? AdminTheme.success : Colors.orange,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          Navigator.pop(context); // Close loading dialog
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error uploading recipes: $e'),
+              backgroundColor: AdminTheme.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    }
   }
 
   void _showAddRecipeDialog() {
@@ -187,7 +351,7 @@ class _RecipeManagementPageState extends State<RecipeManagementPage> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AdminTheme.error,
               foregroundColor: Colors.white,
             ),
             child: const Text('Delete'),
@@ -201,13 +365,21 @@ class _RecipeManagementPageState extends State<RecipeManagementPage> {
         await _recipeService.deleteRecipe(recipeId);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Recipe deleted successfully')),
+            SnackBar(
+              content: const Text('Recipe deleted successfully'),
+              backgroundColor: AdminTheme.success,
+              behavior: SnackBarBehavior.floating,
+            ),
           );
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error deleting recipe: $e')),
+            SnackBar(
+              content: Text('Error deleting recipe: $e'),
+              backgroundColor: AdminTheme.error,
+              behavior: SnackBarBehavior.floating,
+            ),
           );
         }
       }
@@ -235,7 +407,12 @@ class _RecipeCard extends StatelessWidget {
     final calories = recipeData['calories'] ?? 0;
     final categories = List<String>.from(recipeData['dietCategories'] ?? []);
 
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        color: AdminTheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AdminTheme.border),
+      ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -249,41 +426,47 @@ class _RecipeCard extends StatelessWidget {
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
-                        color: Colors.grey[300],
-                        child: const Icon(Icons.restaurant_menu, size: 64),
+                        color: AdminTheme.background,
+                        child: Center(
+                            child: Icon(Icons.restaurant_menu_rounded,
+                                size: 48,
+                                color:
+                                    AdminTheme.primary.withValues(alpha: 0.4))),
                       );
                     },
                   )
                 : Container(
-                    color: Colors.grey[300],
-                    child: const Center(
-                      child: Icon(Icons.restaurant_menu, size: 64),
-                    ),
+                    color: AdminTheme.background,
+                    child: Center(
+                        child: Icon(Icons.restaurant_menu_rounded,
+                            size: 48,
+                            color: AdminTheme.primary.withValues(alpha: 0.4))),
                   ),
           ),
 
           // Details
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                Text(name,
+                    style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AdminTheme.textPrimary),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 4),
-                Text(
-                  '$calories kcal',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
+                Row(
+                  children: [
+                    const Icon(Icons.local_fire_department_rounded,
+                        size: 14, color: AdminTheme.cardOrange),
+                    const SizedBox(width: 4),
+                    Text('$calories cal',
+                        style: GoogleFonts.inter(
+                            fontSize: 13, color: AdminTheme.textSecondary)),
+                  ],
                 ),
                 if (categories.isNotEmpty) ...[
                   const SizedBox(height: 8),
@@ -293,20 +476,16 @@ class _RecipeCard extends StatelessWidget {
                     children: categories.take(2).map((category) {
                       return Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
+                            horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: Colors.blue.shade100,
-                          borderRadius: BorderRadius.circular(12),
+                          color: AdminTheme.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                        child: Text(
-                          category,
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.blue.shade900,
-                          ),
-                        ),
+                        child: Text(category,
+                            style: GoogleFonts.inter(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: AdminTheme.primary)),
                       );
                     }).toList(),
                   ),
@@ -316,12 +495,19 @@ class _RecipeCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.edit, size: 20),
+                      icon: const Icon(Icons.edit_rounded, size: 20),
+                      color: AdminTheme.textSecondary,
                       onPressed: onEdit,
+                      constraints: const BoxConstraints(),
+                      padding: const EdgeInsets.all(6),
                     ),
+                    const SizedBox(width: 4),
                     IconButton(
-                      icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+                      icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                      color: AdminTheme.error,
                       onPressed: onDelete,
+                      constraints: const BoxConstraints(),
+                      padding: const EdgeInsets.all(6),
                     ),
                   ],
                 ),
@@ -360,6 +546,9 @@ class _RecipeEditDialogState extends State<_RecipeEditDialog> {
   late TextEditingController _fatController;
   List<String> _selectedCategories = [];
   bool _isLoading = false;
+  XFile? _selectedImage;
+  String? _imageUrl;
+  bool _isUploadingImage = false;
 
   @override
   void initState() {
@@ -379,6 +568,7 @@ class _RecipeEditDialogState extends State<_RecipeEditDialog> {
     _imageUrlController = TextEditingController(
       text: widget.recipeData?['imageUrl'] ?? '',
     );
+    _imageUrl = widget.recipeData?['imageUrl'];
     _caloriesController = TextEditingController(
       text: widget.recipeData?['calories']?.toString() ?? '',
     );
@@ -409,12 +599,55 @@ class _RecipeEditDialogState extends State<_RecipeEditDialog> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() => _selectedImage = pickedFile);
+    }
+  }
+
+  Future<String?> _uploadImage(XFile imageFile) async {
+    try {
+      setState(() => _isUploadingImage = true);
+      final fileName =
+          'recipes/${DateTime.now().millisecondsSinceEpoch}_${imageFile.name}';
+      final ref = FirebaseStorage.instance.ref().child(fileName);
+      final bytes = await imageFile.readAsBytes();
+      await ref.putData(bytes);
+      final url = await ref.getDownloadURL();
+      return url;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error uploading image: $e')),
+        );
+      }
+      return null;
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingImage = false);
+      }
+    }
+  }
+
   Future<void> _saveRecipe() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
     try {
+      // Upload image if a new one was selected
+      String imageUrlToSave = _imageUrl ?? '';
+      if (_selectedImage != null) {
+        final uploadedUrl = await _uploadImage(_selectedImage!);
+        if (uploadedUrl != null) {
+          imageUrlToSave = uploadedUrl;
+        } else {
+          return; // Stop if upload failed
+        }
+      }
+
       final recipeData = {
         'name': _nameController.text.trim(),
         'description': _descriptionController.text.trim(),
@@ -426,7 +659,7 @@ class _RecipeEditDialogState extends State<_RecipeEditDialog> {
             .split('\n')
             .where((line) => line.trim().isNotEmpty)
             .toList(),
-        'imageUrl': _imageUrlController.text.trim(),
+        'imageUrl': imageUrlToSave,
         'calories': int.tryParse(_caloriesController.text) ?? 0,
         'protein': double.tryParse(_proteinController.text) ?? 0.0,
         'carbs': double.tryParse(_carbsController.text) ?? 0.0,
@@ -451,18 +684,22 @@ class _RecipeEditDialogState extends State<_RecipeEditDialog> {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              widget.recipeId == null
-                  ? 'Recipe added successfully'
-                  : 'Recipe updated successfully',
-            ),
+            content: Text(widget.recipeId == null
+                ? 'Recipe added successfully'
+                : 'Recipe updated successfully'),
+            backgroundColor: AdminTheme.success,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving recipe: $e')),
+          SnackBar(
+            content: Text('Error saving recipe: $e'),
+            backgroundColor: AdminTheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     } finally {
@@ -472,167 +709,348 @@ class _RecipeEditDialogState extends State<_RecipeEditDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(widget.recipeId == null ? 'Add Recipe' : 'Edit Recipe'),
-      content: SizedBox(
-        width: 600,
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+    final isEditing = widget.recipeId != null;
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        width: 640,
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
               children: [
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Recipe Name *',
-                    border: OutlineInputBorder(),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AdminTheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a recipe name';
-                    }
-                    return null;
-                  },
+                  child: const Icon(Icons.restaurant_menu_rounded,
+                      color: AdminTheme.primary, size: 22),
                 ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Description',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 3,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _ingredientsController,
-                  decoration: const InputDecoration(
-                    labelText: 'Ingredients (one per line)',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 5,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _instructionsController,
-                  decoration: const InputDecoration(
-                    labelText: 'Instructions (one per line)',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 5,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _imageUrlController,
-                  decoration: const InputDecoration(
-                    labelText: 'Image URL',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _caloriesController,
-                        decoration: const InputDecoration(
-                          labelText: 'Calories',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _proteinController,
-                        decoration: const InputDecoration(
-                          labelText: 'Protein (g)',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _carbsController,
-                        decoration: const InputDecoration(
-                          labelText: 'Carbs (g)',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _fatController,
-                        decoration: const InputDecoration(
-                          labelText: 'Fat (g)',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Diet Categories',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: DietCategories.all.map((category) {
-                    final isSelected = _selectedCategories.contains(category);
-                    return FilterChip(
-                      label: Text(category),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        setState(() {
-                          if (selected) {
-                            _selectedCategories.add(category);
-                          } else {
-                            _selectedCategories.remove(category);
-                          }
-                        });
-                      },
-                    );
-                  }).toList(),
+                const SizedBox(width: 12),
+                Text(
+                  isEditing ? 'Edit Recipe' : 'Add Recipe',
+                  style: GoogleFonts.inter(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: AdminTheme.textPrimary),
                 ),
               ],
             ),
-          ),
+            const SizedBox(height: 24),
+            Flexible(
+              child: SingleChildScrollView(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: const InputDecoration(
+                            labelText: 'Recipe Name *',
+                            prefixIcon: Icon(Icons.fastfood_rounded)),
+                        validator: (value) => (value == null || value.isEmpty)
+                            ? 'Please enter a recipe name'
+                            : null,
+                      ),
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: _descriptionController,
+                        decoration: const InputDecoration(
+                            labelText: 'Description',
+                            prefixIcon: Icon(Icons.notes_rounded)),
+                        maxLines: 3,
+                      ),
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: _ingredientsController,
+                        decoration: const InputDecoration(
+                            labelText: 'Ingredients (one per line)',
+                            prefixIcon: Icon(Icons.list_rounded),
+                            alignLabelWithHint: true),
+                        maxLines: 4,
+                      ),
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: _instructionsController,
+                        decoration: const InputDecoration(
+                            labelText: 'Instructions (one per line)',
+                            prefixIcon:
+                                Icon(Icons.format_list_numbered_rounded),
+                            alignLabelWithHint: true),
+                        maxLines: 4,
+                      ),
+                      const SizedBox(height: 14),
+                      // Image Upload Section
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Recipe Image',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: AdminTheme.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: AdminTheme.textSecondary
+                                    .withValues(alpha: 0.3),
+                                width: 1,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Column(
+                              children: [
+                                if (_selectedImage != null || _imageUrl != null)
+                                  Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        if (_selectedImage != null)
+                                          Image.file(
+                                            File(_selectedImage!.path),
+                                            height: 150,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                          )
+                                        else if (_imageUrl != null &&
+                                            _imageUrl!.isNotEmpty)
+                                          Image.network(
+                                            _imageUrl!,
+                                            height: 150,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                              return Container(
+                                                height: 150,
+                                                color: Colors.grey[300],
+                                                child: const Center(
+                                                  child: Icon(
+                                                    Icons.broken_image,
+                                                    size: 48,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        const SizedBox(height: 12),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              _selectedImage != null
+                                                  ? 'New image selected'
+                                                  : 'Current image',
+                                              style: GoogleFonts.inter(
+                                                fontSize: 12,
+                                                color: AdminTheme.textSecondary,
+                                              ),
+                                            ),
+                                            ElevatedButton.icon(
+                                              onPressed: _isUploadingImage
+                                                  ? null
+                                                  : _pickImage,
+                                              icon: const Icon(Icons.edit),
+                                              label: const Text('Change'),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor:
+                                                    AdminTheme.primary,
+                                                foregroundColor: Colors.white,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                else
+                                  Padding(
+                                    padding: const EdgeInsets.all(24),
+                                    child: Column(
+                                      children: [
+                                        Icon(
+                                          Icons.cloud_upload_rounded,
+                                          size: 48,
+                                          color: AdminTheme.textSecondary
+                                              .withValues(alpha: 0.5),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Text(
+                                          'Upload Recipe Image',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: AdminTheme.textPrimary,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Click to select an image from your device',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 12,
+                                            color: AdminTheme.textSecondary,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        ElevatedButton.icon(
+                                          onPressed: _isUploadingImage
+                                              ? null
+                                              : _pickImage,
+                                          icon: const Icon(
+                                              Icons.add_photo_alternate),
+                                          label: const Text('Select Image'),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: AdminTheme.primary,
+                                            foregroundColor: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Expanded(
+                              child: TextFormField(
+                                  controller: _caloriesController,
+                                  decoration: const InputDecoration(
+                                      labelText: 'Calories'),
+                                  keyboardType: TextInputType.number)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                              child: TextFormField(
+                                  controller: _proteinController,
+                                  decoration: const InputDecoration(
+                                      labelText: 'Protein (g)'),
+                                  keyboardType: TextInputType.number)),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Expanded(
+                              child: TextFormField(
+                                  controller: _carbsController,
+                                  decoration: const InputDecoration(
+                                      labelText: 'Carbs (g)'),
+                                  keyboardType: TextInputType.number)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                              child: TextFormField(
+                                  controller: _fatController,
+                                  decoration: const InputDecoration(
+                                      labelText: 'Fat (g)'),
+                                  keyboardType: TextInputType.number)),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text('Diet Categories',
+                            style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AdminTheme.textPrimary)),
+                      ),
+                      const SizedBox(height: 10),
+                      StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection('diet_categories')
+                            .snapshots(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                                child: CircularProgressIndicator(
+                                    color: AdminTheme.primary));
+                          }
+
+                          final categories = snapshot.data?.docs ?? [];
+
+                          return Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: categories.map((doc) {
+                              final data = doc.data() as Map<String, dynamic>;
+                              final categoryName = data['name'] ?? '';
+                              final emoji = data['emoji'] ?? '🍽️';
+                              final isSelected =
+                                  _selectedCategories.contains(categoryName);
+                              return FilterChip(
+                                label: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(emoji,
+                                        style: const TextStyle(fontSize: 16)),
+                                    const SizedBox(width: 6),
+                                    Text(categoryName),
+                                  ],
+                                ),
+                                selected: isSelected,
+                                selectedColor:
+                                    AdminTheme.primary.withValues(alpha: 0.15),
+                                checkmarkColor: AdminTheme.primary,
+                                onSelected: (selected) {
+                                  setState(() {
+                                    if (selected) {
+                                      _selectedCategories.add(categoryName);
+                                    } else {
+                                      _selectedCategories.remove(categoryName);
+                                    }
+                                  });
+                                },
+                              );
+                            }).toList(),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: _isLoading ? null : () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _saveRecipe,
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white))
+                      : Text(isEditing ? 'Save Changes' : 'Add Recipe'),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: _isLoading ? null : () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: _isLoading ? null : _saveRecipe,
-          child: _isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('Save'),
-        ),
-      ],
     );
   }
 }
-

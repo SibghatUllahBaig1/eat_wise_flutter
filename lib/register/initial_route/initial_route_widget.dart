@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '/backend/services/onboarding_service.dart';
+import '/backend/firestore/user_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/index.dart';
@@ -47,7 +48,37 @@ class _InitialRouteWidgetState extends State<InitialRouteWidget> {
         context.go(EntryPageWidget.routePath);
       }
     } else {
-      // User is logged in - check onboarding status
+      // User is logged in - check account status first
+      final userService = UserService();
+      final userProfile = await userService.getUserProfile(user.uid);
+
+      if (!mounted) return;
+
+      // Check if user is suspended or blocked
+      if (userProfile != null) {
+        final isSuspended = userProfile['isSuspended'] == true;
+        final isBlocked = userProfile['isBlocked'] == true;
+
+        if (isSuspended) {
+          debugPrint('InitialRoute: User is suspended, showing account status');
+          context.goNamed(
+            'AccountStatus',
+            queryParameters: {'status': 'suspended'},
+          );
+          return;
+        }
+
+        if (isBlocked) {
+          debugPrint('InitialRoute: User is blocked, showing account status');
+          context.goNamed(
+            'AccountStatus',
+            queryParameters: {'status': 'blocked'},
+          );
+          return;
+        }
+      }
+
+      // User is not suspended/blocked - check onboarding status
       final hasCompleted =
           await _onboardingService.hasCompletedOnboarding(user.uid);
 

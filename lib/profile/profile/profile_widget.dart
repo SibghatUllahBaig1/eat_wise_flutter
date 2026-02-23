@@ -1,4 +1,5 @@
 import '/auth/firebase_auth/auth_util.dart';
+import '/backend/firestore/user_service.dart';
 import '/buttons/icon_text_right/icon_text_right_widget.dart';
 import '/flutter_flow/flutter_flow_animations.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -12,6 +13,7 @@ import '/profile/components/rate_us/rate_us_widget.dart';
 import 'dart:math';
 import 'dart:ui';
 import '/index.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -296,21 +298,74 @@ class _ProfileWidgetState extends State<ProfileWidget>
                               mainAxisSize: MainAxisSize.max,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                Container(
-                                  width: 50.0,
-                                  height: 50.0,
-                                  decoration: BoxDecoration(
-                                    color: FlutterFlowTheme.of(context)
-                                        .secondaryBackground,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  alignment: AlignmentDirectional(0.0, 0.0),
-                                  child: Icon(
-                                    Icons.person,
-                                    size: 30.0,
-                                    color: FlutterFlowTheme.of(context)
-                                        .secondaryText,
-                                  ),
+                                FutureBuilder<Map<String, dynamic>?>(
+                                  future: UserService()
+                                      .getUserProfile(currentUserUid),
+                                  builder: (context, snapshot) {
+                                    final photoUrl =
+                                        snapshot.data?['photoUrl'] as String?;
+                                    final hasPhoto =
+                                        photoUrl != null && photoUrl.isNotEmpty;
+
+                                    return Container(
+                                      width: 60.0,
+                                      height: 60.0,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: FlutterFlowTheme.of(context)
+                                              .primary,
+                                          width: 2.0,
+                                        ),
+                                      ),
+                                      child: ClipOval(
+                                        child: hasPhoto
+                                            ? CachedNetworkImage(
+                                                imageUrl: photoUrl,
+                                                fit: BoxFit.cover,
+                                                placeholder: (context, url) =>
+                                                    Container(
+                                                  color: FlutterFlowTheme.of(
+                                                          context)
+                                                      .secondaryBackground,
+                                                  child: Icon(
+                                                    Icons.person,
+                                                    size: 30.0,
+                                                    color: FlutterFlowTheme.of(
+                                                            context)
+                                                        .secondaryText,
+                                                  ),
+                                                ),
+                                                errorWidget:
+                                                    (context, url, error) =>
+                                                        Container(
+                                                  color: FlutterFlowTheme.of(
+                                                          context)
+                                                      .secondaryBackground,
+                                                  child: Icon(
+                                                    Icons.person,
+                                                    size: 30.0,
+                                                    color: FlutterFlowTheme.of(
+                                                            context)
+                                                        .secondaryText,
+                                                  ),
+                                                ),
+                                              )
+                                            : Container(
+                                                color:
+                                                    FlutterFlowTheme.of(context)
+                                                        .secondaryBackground,
+                                                child: Icon(
+                                                  Icons.person,
+                                                  size: 30.0,
+                                                  color: FlutterFlowTheme.of(
+                                                          context)
+                                                      .secondaryText,
+                                                ),
+                                              ),
+                                      ),
+                                    );
+                                  },
                                 ),
                                 Expanded(
                                   child: Padding(
@@ -323,36 +378,51 @@ class _ProfileWidgetState extends State<ProfileWidget>
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          currentUserDisplayName.isNotEmpty
-                                              ? currentUserDisplayName
-                                              : 'User',
-                                          style: FlutterFlowTheme.of(context)
-                                              .titleSmall
-                                              .override(
-                                                font: GoogleFonts.inter(
-                                                  fontWeight:
-                                                      FlutterFlowTheme.of(
-                                                              context)
-                                                          .titleSmall
-                                                          .fontWeight,
-                                                  fontStyle:
-                                                      FlutterFlowTheme.of(
-                                                              context)
-                                                          .titleSmall
-                                                          .fontStyle,
-                                                ),
-                                                letterSpacing: 0.0,
-                                                fontWeight:
-                                                    FlutterFlowTheme.of(context)
-                                                        .titleSmall
-                                                        .fontWeight,
-                                                fontStyle:
-                                                    FlutterFlowTheme.of(context)
-                                                        .titleSmall
-                                                        .fontStyle,
-                                                lineHeight: 1.0,
-                                              ),
+                                        FutureBuilder<Map<String, dynamic>?>(
+                                          future: UserService()
+                                              .getUserProfile(currentUserUid),
+                                          builder: (context, snapshot) {
+                                            final displayName =
+                                                snapshot.data?['displayName']
+                                                        as String? ??
+                                                    currentUserDisplayName;
+                                            final name = displayName.isNotEmpty
+                                                ? displayName
+                                                : 'User';
+
+                                            return Text(
+                                              name,
+                                              style:
+                                                  FlutterFlowTheme.of(context)
+                                                      .titleSmall
+                                                      .override(
+                                                        font: GoogleFonts.inter(
+                                                          fontWeight:
+                                                              FlutterFlowTheme.of(
+                                                                      context)
+                                                                  .titleSmall
+                                                                  .fontWeight,
+                                                          fontStyle:
+                                                              FlutterFlowTheme.of(
+                                                                      context)
+                                                                  .titleSmall
+                                                                  .fontStyle,
+                                                        ),
+                                                        letterSpacing: 0.0,
+                                                        fontWeight:
+                                                            FlutterFlowTheme.of(
+                                                                    context)
+                                                                .titleSmall
+                                                                .fontWeight,
+                                                        fontStyle:
+                                                            FlutterFlowTheme.of(
+                                                                    context)
+                                                                .titleSmall
+                                                                .fontStyle,
+                                                        lineHeight: 1.0,
+                                                      ),
+                                            );
+                                          },
                                         ),
                                         Padding(
                                           padding:
@@ -934,36 +1004,30 @@ class _ProfileWidgetState extends State<ProfileWidget>
                                 ),
                               ),
                             ),
-                            // NOTE: Help & Support navigation has been hidden - backend functionality will not be implemented
-                            // Expanded(
-                            //   child: InkWell(
-                            //     splashColor: Colors.transparent,
-                            //     focusColor: Colors.transparent,
-                            //     hoverColor: Colors.transparent,
-                            //     highlightColor: Colors.transparent,
-                            //     onTap: () async {
-                            //       context.pushNamed(
-                            //           HelpSupportWidget.routeName);
-                            //     },
-                            //     child: wrapWithModel(
-                            //       model: _model.iconTextRightModel11,
-                            //       updateCallback: () =>
-                            //           safeSetState(() {}),
-                            //       child: IconTextRightWidget(
-                            //         icon: Icon(
-                            //           FFIcons.kfileText,
-                            //           color: FlutterFlowTheme.of(context)
-                            //               .primaryText,
-                            //           size: 24.0,
-                            //         ),
-                            //         text: 'Help & Support',
-                            //         textColor:
-                            //             FlutterFlowTheme.of(context)
-                            //                 .primaryText,
-                            //       ),
-                            //     ),
-                            //   ),
-                            // ),
+                            InkWell(
+                              splashColor: Colors.transparent,
+                              focusColor: Colors.transparent,
+                              hoverColor: Colors.transparent,
+                              highlightColor: Colors.transparent,
+                              onTap: () async {
+                                context.pushNamed(HelpSupportWidget.routeName);
+                              },
+                              child: wrapWithModel(
+                                model: _model.iconTextRightModel11,
+                                updateCallback: () => safeSetState(() {}),
+                                child: IconTextRightWidget(
+                                  icon: Icon(
+                                    FFIcons.kfileText,
+                                    color: FlutterFlowTheme.of(context)
+                                        .primaryText,
+                                    size: 24.0,
+                                  ),
+                                  text: 'Help & Support',
+                                  textColor:
+                                      FlutterFlowTheme.of(context).primaryText,
+                                ),
+                              ),
+                            ),
                             Builder(
                               builder: (context) => InkWell(
                                 splashColor: Colors.transparent,

@@ -22,6 +22,7 @@ class DietsModel extends FlutterFlowModel<DietsWidget> {
   String? selectedDiet = 'Vegetarian';
 
   List<Map<String, dynamic>> categoryRecipes = [];
+  List<Map<String, dynamic>> categories = [];
   bool isLoadingRecipes = false;
 
   ///  State fields for stateful widgets in this page.

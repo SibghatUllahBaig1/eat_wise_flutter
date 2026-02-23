@@ -2,14 +2,11 @@ import '/backend/schema/structs/index.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
 import '/recipes/components/z_recipe_card/z_recipe_card_widget.dart';
-import 'dart:ui';
-import '/flutter_flow/custom_functions.dart' as functions;
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'diets_model.dart';
 export 'diets_model.dart';
 
@@ -38,16 +35,79 @@ class _DietsWidgetState extends State<DietsWidget> {
     super.initState();
     _model = createModel(context, () => DietsModel());
 
-    // On page load action.
-    SchedulerBinding.instance.addPostFrameCallback((_) async {
-      await _model.pageViewController?.animateToPage(
-        functions.indexFromList(
-            FFAppState().categories.diets.map((e) => e.title).toList().toList(),
-            widget!.diets!),
-        duration: Duration(milliseconds: 500),
-        curve: Curves.ease,
-      );
-    });
+    // Set initial selected diet
+    _model.selectedDiet = widget.diets ?? 'All';
+
+    // Load all recipes and categories once on page load
+    _loadAllData();
+  }
+
+  Future<void> _loadAllData() async {
+    try {
+      // Load recipes
+      final recipesSnapshot =
+          await FirebaseFirestore.instance.collection('recipes').get();
+      _model.categoryRecipes =
+          recipesSnapshot.docs.map((doc) => doc.data()).toList();
+      debugPrint('Loaded ${_model.categoryRecipes.length} recipes');
+
+      // Load categories
+      final categoriesSnapshot = await FirebaseFirestore.instance
+          .collection('diet_categories')
+          .orderBy('name')
+          .get();
+
+      _model.categories =
+          categoriesSnapshot.docs.map((doc) => doc.data()).toList();
+      debugPrint('Loaded ${_model.categories.length} categories');
+
+      // Initialize PageController after data is loaded
+      if (mounted) {
+        setState(() {
+          _initializePageController();
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading data: $e');
+    }
+  }
+
+  void _initializePageController() {
+    final allCategories = _getAllCategories();
+    final initialIndex = widget.diets == null || widget.diets == 'All'
+        ? 0
+        : allCategories.indexWhere((cat) => cat['name'] == widget.diets);
+
+    _model.pageViewController ??= PageController(
+      initialPage: initialIndex >= 0 ? initialIndex : 0,
+    );
+  }
+
+  List<Map<String, dynamic>> _getAllCategories() {
+    return [
+      {'name': 'All', 'emoji': '🍽️', 'isAll': true},
+      ..._model.categories.map((cat) {
+        return {
+          ...cat,
+          'isAll': false,
+        };
+      }),
+    ];
+  }
+
+  List<Map<String, dynamic>> _getFilteredRecipes(
+      String categoryName, bool isAll) {
+    if (isAll) {
+      debugPrint('Filtering All: ${_model.categoryRecipes.length} recipes');
+      return _model.categoryRecipes;
+    }
+    final filtered = _model.categoryRecipes.where((recipe) {
+      final dietCategories = recipe['dietCategories'] as List<dynamic>?;
+      return dietCategories?.contains(categoryName) ?? false;
+    }).toList();
+    debugPrint(
+        'Filtering $categoryName: ${filtered.length} recipes out of ${_model.categoryRecipes.length}');
+    return filtered;
   }
 
   @override
@@ -117,170 +177,171 @@ class _DietsWidgetState extends State<DietsWidget> {
           centerTitle: true,
           elevation: 0.0,
         ),
-        body: Column(
-          mainAxisSize: MainAxisSize.max,
-          children: [
-            Padding(
-              padding: EdgeInsetsDirectional.fromSTEB(0.0, 16.0, 0.0, 12.0),
-              child: Builder(
-                builder: (context) {
-                  final dietsList = FFAppState().categories.diets.toList();
+        body: _model.categories.isEmpty
+            ? Center(child: CircularProgressIndicator())
+            : Column(
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  // Category tabs
+                  Padding(
+                    padding:
+                        EdgeInsetsDirectional.fromSTEB(0.0, 16.0, 0.0, 12.0),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.max,
+                        children:
+                            List.generate(_getAllCategories().length, (index) {
+                          final category = _getAllCategories()[index];
+                          final categoryName = category['name'] as String;
+                          final categoryEmoji = category['emoji'] as String;
+                          final isSelected =
+                              categoryName == _model.selectedDiet;
 
-                  return SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.max,
-                      children:
-                          List.generate(dietsList.length, (dietsListIndex) {
-                        final dietsListItem = dietsList[dietsListIndex];
-                        return InkWell(
-                          splashColor: Colors.transparent,
-                          focusColor: Colors.transparent,
-                          hoverColor: Colors.transparent,
-                          highlightColor: Colors.transparent,
-                          onTap: () async {
-                            await _model.pageViewController?.animateToPage(
-                              dietsListIndex,
-                              duration: Duration(milliseconds: 500),
-                              curve: Curves.ease,
-                            );
-                          },
-                          child: Container(
-                            height: 44.0,
-                            decoration: BoxDecoration(
-                              color: dietsListItem.title == _model.selectedDiet
-                                  ? FlutterFlowTheme.of(context).primary
-                                  : FlutterFlowTheme.of(context)
-                                      .secondaryBackground,
-                              borderRadius: BorderRadius.circular(12.0),
-                            ),
-                            child: Padding(
-                              padding: EdgeInsetsDirectional.fromSTEB(
-                                  12.0, 8.0, 12.0, 8.0),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.max,
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(0.0),
-                                    child: Image.network(
-                                      valueOrDefault<String>(
-                                        dietsListItem.image,
-                                        'https://picsum.photos/seed/495/600',
-                                      ),
-                                      width: 24.0,
-                                      height: 24.0,
-                                      fit: BoxFit.cover,
+                          return InkWell(
+                            splashColor: Colors.transparent,
+                            focusColor: Colors.transparent,
+                            hoverColor: Colors.transparent,
+                            highlightColor: Colors.transparent,
+                            onTap: () {
+                              setState(() {
+                                _model.selectedDiet = categoryName;
+                                _model.pageItem = index;
+                              });
+                              _model.pageViewController?.animateToPage(
+                                index,
+                                duration: Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                            },
+                            child: Container(
+                              height: 44.0,
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? FlutterFlowTheme.of(context).primary
+                                    : FlutterFlowTheme.of(context)
+                                        .secondaryBackground,
+                                borderRadius: BorderRadius.circular(12.0),
+                              ),
+                              child: Padding(
+                                padding: EdgeInsetsDirectional.fromSTEB(
+                                    12.0, 8.0, 12.0, 8.0),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.max,
+                                  children: [
+                                    Text(
+                                      categoryEmoji,
+                                      style: TextStyle(fontSize: 20.0),
                                     ),
-                                  ),
-                                  Text(
-                                    valueOrDefault<String>(
-                                      dietsListItem.title,
-                                      'Vegetarian',
-                                    ),
-                                    style: FlutterFlowTheme.of(context)
-                                        .bodyMedium
-                                        .override(
-                                          font: GoogleFonts.inter(
+                                    SizedBox(width: 8.0),
+                                    Text(
+                                      categoryName,
+                                      style: FlutterFlowTheme.of(context)
+                                          .bodyMedium
+                                          .override(
+                                            font: GoogleFonts.inter(
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            color: isSelected
+                                                ? FlutterFlowTheme.of(context)
+                                                    .info
+                                                : FlutterFlowTheme.of(context)
+                                                    .primaryText,
+                                            letterSpacing: 0.0,
                                             fontWeight: FontWeight.w500,
-                                            fontStyle:
-                                                FlutterFlowTheme.of(context)
-                                                    .bodyMedium
-                                                    .fontStyle,
+                                            lineHeight: 1.0,
                                           ),
-                                          color: dietsListItem.title ==
-                                                  _model.selectedDiet
-                                              ? FlutterFlowTheme.of(context)
-                                                  .info
-                                              : FlutterFlowTheme.of(context)
-                                                  .primaryText,
-                                          letterSpacing: 0.0,
-                                          fontWeight: FontWeight.w500,
-                                          fontStyle:
-                                              FlutterFlowTheme.of(context)
-                                                  .bodyMedium
-                                                  .fontStyle,
-                                          lineHeight: 1.0,
-                                        ),
-                                  ),
-                                ].divide(SizedBox(width: 12.0)),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      })
-                              .divide(SizedBox(width: 12.0))
-                              .addToStart(SizedBox(width: 16.0))
-                              .addToEnd(SizedBox(width: 16.0)),
+                          );
+                        })
+                                .divide(SizedBox(width: 12.0))
+                                .addToStart(SizedBox(width: 16.0))
+                                .addToEnd(SizedBox(width: 16.0)),
+                      ),
                     ),
-                  );
-                },
-              ),
-            ),
-            Expanded(
-              child: Builder(
-                builder: (context) {
-                  final dietsPageList = FFAppState().categories.diets.toList();
-
-                  return Container(
-                    width: double.infinity,
-                    height: 500.0,
+                  ),
+                  // PageView for recipes
+                  Expanded(
                     child: PageView.builder(
-                      controller: _model.pageViewController ??= PageController(
-                          initialPage:
-                              max(0, min(0, dietsPageList.length - 1))),
-                      onPageChanged: (_) async {
-                        _model.pageItem = _model.pageViewCurrentIndex;
-                        safeSetState(() {});
-                        _model.selectedDiet = dietsPageList
-                            .elementAtOrNull(_model.pageItem!)
-                            ?.title;
-                        safeSetState(() {});
+                      controller: _model.pageViewController,
+                      onPageChanged: (index) {
+                        setState(() {
+                          _model.pageItem = index;
+                          _model.selectedDiet =
+                              _getAllCategories()[index]['name'] as String;
+                        });
                       },
                       scrollDirection: Axis.horizontal,
-                      itemCount: dietsPageList.length,
-                      itemBuilder: (context, dietsPageListIndex) {
-                        final dietsPageListItem =
-                            dietsPageList[dietsPageListIndex];
-                        return Builder(
-                          builder: (context) {
-                            final recipesList = FFAppState().recipes.toList();
+                      itemCount: _getAllCategories().length,
+                      itemBuilder: (context, pageIndex) {
+                        final category = _getAllCategories()[pageIndex];
+                        final categoryName = category['name'] as String;
+                        final isAll = (category['isAll'] as bool?) ?? false;
 
-                            return SingleChildScrollView(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.max,
-                                children: List.generate(recipesList.length,
-                                        (recipesListIndex) {
-                                  final recipesListItem =
-                                      recipesList[recipesListIndex];
-                                  return wrapWithModel(
-                                    model: _model.zRecipeCardModels.getModel(
-                                      recipesListIndex.toString(),
-                                      recipesListIndex,
-                                    ),
-                                    updateCallback: () => safeSetState(() {}),
-                                    child: ZRecipeCardWidget(
-                                      key: Key(
-                                        'Keyado_${recipesListIndex.toString()}',
-                                      ),
-                                      recipeData: recipesListItem,
-                                    ),
-                                  );
-                                })
-                                    .divide(SizedBox(height: 16.0))
-                                    .addToStart(SizedBox(height: 12.0))
-                                    .addToEnd(SizedBox(height: 24.0)),
+                        // Filter recipes locally based on category
+                        final filteredRecipes =
+                            _getFilteredRecipes(categoryName, isAll);
+
+                        if (filteredRecipes.isEmpty) {
+                          return Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(24.0),
+                              child: Text(
+                                'No recipes available for this category',
+                                style: FlutterFlowTheme.of(context).bodyLarge,
                               ),
-                            );
-                          },
+                            ),
+                          );
+                        }
+
+                        return SingleChildScrollView(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.max,
+                            children: List.generate(filteredRecipes.length,
+                                    (recipeIndex) {
+                              final recipeData = filteredRecipes[recipeIndex];
+
+                              // Convert recipe data to RecipesStruct
+                              final recipeStruct = RecipesStruct(
+                                title: recipeData['name'] ?? '',
+                                description: recipeData['description'] ?? '',
+                                image: recipeData['imageUrl'] ?? '',
+                                kcal: recipeData['calories'] ?? 0,
+                                tags: List<String>.from(
+                                    recipeData['dietCategories'] ?? []),
+                                content: (recipeData['instructions']
+                                            as List<dynamic>?)
+                                        ?.map((e) => e.toString())
+                                        .join('\n') ??
+                                    '',
+                              );
+
+                              return wrapWithModel(
+                                model: _model.zRecipeCardModels.getModel(
+                                  '${pageIndex}_$recipeIndex',
+                                  recipeIndex,
+                                ),
+                                updateCallback: () => setState(() {}),
+                                child: ZRecipeCardWidget(
+                                  key: Key('Recipe_${pageIndex}_$recipeIndex'),
+                                  recipeData: recipeStruct,
+                                ),
+                              );
+                            })
+                                .divide(SizedBox(height: 16.0))
+                                .addToStart(SizedBox(height: 12.0))
+                                .addToEnd(SizedBox(height: 24.0)),
+                          ),
                         );
                       },
                     ),
-                  );
-                },
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }

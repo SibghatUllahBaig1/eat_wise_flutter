@@ -3,7 +3,6 @@ import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
-import '/profile/components/feedback/feedback_widget.dart';
 import '/profile/components/rate_us/rate_us_widget.dart';
 import 'dart:ui';
 import '/index.dart';
@@ -180,25 +179,20 @@ class _HelpSupportWidgetState extends State<HelpSupportWidget> {
                           ),
                         ),
                       ),
-                      wrapWithModel(
-                        model: _model.textRightModel5,
-                        updateCallback: () => safeSetState(() {}),
-                        child: TextRightWidget(
-                          text: 'Partner',
-                        ),
-                      ),
-                      wrapWithModel(
-                        model: _model.textRightModel6,
-                        updateCallback: () => safeSetState(() {}),
-                        child: TextRightWidget(
-                          text: 'Job Vacancy',
-                        ),
-                      ),
-                      wrapWithModel(
-                        model: _model.textRightModel7,
-                        updateCallback: () => safeSetState(() {}),
-                        child: TextRightWidget(
-                          text: 'Accessibility',
+                      InkWell(
+                        splashColor: Colors.transparent,
+                        focusColor: Colors.transparent,
+                        hoverColor: Colors.transparent,
+                        highlightColor: Colors.transparent,
+                        onTap: () async {
+                          context.pushNamed(AboutUsWidget.routeName);
+                        },
+                        child: wrapWithModel(
+                          model: _model.textRightModel5,
+                          updateCallback: () => safeSetState(() {}),
+                          child: TextRightWidget(
+                            text: 'About Us',
+                          ),
                         ),
                       ),
                       InkWell(
@@ -207,37 +201,14 @@ class _HelpSupportWidgetState extends State<HelpSupportWidget> {
                         hoverColor: Colors.transparent,
                         highlightColor: Colors.transparent,
                         onTap: () async {
-                          await showModalBottomSheet(
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            context: context,
-                            builder: (context) {
-                              return GestureDetector(
-                                onTap: () {
-                                  FocusScope.of(context).unfocus();
-                                  FocusManager.instance.primaryFocus?.unfocus();
-                                },
-                                child: Padding(
-                                  padding: MediaQuery.viewInsetsOf(context),
-                                  child: FeedbackWidget(),
-                                ),
-                              );
-                            },
-                          ).then((value) => safeSetState(() {}));
+                          context.pushNamed(ContactUsWidget.routeName);
                         },
                         child: wrapWithModel(
-                          model: _model.textRightModel8,
+                          model: _model.textRightModel6,
                           updateCallback: () => safeSetState(() {}),
                           child: TextRightWidget(
-                            text: 'Feedback',
+                            text: 'Contact Us',
                           ),
-                        ),
-                      ),
-                      wrapWithModel(
-                        model: _model.textRightModel9,
-                        updateCallback: () => safeSetState(() {}),
-                        child: TextRightWidget(
-                          text: 'About us',
                         ),
                       ),
                       Builder(
@@ -277,13 +248,6 @@ class _HelpSupportWidgetState extends State<HelpSupportWidget> {
                               text: 'Rate us',
                             ),
                           ),
-                        ),
-                      ),
-                      wrapWithModel(
-                        model: _model.textRightModel11,
-                        updateCallback: () => safeSetState(() {}),
-                        child: TextRightWidget(
-                          text: 'Visit Our Website',
                         ),
                       ),
                       // NOTE: Social Media navigation has been removed - backend functionality will not be implemented

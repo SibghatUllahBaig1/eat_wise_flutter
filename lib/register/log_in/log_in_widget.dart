@@ -1,5 +1,6 @@
 import '/auth/firebase_auth/auth_util.dart';
 import '/backend/auth/auth_handler.dart';
+import '/backend/firestore/user_service.dart';
 import '/backend/services/credentials_storage_service.dart';
 import '/flutter_flow/flutter_flow_animations.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
@@ -641,6 +642,49 @@ class _LogInWidgetState extends State<LogInWidget>
                         );
                       }
                       return;
+                    }
+
+                    // Check if user is suspended or blocked
+                    final userService = UserService();
+                    final userProfile =
+                        await userService.getUserProfile(user.uid);
+
+                    if (!context.mounted) return;
+
+                    if (userProfile != null) {
+                      final isSuspended = userProfile['isSuspended'] == true;
+                      final isBlocked = userProfile['isBlocked'] == true;
+
+                      if (isSuspended) {
+                        // Sign out the user
+                        await authHandler.signOut();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text(
+                              'Your account has been suspended. Please contact support.',
+                            ),
+                            backgroundColor:
+                                FlutterFlowTheme.of(context).warning,
+                            duration: const Duration(seconds: 5),
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (isBlocked) {
+                        // Sign out the user
+                        await authHandler.signOut();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text(
+                              'Your account has been blocked. Please contact support.',
+                            ),
+                            backgroundColor: FlutterFlowTheme.of(context).error,
+                            duration: const Duration(seconds: 5),
+                          ),
+                        );
+                        return;
+                      }
                     }
 
                     // Handle Remember Me

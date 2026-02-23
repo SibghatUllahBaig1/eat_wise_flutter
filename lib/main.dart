@@ -11,6 +11,7 @@ import 'auth/firebase_auth/auth_util.dart';
 import 'backend/firebase/firebase_config.dart';
 import 'backend/api_requests/api_config.dart';
 import 'backend/services/pedometer_service.dart';
+import 'backend/services/legal_content_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import 'flutter_flow/flutter_flow_util.dart';
 import 'flutter_flow/nav/nav.dart';
@@ -26,6 +27,9 @@ void main() async {
 
   // Load API keys from Firestore
   await ApiConfig.loadApiKeys();
+
+  // Initialize default legal content in Firestore
+  await LegalContentService().initializeDefaultContent();
 
   await FlutterFlowTheme.initialize();
 

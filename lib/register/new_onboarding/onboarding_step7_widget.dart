@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import '/app_state.dart';
 import 'onboarding_step7_model.dart';
 export 'onboarding_step7_model.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Step 7: Calculate calories and complete onboarding
 class OnboardingStep7Widget extends StatefulWidget {
@@ -21,8 +22,10 @@ class OnboardingStep7Widget extends StatefulWidget {
   State<OnboardingStep7Widget> createState() => _OnboardingStep7WidgetState();
 }
 
-class _OnboardingStep7WidgetState extends State<OnboardingStep7Widget> {
+class _OnboardingStep7WidgetState extends State<OnboardingStep7Widget>
+    with TickerProviderStateMixin {
   late OnboardingStep7Model _model;
+  late AnimationController _progressController;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
   final UserService _userService = UserService();
@@ -32,12 +35,21 @@ class _OnboardingStep7WidgetState extends State<OnboardingStep7Widget> {
     super.initState();
     _model = createModel(context, () => OnboardingStep7Model());
 
+    // Initialize progress animation controller
+    _progressController = AnimationController(
+      duration: const Duration(seconds: 4),
+      vsync: this,
+    );
+
     // Calculate calories when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) => _calculateCalories());
   }
 
   Future<void> _calculateCalories() async {
     setState(() => _model.isCalculating = true);
+
+    // Start progress animation
+    _progressController.forward();
 
     try {
       final profile = FFAppState().userProfile;
@@ -67,20 +79,28 @@ class _OnboardingStep7WidgetState extends State<OnboardingStep7Widget> {
         );
       }
 
-      setState(() {
-        _model.isCalculating = false;
-        _model.isComplete = true;
-      });
+      // Wait for progress animation to complete (4 seconds)
+      await Future.delayed(const Duration(seconds: 4));
+
+      if (mounted) {
+        setState(() {
+          _model.isCalculating = false;
+          _model.isComplete = true;
+        });
+      }
     } catch (e) {
-      setState(() => _model.isCalculating = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error calculating calories: $e')),
-      );
+      if (mounted) {
+        setState(() => _model.isCalculating = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error calculating calories: $e')),
+        );
+      }
     }
   }
 
   @override
   void dispose() {
+    _progressController.dispose();
     _model.dispose();
     super.dispose();
   }
@@ -103,14 +123,105 @@ class _OnboardingStep7WidgetState extends State<OnboardingStep7Widget> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (_model.isCalculating) ...[
-                  CircularProgressIndicator(
-                    color: FlutterFlowTheme.of(context).primary,
-                  ),
-                  SizedBox(height: 24.0),
-                  Text(
-                    'Calculating your personalized plan...',
-                    style: FlutterFlowTheme.of(context).headlineSmall,
-                    textAlign: TextAlign.center,
+                  // Modern loading screen with progress
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Animated circular progress indicator
+                      SizedBox(
+                        width: 120.0,
+                        height: 120.0,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Background circle
+                            Container(
+                              width: 120.0,
+                              height: 120.0,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: FlutterFlowTheme.of(context)
+                                    .primary
+                                    .withValues(alpha: 0.1),
+                              ),
+                            ),
+                            // Animated progress circle
+                            AnimatedBuilder(
+                              animation: _progressController,
+                              builder: (context, child) {
+                                return CustomPaint(
+                                  painter: CircleProgressPainter(
+                                    progress: _progressController.value,
+                                    color: FlutterFlowTheme.of(context).primary,
+                                  ),
+                                  size: const Size(120.0, 120.0),
+                                );
+                              },
+                            ),
+                            // Center icon
+                            Icon(
+                              Icons.restaurant_menu_rounded,
+                              size: 50.0,
+                              color: FlutterFlowTheme.of(context).primary,
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 40.0),
+                      // Title
+                      Text(
+                        'Creating Your Plan',
+                        style: GoogleFonts.inter(
+                          fontSize: 28.0,
+                          fontWeight: FontWeight.w700,
+                          color: FlutterFlowTheme.of(context).primaryText,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 12.0),
+                      // Subtitle
+                      Text(
+                        'Calculating your personalized nutrition plan...',
+                        style: GoogleFonts.inter(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w400,
+                          color: FlutterFlowTheme.of(context).secondaryText,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 32.0),
+                      // Linear progress bar
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8.0),
+                        child: LinearProgressIndicator(
+                          minHeight: 6.0,
+                          value: _progressController.value,
+                          backgroundColor: FlutterFlowTheme.of(context)
+                              .primary
+                              .withValues(alpha: 0.2),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            FlutterFlowTheme.of(context).primary,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16.0),
+                      // Progress percentage
+                      AnimatedBuilder(
+                        animation: _progressController,
+                        builder: (context, child) {
+                          final percentage =
+                              (_progressController.value * 100).toInt();
+                          return Text(
+                            '$percentage%',
+                            style: GoogleFonts.inter(
+                              fontSize: 12.0,
+                              fontWeight: FontWeight.w600,
+                              color: FlutterFlowTheme.of(context).primary,
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ] else if (_model.isComplete) ...[
                   Icon(
@@ -254,5 +365,39 @@ class _OnboardingStep7WidgetState extends State<OnboardingStep7Widget> {
         ],
       ),
     );
+  }
+}
+
+/// Custom painter for circular progress indicator
+class CircleProgressPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+
+  CircleProgressPainter({required this.progress, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 6.0
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2 - 3.0;
+
+    // Draw progress arc
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -3.14159 / 2, // Start from top
+      progress * 2 * 3.14159, // Sweep angle based on progress
+      false,
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(CircleProgressPainter oldDelegate) {
+    return oldDelegate.progress != progress;
   }
 }

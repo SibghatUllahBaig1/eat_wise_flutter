@@ -1,4 +1,5 @@
 import '/flutter_flow/flutter_flow_animations.dart';
+import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/home_pages/components/z_home_calendar/z_home_calendar_widget.dart';
@@ -120,7 +121,45 @@ class _HomePageWidgetState extends State<HomePageWidget>
                   fontStyle: FlutterFlowTheme.of(context).titleLarge.fontStyle,
                 ),
           ),
-          actions: const [],
+          actions: [
+            Padding(
+              padding: EdgeInsetsDirectional.fromSTEB(0.0, 6.0, 6.0, 6.0),
+              child: Container(
+                width: 44.0,
+                height: 44.0,
+                child: Stack(
+                  alignment: AlignmentDirectional(0.0, 0.0),
+                  children: [
+                    FlutterFlowIconButton(
+                      borderRadius: 22.0,
+                      borderWidth: 1.5,
+                      buttonSize: 44.0,
+                      icon: Icon(
+                        FFIcons.kbell,
+                        color: FlutterFlowTheme.of(context).primaryText,
+                        size: 22.0,
+                      ),
+                      onPressed: () async {
+                        context.pushNamed(NotificationWidget.routeName);
+                      },
+                    ),
+                    Padding(
+                      padding:
+                          EdgeInsetsDirectional.fromSTEB(12.0, 0.0, 0.0, 8.0),
+                      child: Container(
+                        width: 6.0,
+                        height: 6.0,
+                        decoration: BoxDecoration(
+                          color: FlutterFlowTheme.of(context).error,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
           centerTitle: true,
           elevation: 0.0,
         ),

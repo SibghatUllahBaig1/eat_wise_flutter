@@ -12,7 +12,12 @@
           "package_name": "com.developlogix.eatwise"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "777633941122-joq9squ0660f9g796ia3iil0m02ur79m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCeFpIcQsqqkzu_7k4KkhuD41AKp0w2E2s"
@@ -20,7 +25,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "777633941122-joq9squ0660f9g796ia3iil0m02ur79m.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "777633941122-iqci9v858n49pd8omoqm5qihke7nh0ok.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.developlogix.eatwise"
+              }
+            }
+          ]
         }
       }
     }

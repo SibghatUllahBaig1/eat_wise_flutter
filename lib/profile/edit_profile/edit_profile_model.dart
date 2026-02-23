@@ -13,6 +13,9 @@ class EditProfileModel extends FlutterFlowModel<EditProfileWidget> {
 
   bool isLoading = false;
 
+  String? selectedProfileImagePath;
+  String? currentPhotoUrl;
+
   ///  State fields for stateful widgets in this page.
 
   // State field(s) for Full Name widget.

@@ -177,6 +177,15 @@ class RecipeService extends FirestoreService {
     }
   }
 
+  /// Delete a recipe by ID
+  Future<void> deleteRecipe(String recipeId) async {
+    try {
+      await firestore.collection('recipes').doc(recipeId).delete();
+    } catch (e) {
+      throw Exception(handleFirestoreError(e));
+    }
+  }
+
   /// Get recipes by diet category
   Future<List<Map<String, dynamic>>> getRecipesByCategory({
     required String category,

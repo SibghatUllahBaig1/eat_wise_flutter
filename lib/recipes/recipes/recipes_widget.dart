@@ -13,6 +13,8 @@ import '/recipes/components/z_recipe_card/z_recipe_card_widget.dart';
 import '/recipes/components/z_recipe_card1/z_recipe_card1_widget.dart';
 import '/recipes/components/z_recipe_card2/z_recipe_card2_widget.dart';
 import '/recipes/components/z_search/z_search_widget.dart';
+import '/recipes/components/dynamic_categories/dynamic_categories_widget.dart';
+import '/recipes/components/dynamic_diets/dynamic_diets_widget.dart';
 import 'dart:math';
 import 'dart:ui';
 import '/index.dart';
@@ -382,11 +384,7 @@ class _RecipesWidgetState extends State<RecipesWidget>
                           Padding(
                             padding: EdgeInsetsDirectional.fromSTEB(
                                 0.0, 12.0, 0.0, 0.0),
-                            child: wrapWithModel(
-                              model: _model.zPopularCategoriesModel,
-                              updateCallback: () => safeSetState(() {}),
-                              child: ZPopularCategoriesWidget(),
-                            ),
+                            child: DynamicCategoriesWidget(),
                           ),
                           Padding(
                             padding: EdgeInsetsDirectional.fromSTEB(
@@ -608,133 +606,7 @@ class _RecipesWidgetState extends State<RecipesWidget>
                           Padding(
                             padding: EdgeInsetsDirectional.fromSTEB(
                                 0.0, 12.0, 0.0, 0.0),
-                            child: wrapWithModel(
-                              model: _model.zDietsModel,
-                              updateCallback: () => safeSetState(() {}),
-                              child: ZDietsWidget(),
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(
-                                16.0, 24.0, 16.0, 0.0),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.max,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    'Recipe of the Day',
-                                    style: FlutterFlowTheme.of(context)
-                                        .titleLarge
-                                        .override(
-                                          font: GoogleFonts.inter(
-                                            fontWeight:
-                                                FlutterFlowTheme.of(context)
-                                                    .titleLarge
-                                                    .fontWeight,
-                                            fontStyle:
-                                                FlutterFlowTheme.of(context)
-                                                    .titleLarge
-                                                    .fontStyle,
-                                          ),
-                                          letterSpacing: 0.0,
-                                          fontWeight:
-                                              FlutterFlowTheme.of(context)
-                                                  .titleLarge
-                                                  .fontWeight,
-                                          fontStyle:
-                                              FlutterFlowTheme.of(context)
-                                                  .titleLarge
-                                                  .fontStyle,
-                                        ),
-                                  ),
-                                ),
-                                FFButtonWidget(
-                                  onPressed: () async {
-                                    context.pushNamed(
-                                      RecipesByCategoryWidget.routeName,
-                                      queryParameters: {
-                                        'category': serializeParam(
-                                          'Recipe of the Day',
-                                          ParamType.String,
-                                        ),
-                                      }.withoutNulls,
-                                    );
-                                  },
-                                  text: 'View All',
-                                  options: FFButtonOptions(
-                                    height: 30.0,
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        12.0, 0.0, 12.0, 0.0),
-                                    iconPadding: EdgeInsetsDirectional.fromSTEB(
-                                        0.0, 0.0, 0.0, 0.0),
-                                    color: FlutterFlowTheme.of(context)
-                                        .transparent,
-                                    textStyle: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .override(
-                                          font: GoogleFonts.inter(
-                                            fontWeight:
-                                                FlutterFlowTheme.of(context)
-                                                    .titleSmall
-                                                    .fontWeight,
-                                            fontStyle:
-                                                FlutterFlowTheme.of(context)
-                                                    .titleSmall
-                                                    .fontStyle,
-                                          ),
-                                          color: FlutterFlowTheme.of(context)
-                                              .primary,
-                                          letterSpacing: 0.0,
-                                          fontWeight:
-                                              FlutterFlowTheme.of(context)
-                                                  .titleSmall
-                                                  .fontWeight,
-                                          fontStyle:
-                                              FlutterFlowTheme.of(context)
-                                                  .titleSmall
-                                                  .fontStyle,
-                                        ),
-                                    elevation: 0.0,
-                                    borderRadius: BorderRadius.circular(20.0),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(
-                                0.0, 12.0, 0.0, 0.0),
-                            child: Builder(
-                              builder: (context) {
-                                final recipes3 = FFAppState()
-                                    .recipes
-                                    .toList()
-                                    .take(2)
-                                    .toList();
-
-                                return Column(
-                                  mainAxisSize: MainAxisSize.max,
-                                  children: List.generate(recipes3.length,
-                                      (recipes3Index) {
-                                    final recipes3Item =
-                                        recipes3[recipes3Index];
-                                    return wrapWithModel(
-                                      model: _model.zRecipeCard2Models.getModel(
-                                        recipes3Index.toString(),
-                                        recipes3Index,
-                                      ),
-                                      updateCallback: () => safeSetState(() {}),
-                                      child: ZRecipeCard2Widget(
-                                        key: Key(
-                                          'Keyysr_${recipes3Index.toString()}',
-                                        ),
-                                        articlesData: recipes3Item,
-                                      ),
-                                    );
-                                  }).divide(SizedBox(height: 12.0)),
-                                );
-                              },
-                            ),
+                            child: DynamicDietsWidget(),
                           ),
                           Padding(
                             padding: EdgeInsetsDirectional.fromSTEB(
@@ -769,136 +641,6 @@ class _RecipesWidgetState extends State<RecipesWidget>
                               model: _model.zEnergyWrapModel,
                               updateCallback: () => safeSetState(() {}),
                               child: ZEnergyWrapWidget(),
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(
-                                16.0, 24.0, 16.0, 0.0),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.max,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    'Seasonal Recipes',
-                                    style: FlutterFlowTheme.of(context)
-                                        .titleLarge
-                                        .override(
-                                          font: GoogleFonts.inter(
-                                            fontWeight:
-                                                FlutterFlowTheme.of(context)
-                                                    .titleLarge
-                                                    .fontWeight,
-                                            fontStyle:
-                                                FlutterFlowTheme.of(context)
-                                                    .titleLarge
-                                                    .fontStyle,
-                                          ),
-                                          letterSpacing: 0.0,
-                                          fontWeight:
-                                              FlutterFlowTheme.of(context)
-                                                  .titleLarge
-                                                  .fontWeight,
-                                          fontStyle:
-                                              FlutterFlowTheme.of(context)
-                                                  .titleLarge
-                                                  .fontStyle,
-                                        ),
-                                  ),
-                                ),
-                                FFButtonWidget(
-                                  onPressed: () async {
-                                    context.pushNamed(
-                                      RecipesByCategoryWidget.routeName,
-                                      queryParameters: {
-                                        'category': serializeParam(
-                                          'Seasonal Recipes',
-                                          ParamType.String,
-                                        ),
-                                      }.withoutNulls,
-                                    );
-                                  },
-                                  text: 'View All',
-                                  options: FFButtonOptions(
-                                    height: 30.0,
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        12.0, 0.0, 12.0, 0.0),
-                                    iconPadding: EdgeInsetsDirectional.fromSTEB(
-                                        0.0, 0.0, 0.0, 0.0),
-                                    color: FlutterFlowTheme.of(context)
-                                        .transparent,
-                                    textStyle: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .override(
-                                          font: GoogleFonts.inter(
-                                            fontWeight:
-                                                FlutterFlowTheme.of(context)
-                                                    .titleSmall
-                                                    .fontWeight,
-                                            fontStyle:
-                                                FlutterFlowTheme.of(context)
-                                                    .titleSmall
-                                                    .fontStyle,
-                                          ),
-                                          color: FlutterFlowTheme.of(context)
-                                              .primary,
-                                          letterSpacing: 0.0,
-                                          fontWeight:
-                                              FlutterFlowTheme.of(context)
-                                                  .titleSmall
-                                                  .fontWeight,
-                                          fontStyle:
-                                              FlutterFlowTheme.of(context)
-                                                  .titleSmall
-                                                  .fontStyle,
-                                        ),
-                                    elevation: 0.0,
-                                    borderRadius: BorderRadius.circular(20.0),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(
-                                0.0, 12.0, 0.0, 0.0),
-                            child: Builder(
-                              builder: (context) {
-                                final articlesList = FFAppState()
-                                    .recipes
-                                    .toList()
-                                    .take(5)
-                                    .toList();
-
-                                return SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.max,
-                                    children: List.generate(articlesList.length,
-                                            (articlesListIndex) {
-                                      final articlesListItem =
-                                          articlesList[articlesListIndex];
-                                      return wrapWithModel(
-                                        model:
-                                            _model.zRecipeCard1Models2.getModel(
-                                          articlesListIndex.toString(),
-                                          articlesListIndex,
-                                        ),
-                                        updateCallback: () =>
-                                            safeSetState(() {}),
-                                        child: ZRecipeCard1Widget(
-                                          key: Key(
-                                            'Key5h3_${articlesListIndex.toString()}',
-                                          ),
-                                          articlesData: articlesListItem,
-                                        ),
-                                      );
-                                    })
-                                        .divide(SizedBox(width: 12.0))
-                                        .addToStart(SizedBox(width: 16.0))
-                                        .addToEnd(SizedBox(width: 16.0)),
-                                  ),
-                                );
-                              },
                             ),
                           ),
                         ]

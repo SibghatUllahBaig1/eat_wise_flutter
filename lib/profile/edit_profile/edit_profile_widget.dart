@@ -1,14 +1,19 @@
 import '/auth/firebase_auth/auth_util.dart';
 import '/backend/backend_manager.dart';
+import '/backend/firestore/user_service.dart';
 import '/backend/services/calorie_calculator_service.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'dart:io';
 import 'edit_profile_model.dart';
 export 'edit_profile_model.dart';
 
@@ -63,6 +68,98 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
     _model.selectedGoal = userProfile.goal.isNotEmpty ? userProfile.goal : null;
     _model.selectedActivityLevel =
         userProfile.activityLevel.isNotEmpty ? userProfile.activityLevel : null;
+
+    // Load current photo URL from Firestore
+    _loadCurrentPhotoUrl();
+  }
+
+  Future<void> _loadCurrentPhotoUrl() async {
+    try {
+      final userProfile = await UserService().getUserProfile(currentUserUid);
+      if (userProfile != null && mounted) {
+        setState(() {
+          _model.currentPhotoUrl = userProfile['photoUrl'] as String?;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading photo URL: $e');
+    }
+  }
+
+  Future<void> _pickAndUploadProfileImage() async {
+    try {
+      // Show dialog to choose between camera and gallery
+      final source = await showDialog<ImageSource>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Select Image Source'),
+          content: const Text('Choose where to pick the image from'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, ImageSource.camera),
+              child: const Text('Camera'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, ImageSource.gallery),
+              child: const Text('Gallery'),
+            ),
+          ],
+        ),
+      );
+
+      if (source == null) return;
+
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: source,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 85,
+      );
+
+      if (pickedFile == null) return;
+
+      setState(() {
+        _model.isLoading = true;
+      });
+
+      // Upload to Firebase Storage
+      final file = File(pickedFile.path);
+      final fileName =
+          'profile_pictures/${currentUserUid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final storageRef = FirebaseStorage.instance.ref().child(fileName);
+
+      await storageRef.putFile(file);
+      final photoUrl = await storageRef.getDownloadURL();
+
+      // Update Firestore
+      await UserService().createOrUpdateUserProfile(
+        userId: currentUserUid,
+        photoUrl: photoUrl,
+      );
+
+      if (mounted) {
+        setState(() {
+          _model.currentPhotoUrl = photoUrl;
+          _model.selectedProfileImagePath = pickedFile.path;
+          _model.isLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile picture updated successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _model.isLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error uploading image: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -139,17 +236,74 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
             children: [
               Align(
                 alignment: const AlignmentDirectional(0.0, -1.0),
-                child: Container(
-                  width: 110.0,
-                  height: 110.0,
-                  decoration: BoxDecoration(
-                    color: FlutterFlowTheme.of(context).secondaryBackground,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.person,
-                    size: 60.0,
-                    color: FlutterFlowTheme.of(context).secondaryText,
+                child: GestureDetector(
+                  onTap: _model.isLoading ? null : _pickAndUploadProfileImage,
+                  child: Container(
+                    width: 110.0,
+                    height: 110.0,
+                    decoration: BoxDecoration(
+                      color: FlutterFlowTheme.of(context).secondaryBackground,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: FlutterFlowTheme.of(context).primary,
+                        width: 2.0,
+                      ),
+                    ),
+                    child: _model.isLoading
+                        ? Center(
+                            child: CircularProgressIndicator(
+                              color: FlutterFlowTheme.of(context).primary,
+                            ),
+                          )
+                        : _model.currentPhotoUrl != null &&
+                                _model.currentPhotoUrl!.isNotEmpty
+                            ? ClipOval(
+                                child: CachedNetworkImage(
+                                  imageUrl: _model.currentPhotoUrl!,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => Icon(
+                                    Icons.person,
+                                    size: 60.0,
+                                    color: FlutterFlowTheme.of(context)
+                                        .secondaryText,
+                                  ),
+                                  errorWidget: (context, url, error) => Icon(
+                                    Icons.person,
+                                    size: 60.0,
+                                    color: FlutterFlowTheme.of(context)
+                                        .secondaryText,
+                                  ),
+                                ),
+                              )
+                            : Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.person,
+                                    size: 60.0,
+                                    color: FlutterFlowTheme.of(context)
+                                        .secondaryText,
+                                  ),
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: Container(
+                                      width: 32.0,
+                                      height: 32.0,
+                                      decoration: BoxDecoration(
+                                        color: FlutterFlowTheme.of(context)
+                                            .primary,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.camera_alt,
+                                        size: 16.0,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                   ),
                 ),
               ),
