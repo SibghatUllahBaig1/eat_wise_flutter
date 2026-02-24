@@ -17,7 +17,10 @@ class EnergyValueModel extends FlutterFlowModel<EnergyValueWidget> {
 
   int? pageItem = 0;
 
-  String? selectedEnergy = '50-100 kcal';
+  String? selectedEnergy = '50-100 cal';
+
+  List<Map<String, dynamic>> allRecipes = [];
+  bool isLoadingRecipes = false;
 
   ///  State fields for stateful widgets in this page.
 

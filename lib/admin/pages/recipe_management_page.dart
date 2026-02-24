@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'dart:typed_data';
 import '../../backend/firestore/recipe_service.dart';
 import '../theme/admin_theme.dart';
 import '../utils/upload_hardcoded_recipes.dart';
@@ -407,6 +408,10 @@ class _RecipeCard extends StatelessWidget {
     final calories = recipeData['calories'] ?? 0;
     final categories = List<String>.from(recipeData['dietCategories'] ?? []);
 
+    // Debug: Log recipe data
+    debugPrint(
+        'Recipe Card - Name: $name, ImageUrl: $imageUrl, Calories: $calories');
+
     return Container(
       decoration: BoxDecoration(
         color: AdminTheme.surface,
@@ -424,14 +429,42 @@ class _RecipeCard extends StatelessWidget {
                     imageUrl,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
                       return Container(
                         color: AdminTheme.background,
                         child: Center(
-                            child: Icon(Icons.restaurant_menu_rounded,
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      debugPrint('Error loading image: $imageUrl - $error');
+                      return Container(
+                        color: AdminTheme.background,
+                        child: Center(
+                            child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.restaurant_menu_rounded,
                                 size: 48,
                                 color:
-                                    AdminTheme.primary.withValues(alpha: 0.4))),
+                                    AdminTheme.primary.withValues(alpha: 0.4)),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Image failed to load',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AdminTheme.textSecondary,
+                              ),
+                            ),
+                          ],
+                        )),
                       );
                     },
                   )
@@ -544,9 +577,12 @@ class _RecipeEditDialogState extends State<_RecipeEditDialog> {
   late TextEditingController _proteinController;
   late TextEditingController _carbsController;
   late TextEditingController _fatController;
+  late TextEditingController _timeController;
+  late TextEditingController _difficultyController;
   List<String> _selectedCategories = [];
   bool _isLoading = false;
   XFile? _selectedImage;
+  Uint8List? _selectedImageBytes;
   String? _imageUrl;
   bool _isUploadingImage = false;
 
@@ -581,6 +617,12 @@ class _RecipeEditDialogState extends State<_RecipeEditDialog> {
     _fatController = TextEditingController(
       text: widget.recipeData?['fat']?.toString() ?? '',
     );
+    _timeController = TextEditingController(
+      text: widget.recipeData?['time']?.toString() ?? '',
+    );
+    _difficultyController = TextEditingController(
+      text: widget.recipeData?['difficulty'] ?? '',
+    );
     _selectedCategories =
         List<String>.from(widget.recipeData?['dietCategories'] ?? []);
   }
@@ -596,6 +638,8 @@ class _RecipeEditDialogState extends State<_RecipeEditDialog> {
     _proteinController.dispose();
     _carbsController.dispose();
     _fatController.dispose();
+    _timeController.dispose();
+    _difficultyController.dispose();
     super.dispose();
   }
 
@@ -603,7 +647,13 @@ class _RecipeEditDialogState extends State<_RecipeEditDialog> {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
-      setState(() => _selectedImage = pickedFile);
+      final bytes = await pickedFile.readAsBytes();
+      setState(() {
+        _selectedImage = pickedFile;
+        _selectedImageBytes = bytes;
+        debugPrint(
+            'Image selected: ${pickedFile.name}, Size: ${bytes.length} bytes');
+      });
     }
   }
 
@@ -664,6 +714,8 @@ class _RecipeEditDialogState extends State<_RecipeEditDialog> {
         'protein': double.tryParse(_proteinController.text) ?? 0.0,
         'carbs': double.tryParse(_carbsController.text) ?? 0.0,
         'fat': double.tryParse(_fatController.text) ?? 0.0,
+        'time': int.tryParse(_timeController.text) ?? 0,
+        'difficulty': _difficultyController.text.trim(),
         'dietCategories': _selectedCategories,
         'updatedAt': FieldValue.serverTimestamp(),
       };
@@ -817,9 +869,9 @@ class _RecipeEditDialogState extends State<_RecipeEditDialog> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        if (_selectedImage != null)
-                                          Image.file(
-                                            File(_selectedImage!.path),
+                                        if (_selectedImageBytes != null)
+                                          Image.memory(
+                                            _selectedImageBytes!,
                                             height: 150,
                                             width: double.infinity,
                                             fit: BoxFit.cover,
@@ -851,7 +903,7 @@ class _RecipeEditDialogState extends State<_RecipeEditDialog> {
                                               MainAxisAlignment.spaceBetween,
                                           children: [
                                             Text(
-                                              _selectedImage != null
+                                              _selectedImageBytes != null
                                                   ? 'New image selected'
                                                   : 'Current image',
                                               style: GoogleFonts.inter(
@@ -959,6 +1011,25 @@ class _RecipeEditDialogState extends State<_RecipeEditDialog> {
                                   decoration: const InputDecoration(
                                       labelText: 'Fat (g)'),
                                   keyboardType: TextInputType.number)),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Expanded(
+                              child: TextFormField(
+                                  controller: _timeController,
+                                  decoration: const InputDecoration(
+                                      labelText: 'Cooking Time (minutes)'),
+                                  keyboardType: TextInputType.number)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                              child: TextFormField(
+                                  controller: _difficultyController,
+                                  decoration: const InputDecoration(
+                                      labelText:
+                                          'Difficulty (e.g., Easy, Medium, Hard)'),
+                                  keyboardType: TextInputType.text)),
                         ],
                       ),
                       const SizedBox(height: 20),

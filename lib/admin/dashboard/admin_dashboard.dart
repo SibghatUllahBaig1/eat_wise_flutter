@@ -24,7 +24,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     _NavItem(icon: Icons.key_rounded, label: 'API Keys'),
     _NavItem(icon: Icons.group_rounded, label: 'Customers'),
     _NavItem(icon: Icons.menu_book_rounded, label: 'Recipes'),
-    _NavItem(icon: Icons.category_rounded, label: 'Categories'),
+    _NavItem(icon: Icons.label_rounded, label: 'Categories'),
     _NavItem(icon: Icons.description_rounded, label: 'Content'),
   ];
 
