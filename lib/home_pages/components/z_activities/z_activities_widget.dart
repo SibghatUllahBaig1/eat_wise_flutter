@@ -1,7 +1,5 @@
-import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import '/home_pages/components/z_activity_templates/z_activity_templates_widget.dart';
 import '/backend/backend_manager.dart';
 import '/auth/firebase_auth/auth_util.dart';
 import 'package:flutter/material.dart';
@@ -163,29 +161,10 @@ class _ZActivitiesWidgetState extends State<ZActivitiesWidget> {
                         ),
                       ),
                     ),
-                    FlutterFlowIconButton(
-                      borderRadius: 22.0,
-                      buttonSize: 32.0,
-                      fillColor: FlutterFlowTheme.of(context).primary,
-                      icon: Icon(
-                        FFIcons.kplus,
-                        color: FlutterFlowTheme.of(context).info,
-                        size: 16.0,
-                      ),
-                      onPressed: () async {
-                        await showModalBottomSheet(
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          enableDrag: false,
-                          context: context,
-                          builder: (context) {
-                            return Padding(
-                              padding: MediaQuery.viewInsetsOf(context),
-                              child: ZActivityTemplatesWidget(),
-                            );
-                          },
-                        ).then((value) => safeSetState(() {}));
-                      },
+                    Icon(
+                      FFIcons.kchevronRight,
+                      color: FlutterFlowTheme.of(context).primaryText,
+                      size: 24.0,
                     ),
                   ],
                 ),
@@ -302,7 +281,7 @@ class _ZActivitiesWidgetState extends State<ZActivitiesWidget> {
                                             style: TextStyle(),
                                           ),
                                           TextSpan(
-                                            text: 'cal',
+                                            text: 'kcal',
                                             style: TextStyle(),
                                           )
                                         ],
@@ -333,7 +312,7 @@ class _ZActivitiesWidgetState extends State<ZActivitiesWidget> {
                                       ),
                                     ),
                                     Text(
-                                      'Goal: $goal cal',
+                                      'Goal: $goal kcal',
                                       style: FlutterFlowTheme.of(context)
                                           .bodyMedium
                                           .override(

@@ -296,7 +296,7 @@ class _ActivityHistoryWidgetState extends State<ActivityHistoryWidget> {
                                       width: 1.0,
                                     ),
                                   ),
-                                  suffixText: 'cal',
+                                  suffixText: 'kcal',
                                   suffixStyle: FlutterFlowTheme.of(context)
                                       .titleSmall
                                       .override(
@@ -371,7 +371,7 @@ class _ActivityHistoryWidgetState extends State<ActivityHistoryWidget> {
                               ),
                             ),
                             Text(
-                              '${_model.totalCaloriesBurned} cal',
+                              '${_model.totalCaloriesBurned} kcal',
                               style: FlutterFlowTheme.of(context)
                                   .titleSmall
                                   .override(
@@ -496,7 +496,7 @@ class _ActivityHistoryWidgetState extends State<ActivityHistoryWidget> {
                                                 ),
                                           ),
                                           Text(
-                                            '$caloriesBurned cal, $duration min',
+                                            '$caloriesBurned kcal, $duration min',
                                             style: FlutterFlowTheme.of(context)
                                                 .labelMedium
                                                 .override(

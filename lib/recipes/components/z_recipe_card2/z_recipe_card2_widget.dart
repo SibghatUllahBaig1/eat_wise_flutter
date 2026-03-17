@@ -141,7 +141,7 @@ class _ZRecipeCard2WidgetState extends State<ZRecipeCard2Widget> {
                         ),
                       ),
                       Text(
-                        '${widget!.articlesData?.calories?.toString()} cal',
+                        '${widget!.articlesData?.calories?.toString()} kcal',
                         style: FlutterFlowTheme.of(context).labelSmall.override(
                               font: GoogleFonts.inter(
                                 fontWeight: FlutterFlowTheme.of(context)

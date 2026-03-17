@@ -174,7 +174,7 @@ class _ZPersonalFoodContentWidgetState
                                           ),
                                     ),
                                     Text(
-                                      'cal',
+                                      'kcal',
                                       style: FlutterFlowTheme.of(context)
                                           .bodyMedium
                                           .override(

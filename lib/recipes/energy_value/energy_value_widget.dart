@@ -84,25 +84,25 @@ class _EnergyValueWidgetState extends State<EnergyValueWidget> {
       return [];
     }
 
-    // Parse energy range (e.g., "50-100 cal" -> min: 50, max: 100)
-    final parts = energyRange.replaceAll(' cal', '').split('-');
+    // Parse energy range (e.g., "50-100 kcal" -> min: 50, max: 100)
+    final parts = energyRange.replaceAll(' kcal', '').split('-');
     if (parts.length < 2) {
       return [];
     }
 
     final minCal = int.tryParse(parts[0].trim()) ?? 0;
     final maxCal = energyRange.contains('+')
-        ? 10000 // For "700+ cal", set a very high max
+        ? 10000 // For "700+ kcal", set a very high max
         : (int.tryParse(parts[1].trim()) ?? 0);
 
     debugPrint(
-        'Filtering recipes for energy range: $energyRange ($minCal - $maxCal cal)');
+        'Filtering recipes for energy range: $energyRange ($minCal - $maxCal kcal)');
 
     final filtered = _model.allRecipes.where((recipe) {
       final cal = recipe['calories'] as int? ?? 0;
       final matches = cal >= minCal && cal <= maxCal;
       if (matches) {
-        debugPrint('  - ${recipe['name']}: $cal cal ✓');
+        debugPrint('  - ${recipe['name']}: $cal kcal ✓');
       }
       return matches;
     }).toList();
@@ -238,7 +238,7 @@ class _EnergyValueWidgetState extends State<EnergyValueWidget> {
                                   Text(
                                     valueOrDefault<String>(
                                       energyListItem.title,
-                                      '200-300 cal',
+                                      '200-300 kcal',
                                     ),
                                     style: FlutterFlowTheme.of(context)
                                         .bodyMedium

@@ -144,7 +144,7 @@ class _ZNutritionWidgetState extends State<ZNutritionWidget> {
                             ),
                             SizedBox(width: 8.0),
                             Text(
-                              '${meal['totalCalories'] ?? 0} cal',
+                              '${meal['totalCalories'] ?? 0} kcal',
                               style: FlutterFlowTheme.of(context)
                                   .titleMedium
                                   .override(

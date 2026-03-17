@@ -179,7 +179,7 @@ class _ZRecipeCard1WidgetState extends State<ZRecipeCard1Widget> {
             Padding(
               padding: EdgeInsetsDirectional.fromSTEB(12.0, 10.0, 12.0, 12.0),
               child: Text(
-                '${widget!.articlesData?.calories?.toString()} cal',
+                '${widget!.articlesData?.calories?.toString()} kcal',
                 style: FlutterFlowTheme.of(context).labelSmall.override(
                       font: GoogleFonts.inter(
                         fontWeight:

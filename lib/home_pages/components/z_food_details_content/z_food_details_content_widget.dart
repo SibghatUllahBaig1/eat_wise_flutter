@@ -428,7 +428,7 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
                                           ),
                                     ),
                                     Text(
-                                      'cal',
+                                      'kcal',
                                       style: FlutterFlowTheme.of(context)
                                           .bodyMedium
                                           .override(

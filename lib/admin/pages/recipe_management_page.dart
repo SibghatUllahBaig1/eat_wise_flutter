@@ -496,7 +496,7 @@ class _RecipeCard extends StatelessWidget {
                     const Icon(Icons.local_fire_department_rounded,
                         size: 14, color: AdminTheme.cardOrange),
                     const SizedBox(width: 4),
-                    Text('$calories cal',
+                    Text('$calories kcal',
                         style: GoogleFonts.inter(
                             fontSize: 13, color: AdminTheme.textSecondary)),
                   ],

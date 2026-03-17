@@ -2,8 +2,6 @@ import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
-import '/home_pages/components/z_activity_icons/z_activity_icons_widget.dart';
-import '/home_pages/components/z_predefined_activity_selector/z_predefined_activity_selector_widget.dart';
 import '/home_pages/components/z_activity_minuts2/z_activity_minuts2_widget.dart';
 import '/backend/data/predefined_activities.dart';
 import 'dart:ui';
@@ -37,58 +35,14 @@ class _ZCreatActivityWidgetState extends State<ZCreatActivityWidget> {
     super.initState();
     _model = createModel(context, () => ZCreatActivityModel());
 
+    // Default to 'other' icon (no icon chooser needed)
+    _model.selectedIconName = 'other';
+
     _model.textController1 ??= TextEditingController();
     _model.textFieldFocusNode1 ??= FocusNode();
 
     _model.textController2 ??= TextEditingController();
     _model.textFieldFocusNode2 ??= FocusNode();
-  }
-
-  IconData _getActivityIcon(String? iconName) {
-    if (iconName == null || iconName.isEmpty) return FFIcons.ksport2;
-
-    switch (iconName) {
-      case 'sport1':
-        return FFIcons.ksport1;
-      case 'sport2':
-        return FFIcons.ksport2;
-      case 'sport3':
-        return FFIcons.ksport3;
-      case 'sport4':
-        return FFIcons.ksport4;
-      case 'sport5':
-        return FFIcons.ksport5;
-      case 'sport6':
-        return FFIcons.ksport6;
-      case 'sport7':
-        return FFIcons.ksport7;
-      case 'sport8':
-        return FFIcons.ksport8;
-      case 'sport9':
-        return FFIcons.ksport9;
-      case 'sport10':
-        return FFIcons.ksport10;
-      case 'sport11':
-        return FFIcons.ksport11;
-      case 'sport12':
-        return FFIcons.ksport12;
-      case 'sport13':
-        return FFIcons.ksport13;
-      case 'sport14':
-        return FFIcons.ksport14;
-      case 'sport15':
-        return FFIcons.ksport15;
-      case 'sport16':
-        return FFIcons.ksport16;
-      case 'sport17':
-        return FFIcons.ksport17;
-      case 'sport19':
-        return FFIcons.ksport19;
-      case 'other':
-        return FFIcons.kdotsHorizontal;
-      default:
-        return FFIcons.ksport2;
-    }
   }
 
   @override
@@ -163,113 +117,6 @@ class _ZCreatActivityWidgetState extends State<ZCreatActivityWidget> {
                 mainAxisSize: MainAxisSize.max,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding:
-                        EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
-                    child: InkWell(
-                      splashColor: Colors.transparent,
-                      focusColor: Colors.transparent,
-                      hoverColor: Colors.transparent,
-                      highlightColor: Colors.transparent,
-                      onTap: () async {
-                        final selectedActivity =
-                            await showModalBottomSheet<Map<String, dynamic>>(
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          context: context,
-                          builder: (context) {
-                            return Padding(
-                              padding: MediaQuery.viewInsetsOf(context),
-                              child: ZPredefinedActivitySelectorWidget(),
-                            );
-                          },
-                        );
-                        if (selectedActivity != null) {
-                          _model.selectedIconName =
-                              selectedActivity['iconName'] as String?;
-                          _model.caloriesPerHour =
-                              selectedActivity['caloriesPerHour'] as int?;
-                          // Auto-fill activity name if empty
-                          if (_model.textController1?.text.isEmpty ?? true) {
-                            _model.textController1?.text =
-                                selectedActivity['name'] as String? ?? '';
-                          }
-                        }
-                        safeSetState(() {});
-                      },
-                      child: Container(
-                        width: double.infinity,
-                        height: 200.0,
-                        decoration: BoxDecoration(
-                          color:
-                              FlutterFlowTheme.of(context).secondaryBackground,
-                          borderRadius: BorderRadius.circular(12.0),
-                          border: Border.all(
-                            color: FlutterFlowTheme.of(context).divider,
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            if (_model.selectedIconName != null)
-                              Container(
-                                width: 64.0,
-                                height: 64.0,
-                                decoration: BoxDecoration(
-                                  color: FlutterFlowTheme.of(context).primary,
-                                  borderRadius: BorderRadius.circular(10.0),
-                                ),
-                                alignment: AlignmentDirectional(0.0, 0.0),
-                                child: Icon(
-                                  _getActivityIcon(_model.selectedIconName),
-                                  color: FlutterFlowTheme.of(context).info,
-                                  size: 44.0,
-                                ),
-                              )
-                            else
-                              Icon(
-                                Icons.sports,
-                                size: 40.0,
-                                color:
-                                    FlutterFlowTheme.of(context).secondaryText,
-                              ),
-                            SizedBox(height: 16.0),
-                            Text(
-                              _model.selectedIconName != null
-                                  ? 'Icon Selected'
-                                  : 'Choose an Icon',
-                              style: FlutterFlowTheme.of(context)
-                                  .titleMedium
-                                  .override(
-                                    font: GoogleFonts.inter(),
-                                    color: FlutterFlowTheme.of(context)
-                                        .secondaryText,
-                                    letterSpacing: 0.0,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                            SizedBox(height: 12.0),
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 24.0),
-                              child: Text(
-                                'Select an icon that best represents your activity.',
-                                textAlign: TextAlign.center,
-                                style: FlutterFlowTheme.of(context)
-                                    .bodyMedium
-                                    .override(
-                                      font: GoogleFonts.inter(),
-                                      color: FlutterFlowTheme.of(context)
-                                          .secondaryText,
-                                      letterSpacing: 0.0,
-                                    ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
                   Padding(
                     padding:
                         EdgeInsetsDirectional.fromSTEB(16.0, 24.0, 16.0, 0.0),
@@ -401,7 +248,7 @@ class _ZCreatActivityWidgetState extends State<ZCreatActivityWidget> {
                     padding:
                         EdgeInsetsDirectional.fromSTEB(16.0, 24.0, 16.0, 0.0),
                     child: Text(
-                      'Calorie (cal)',
+                      'Calorie (kcal)',
                       textAlign: TextAlign.start,
                       style: FlutterFlowTheme.of(context).bodyMedium.override(
                             font: GoogleFonts.inter(

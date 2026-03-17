@@ -27,7 +27,7 @@ class CalorieCalculatorService {
   /// - [weightKg]: Weight in kilograms
   /// - [heightCm]: Height in centimeters
   ///
-  /// Returns: BMR in cal/day
+  /// Returns: BMR in kcal/day
   static double calculateBMR({
     required String gender,
     required int age,
@@ -57,7 +57,7 @@ class CalorieCalculatorService {
   /// - [bmr]: Basal Metabolic Rate
   /// - [activityLevel]: Activity level string (must match keys in activityFactors)
   ///
-  /// Returns: TDEE in cal/day
+  /// Returns: TDEE in kcal/day
   static double calculateTDEE({
     required double bmr,
     required String activityLevel,
@@ -77,7 +77,7 @@ class CalorieCalculatorService {
   /// - [tdee]: Total Daily Energy Expenditure
   /// - [goal]: "Lose Weight", "Maintain Weight", or "Gain Weight"
   ///
-  /// Returns: Daily calorie goal in cal/day (rounded to nearest integer)
+  /// Returns: Daily calorie goal in kcal/day (rounded to nearest integer)
   static int calculateDailyCalorieGoal({
     required double tdee,
     required String goal,
@@ -135,9 +135,9 @@ class CalorieCalculatorService {
     debugPrint(
         '  Gender: $gender, Age: $age, Weight: ${weightKg}kg, Height: ${heightCm}cm');
     debugPrint('  Activity: $activityLevel, Goal: $goal');
-    debugPrint('  BMR: ${bmr.round()} cal/day');
-    debugPrint('  TDEE: ${tdee.round()} cal/day');
-    debugPrint('  Daily Calorie Goal: $dailyCalories cal/day');
+    debugPrint('  BMR: ${bmr.round()} kcal/day');
+    debugPrint('  TDEE: ${tdee.round()} kcal/day');
+    debugPrint('  Daily Calorie Goal: $dailyCalories kcal/day');
 
     return {
       'bmr': bmr.round(),

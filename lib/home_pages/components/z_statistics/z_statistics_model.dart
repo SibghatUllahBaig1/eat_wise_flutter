@@ -114,9 +114,9 @@ class ZStatisticsModel extends FlutterFlowModel<ZStatisticsWidget> {
       print('   Carbs: $totalCarbs / $carbsGoal g');
       print('   Protein: $totalProtein / $proteinGoal g');
       print('   Fat: $totalFat / $fatGoal g');
-      print('   Burned from activities: ${burnedCalories - stepCalories} cal');
-      print('   Burned from steps: $stepCalories cal');
-      print('   Total burned: $burnedCalories cal');
+      print('   Burned from activities: ${burnedCalories - stepCalories} kcal');
+      print('   Burned from steps: $stepCalories kcal');
+      print('   Total burned: $burnedCalories kcal');
     } catch (e) {
       print('❌ Error loading nutrition data: $e');
     } finally {

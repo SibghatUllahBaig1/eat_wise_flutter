@@ -660,7 +660,7 @@ class _ZRecipeContentWidgetState extends State<ZRecipeContentWidget> {
     final calories = recipe.calories.toDouble();
 
     // Calculate macro percentages based on calorie contribution
-    // Protein: 4 cal/g, Carbs: 4 cal/g, Fat: 9 cal/g
+    // Protein: 4 kcal/g, Carbs: 4 kcal/g, Fat: 9 kcal/g
     double proteinPercent = 0.0;
     double carbsPercent = 0.0;
     double fatPercent = 0.0;

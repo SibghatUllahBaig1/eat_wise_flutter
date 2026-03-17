@@ -538,7 +538,7 @@ class _FoodCaptureWidgetState extends State<FoodCaptureWidget> {
                                                     totalCalories)
                                                 .toDouble();
 
-                                        // Calculate macro percentages from cal
+                                        // Calculate macro percentages from kcal
                                         final totalMacroKcal =
                                             (carbsGrams * 4) +
                                                 (proteinGrams * 4) +
@@ -681,7 +681,7 @@ class _FoodCaptureWidgetState extends State<FoodCaptureWidget> {
                                                 ),
                                                 SizedBox(height: 4.0),
                                                 Text(
-                                                  '$totalCalories cal',
+                                                  '$totalCalories kcal',
                                                   style: FlutterFlowTheme.of(
                                                           context)
                                                       .bodySmall

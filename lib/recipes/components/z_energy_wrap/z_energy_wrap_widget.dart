@@ -117,7 +117,7 @@ class _ZEnergyWrapWidgetState extends State<ZEnergyWrapWidget> {
                               Text(
                                 valueOrDefault<String>(
                                   energyListItem.title,
-                                  '200-300 cal',
+                                  '200-300 kcal',
                                 ),
                                 style: FlutterFlowTheme.of(context)
                                     .bodySmall

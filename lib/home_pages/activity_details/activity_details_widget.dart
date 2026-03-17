@@ -38,6 +38,8 @@ class _ActivityDetailsWidgetState extends State<ActivityDetailsWidget> {
     // Prefill form if using template (activityData passed but will be used to create new activity)
     if (widget.activityData != null) {
       final data = widget.activityData!;
+      final isPredefinedTemplate =
+          data['isPredefinedTemplate'] as bool? ?? false;
       // Keep activityId so favorite button can update the template
       _model.activityId = data['id'] as String?;
       _model.activityName = data['activityName'] as String? ?? '';
@@ -46,10 +48,16 @@ class _ActivityDetailsWidgetState extends State<ActivityDetailsWidget> {
       _model.iconName = data['iconName'] as String? ?? 'sport2';
       _model.caloriesBurned = data['caloriesBurned'] as int? ?? 0;
 
-      // Calculate and store the base calories per minute from the template
-      if (_model.duration != null &&
+      // For predefined templates, use caloriesPerHour to set baseCaloriesPerMinute
+      if (isPredefinedTemplate && data['caloriesPerHour'] != null) {
+        final caloriesPerHour = data['caloriesPerHour'] as int;
+        if (caloriesPerHour > 0) {
+          _model.baseCaloriesPerMinute = caloriesPerHour / 60.0;
+        }
+      } else if (_model.duration != null &&
           _model.duration! > 0 &&
           _model.caloriesBurned != null) {
+        // Calculate and store the base calories per minute from logged activity
         _model.baseCaloriesPerMinute =
             _model.caloriesBurned! / _model.duration!;
       }
@@ -395,7 +403,7 @@ class _ActivityDetailsWidgetState extends State<ActivityDetailsWidget> {
                                               ),
                                         ),
                                         Text(
-                                          '${_model.caloriesBurned ?? 0} cal',
+                                          '${_model.caloriesBurned ?? 0} kcal',
                                           style: FlutterFlowTheme.of(context)
                                               .labelLarge
                                               .override(

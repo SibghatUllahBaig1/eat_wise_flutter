@@ -226,8 +226,8 @@ class _ZStatisticsWidgetState extends State<ZStatisticsWidget> {
                                   ),
                                   Text(
                                     _model.isCaloriesExceeded
-                                        ? 'cal over'
-                                        : 'cal left',
+                                        ? 'kcal over'
+                                        : 'kcal left',
                                     style: FlutterFlowTheme.of(context)
                                         .bodyMedium
                                         .override(

@@ -259,7 +259,7 @@ class _ActivityViewWidgetState extends State<ActivityViewWidget> {
                                     ),
                               ),
                               Text(
-                                '${_model.caloriesBurned} cal',
+                                '${_model.caloriesBurned} kcal',
                                 style: FlutterFlowTheme.of(context)
                                     .bodyLarge
                                     .override(

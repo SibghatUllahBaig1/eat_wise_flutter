@@ -251,7 +251,7 @@ class _OnboardingStep7WidgetState extends State<OnboardingStep7Widget>
                   SizedBox(height: 8.0),
 
                   Text(
-                    '${profile.dailyCalorieGoal} cal/day',
+                    '${profile.dailyCalorieGoal} kcal/day',
                     style: FlutterFlowTheme.of(context).displaySmall.override(
                           fontFamily: 'Outfit',
                           color: FlutterFlowTheme.of(context).primary,
@@ -268,9 +268,9 @@ class _OnboardingStep7WidgetState extends State<OnboardingStep7Widget>
                     ),
                     child: Column(
                       children: [
-                        _buildInfoRow('BMR', '${profile.calculatedBMR} cal'),
+                        _buildInfoRow('BMR', '${profile.calculatedBMR} kcal'),
                         Divider(),
-                        _buildInfoRow('TDEE', '${profile.calculatedTDEE} cal'),
+                        _buildInfoRow('TDEE', '${profile.calculatedTDEE} kcal'),
                         Divider(),
                         _buildInfoRow('Goal', profile.goal),
                       ],
