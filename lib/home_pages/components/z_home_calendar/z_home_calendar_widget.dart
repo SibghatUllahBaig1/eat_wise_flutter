@@ -216,7 +216,8 @@ class _ZHomeCalendarWidgetState extends State<ZHomeCalendarWidget> {
                                       }
                                     },
                                     child: CircularPercentIndicator(
-                                      percent: progress,
+                                      // Clamp progress to max 1.0 (CircularPercentIndicator only accepts 0.0-1.0)
+                                      percent: progress.clamp(0.0, 1.0),
                                       radius: 18.0,
                                       lineWidth: 3.0,
                                       animation: true,

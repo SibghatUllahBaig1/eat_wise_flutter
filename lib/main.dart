@@ -25,8 +25,12 @@ void main() async {
 
   await initFirebase();
 
-  // Load API keys from Firestore
+  // Try to load API keys from Firestore (may fail if user not authenticated yet)
+  // Keys will be reloaded after authentication in AuthHandler
+  print('🔑 Attempting to load API keys before authentication...');
   await ApiConfig.loadApiKeys();
+  print(
+      '🔑 Initial API key load: OpenAI=${ApiConfig.isOpenAiConfigured}, USDA=${ApiConfig.isUsdaConfigured}');
 
   // Initialize default legal content in Firestore
   await LegalContentService().initializeDefaultContent();

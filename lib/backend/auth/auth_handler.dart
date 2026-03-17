@@ -8,6 +8,7 @@ import 'dart:math';
 import 'package:crypto/crypto.dart';
 import '../backend_manager.dart';
 import '/app_state.dart';
+import '/backend/api_requests/api_config.dart';
 
 /// Handler for authentication events and user data synchronization
 class AuthHandler extends ChangeNotifier {
@@ -60,6 +61,12 @@ class AuthHandler extends ChangeNotifier {
 
       // Update app state
       FFAppState().authenticated = true;
+
+      // Load API keys from Firestore now that user is authenticated
+      debugPrint('Loading API keys after authentication...');
+      await ApiConfig.loadApiKeys();
+      debugPrint(
+          'API keys loaded: OpenAI=${ApiConfig.isOpenAiConfigured}, USDA=${ApiConfig.isUsdaConfigured}');
 
       // Check if user profile exists
       final profile = await _backend.userService.getUserProfile(user.uid);

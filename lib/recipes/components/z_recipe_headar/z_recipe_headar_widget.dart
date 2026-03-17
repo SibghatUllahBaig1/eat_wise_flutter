@@ -68,7 +68,7 @@ class _ZRecipeHeadarWidgetState extends State<ZRecipeHeadarWidget> {
               ),
               child: Image.network(
                 valueOrDefault<String>(
-                  widget!.recipeData?.image,
+                  widget!.recipeData?.imageUrl,
                   'https://picsum.photos/seed/573/600',
                 ),
                 width: double.infinity,
@@ -122,7 +122,7 @@ class _ZRecipeHeadarWidgetState extends State<ZRecipeHeadarWidget> {
                               ),
                               onPressed: () async {
                                 await Share.share(
-                                  widget!.recipeData!.title,
+                                  widget!.recipeData!.name,
                                   sharePositionOrigin:
                                       getWidgetBoundingBox(context),
                                 );

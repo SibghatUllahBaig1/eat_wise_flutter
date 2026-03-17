@@ -49,6 +49,9 @@ class _RecipesWidgetState extends State<RecipesWidget>
     super.initState();
     _model = createModel(context, () => RecipesModel());
 
+    // Load recipes and update UI when complete
+    _loadRecipes();
+
     // On page load action.
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       FFAppState().NavBar = 3;
@@ -76,6 +79,14 @@ class _RecipesWidgetState extends State<RecipesWidget>
         ],
       ),
     });
+  }
+
+  /// Load recipes from Firestore and update UI
+  Future<void> _loadRecipes() async {
+    await _model.loadRecipes();
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -478,10 +489,68 @@ class _RecipesWidgetState extends State<RecipesWidget>
                                 0.0, 12.0, 0.0, 0.0),
                             child: Builder(
                               builder: (context) {
-                                final articlesList = FFAppState()
-                                    .recipes
-                                    .toList()
+                                // Show loading indicator while recipes are loading
+                                if (_model.isLoadingRecipes) {
+                                  return Container(
+                                    height: 200,
+                                    child: Center(
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                  );
+                                }
+
+                                // Convert Firestore data to RecipesStruct
+                                final articlesList = _model.allRecipes
                                     .take(5)
+                                    .map((recipeData) => RecipesStruct(
+                                          name: recipeData['name'] as String? ??
+                                              '',
+                                          description: recipeData['description']
+                                                  as String? ??
+                                              '',
+                                          imageUrl: recipeData['imageUrl']
+                                                  as String? ??
+                                              '',
+                                          calories:
+                                              recipeData['calories'] as int? ??
+                                                  0,
+                                          protein:
+                                              (recipeData['protein'] as num?)
+                                                      ?.toDouble() ??
+                                                  0.0,
+                                          carbs: (recipeData['carbs'] as num?)
+                                                  ?.toDouble() ??
+                                              0.0,
+                                          fat: (recipeData['fat'] as num?)
+                                                  ?.toDouble() ??
+                                              0.0,
+                                          time: recipeData['time'] as int? ?? 0,
+                                          difficulty: recipeData['difficulty']
+                                                  as String? ??
+                                              '',
+                                          dietCategories: List<String>.from(
+                                              recipeData['dietCategories']
+                                                      as List? ??
+                                                  []),
+                                          ingredients: List<String>.from(
+                                              recipeData['ingredients']
+                                                      as List? ??
+                                                  []),
+                                          instructions: List<String>.from(
+                                              recipeData['instructions']
+                                                      as List? ??
+                                                  []),
+                                          grams: (recipeData['grams'] as num?)
+                                                  ?.toDouble() ??
+                                              0.0,
+                                          cholesterol:
+                                              NutrientStruct.maybeFromMap(
+                                                  recipeData['cholesterol']),
+                                          sodium: NutrientStruct.maybeFromMap(
+                                              recipeData['sodium']),
+                                          minerals: MineralsStruct.maybeFromMap(
+                                              recipeData['minerals']),
+                                        ))
                                     .toList();
 
                                 return SingleChildScrollView(
@@ -650,43 +719,38 @@ class _RecipesWidgetState extends State<RecipesWidget>
                     ),
                     Builder(
                       builder: (context) {
-                        if (FFAppState().favoritesRecipes.isNotEmpty) {
-                          return Builder(
-                            builder: (context) {
-                              final favoritesRecipesList =
-                                  FFAppState().favoritesRecipes.toList();
+                        // Show only recipes that are in favorites
+                        final favoritesRecipesList =
+                            FFAppState().favoritesRecipes.toList();
 
-                              return ListView.separated(
-                                padding: EdgeInsets.fromLTRB(
-                                  0,
-                                  12.0,
-                                  0,
-                                  24.0,
+                        if (favoritesRecipesList.isNotEmpty) {
+                          return ListView.separated(
+                            padding: EdgeInsets.fromLTRB(
+                              0,
+                              12.0,
+                              0,
+                              24.0,
+                            ),
+                            shrinkWrap: true,
+                            scrollDirection: Axis.vertical,
+                            itemCount: favoritesRecipesList.length,
+                            separatorBuilder: (_, __) => SizedBox(height: 16.0),
+                            itemBuilder: (context, favoritesRecipesListIndex) {
+                              final favoritesRecipesListItem =
+                                  favoritesRecipesList[
+                                      favoritesRecipesListIndex];
+                              return wrapWithModel(
+                                model: _model.zRecipeCardModels.getModel(
+                                  favoritesRecipesListIndex.toString(),
+                                  favoritesRecipesListIndex,
                                 ),
-                                shrinkWrap: true,
-                                scrollDirection: Axis.vertical,
-                                itemCount: favoritesRecipesList.length,
-                                separatorBuilder: (_, __) =>
-                                    SizedBox(height: 16.0),
-                                itemBuilder:
-                                    (context, favoritesRecipesListIndex) {
-                                  final favoritesRecipesListItem =
-                                      favoritesRecipesList[
-                                          favoritesRecipesListIndex];
-                                  return wrapWithModel(
-                                    model: _model.zRecipeCardModels.getModel(
-                                      favoritesRecipesListIndex.toString(),
-                                      favoritesRecipesListIndex,
-                                    ),
-                                    updateCallback: () => safeSetState(() {}),
-                                    child: ZRecipeCardWidget(
-                                      key: Key(
-                                        'Keymqo_${favoritesRecipesListIndex.toString()}',
-                                      ),
-                                      recipeData: favoritesRecipesListItem,
-                                    ),
-                                  );
-                                },
+                                updateCallback: () => safeSetState(() {}),
+                                child: ZRecipeCardWidget(
+                                  key: Key(
+                                    'Keymqo_${favoritesRecipesListIndex.toString()}',
+                                  ),
+                                  recipeData: favoritesRecipesListItem,
+                                ),
                               );
                             },
                           );

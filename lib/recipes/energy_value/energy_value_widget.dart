@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'energy_value_model.dart';
 export 'energy_value_model.dart';
 
@@ -38,6 +39,9 @@ class _EnergyValueWidgetState extends State<EnergyValueWidget> {
     super.initState();
     _model = createModel(context, () => EnergyValueModel());
 
+    // Load all recipes on page load
+    _loadAllRecipes();
+
     // On page load action.
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       await _model.pageViewController?.animateToPage(
@@ -53,6 +57,59 @@ class _EnergyValueWidgetState extends State<EnergyValueWidget> {
         curve: Curves.ease,
       );
     });
+  }
+
+  Future<void> _loadAllRecipes() async {
+    try {
+      _model.isLoadingRecipes = true;
+      final recipesSnapshot =
+          await FirebaseFirestore.instance.collection('recipes').get();
+      _model.allRecipes =
+          recipesSnapshot.docs.map((doc) => doc.data()).toList();
+      debugPrint(
+          'Loaded ${_model.allRecipes.length} recipes for energy filtering');
+
+      if (mounted) {
+        safeSetState(() {});
+      }
+    } catch (e) {
+      debugPrint('Error loading recipes: $e');
+    } finally {
+      _model.isLoadingRecipes = false;
+    }
+  }
+
+  List<Map<String, dynamic>> _getFilteredRecipesByEnergy(String energyRange) {
+    if (_model.allRecipes.isEmpty) {
+      return [];
+    }
+
+    // Parse energy range (e.g., "50-100 cal" -> min: 50, max: 100)
+    final parts = energyRange.replaceAll(' cal', '').split('-');
+    if (parts.length < 2) {
+      return [];
+    }
+
+    final minCal = int.tryParse(parts[0].trim()) ?? 0;
+    final maxCal = energyRange.contains('+')
+        ? 10000 // For "700+ cal", set a very high max
+        : (int.tryParse(parts[1].trim()) ?? 0);
+
+    debugPrint(
+        'Filtering recipes for energy range: $energyRange ($minCal - $maxCal cal)');
+
+    final filtered = _model.allRecipes.where((recipe) {
+      final cal = recipe['calories'] as int? ?? 0;
+      final matches = cal >= minCal && cal <= maxCal;
+      if (matches) {
+        debugPrint('  - ${recipe['name']}: $cal cal ✓');
+      }
+      return matches;
+    }).toList();
+
+    debugPrint(
+        'Found ${filtered.length} recipes for $energyRange out of ${_model.allRecipes.length}');
+    return filtered;
   }
 
   @override
@@ -248,17 +305,72 @@ class _EnergyValueWidgetState extends State<EnergyValueWidget> {
                       itemBuilder: (context, energyPageListIndex) {
                         final energyPageListItem =
                             energyPageList[energyPageListIndex];
+                        final energyRange = energyPageListItem.title;
+
+                        // Get filtered recipes for this energy range
+                        final filteredRecipes =
+                            _getFilteredRecipesByEnergy(energyRange);
+
                         return Builder(
                           builder: (context) {
-                            final recipesList = FFAppState().recipes.toList();
+                            if (filteredRecipes.isEmpty) {
+                              return Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(24.0),
+                                  child: Text(
+                                    'No recipes available for $energyRange',
+                                    style:
+                                        FlutterFlowTheme.of(context).bodyLarge,
+                                  ),
+                                ),
+                              );
+                            }
 
                             return SingleChildScrollView(
                               child: Column(
                                 mainAxisSize: MainAxisSize.max,
-                                children: List.generate(recipesList.length,
+                                children: List.generate(filteredRecipes.length,
                                         (recipesListIndex) {
-                                  final recipesListItem =
-                                      recipesList[recipesListIndex];
+                                  final recipeData =
+                                      filteredRecipes[recipesListIndex];
+
+                                  // Convert map to RecipesStruct for compatibility
+                                  final recipesListItem = RecipesStruct(
+                                    name: recipeData['name'] as String? ?? '',
+                                    description:
+                                        recipeData['description'] as String? ??
+                                            '',
+                                    imageUrl:
+                                        recipeData['imageUrl'] as String? ?? '',
+                                    calories:
+                                        recipeData['calories'] as int? ?? 0,
+                                    protein: (recipeData['protein'] as num?)
+                                            ?.toDouble() ??
+                                        0.0,
+                                    carbs: (recipeData['carbs'] as num?)
+                                            ?.toDouble() ??
+                                        0.0,
+                                    fat: (recipeData['fat'] as num?)
+                                            ?.toDouble() ??
+                                        0.0,
+                                    time: recipeData['time'] as int? ?? 0,
+                                    difficulty:
+                                        recipeData['difficulty'] as String? ??
+                                            '',
+                                    dietCategories: List<String>.from(
+                                        recipeData['dietCategories'] as List? ??
+                                            []),
+                                    grams: (recipeData['grams'] as num?)
+                                            ?.toDouble() ??
+                                        0.0,
+                                    cholesterol: NutrientStruct.maybeFromMap(
+                                        recipeData['cholesterol']),
+                                    sodium: NutrientStruct.maybeFromMap(
+                                        recipeData['sodium']),
+                                    minerals: MineralsStruct.maybeFromMap(
+                                        recipeData['minerals']),
+                                  );
+
                                   return wrapWithModel(
                                     model: _model.zRecipeCardModels.getModel(
                                       recipesListIndex.toString(),

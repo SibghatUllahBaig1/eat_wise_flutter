@@ -36,6 +36,17 @@ class _RecipesByCategoryWidgetState extends State<RecipesByCategoryWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => RecipesByCategoryModel());
+
+    // Load recipes and update UI when complete
+    _loadRecipes();
+  }
+
+  /// Load recipes from Firestore and trigger UI rebuild
+  Future<void> _loadRecipes() async {
+    await _model.loadRecipes();
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -110,7 +121,43 @@ class _RecipesByCategoryWidgetState extends State<RecipesByCategoryWidget> {
         ),
         body: Builder(
           builder: (context) {
-            final articlesList = FFAppState().recipes.toList();
+            // Show loading indicator while recipes are loading
+            if (_model.isLoadingRecipes) {
+              return Container(
+                height: 200,
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+
+            // Convert Firestore data to RecipesStruct
+            final articlesList = _model.allRecipes
+                .map((recipeData) => RecipesStruct(
+                      name: recipeData['name'] as String? ?? '',
+                      description: recipeData['description'] as String? ?? '',
+                      imageUrl: recipeData['imageUrl'] as String? ?? '',
+                      calories: recipeData['calories'] as int? ?? 0,
+                      protein:
+                          (recipeData['protein'] as num?)?.toDouble() ?? 0.0,
+                      carbs: (recipeData['carbs'] as num?)?.toDouble() ?? 0.0,
+                      fat: (recipeData['fat'] as num?)?.toDouble() ?? 0.0,
+                      time: recipeData['time'] as int? ?? 0,
+                      difficulty: recipeData['difficulty'] as String? ?? '',
+                      dietCategories: List<String>.from(
+                          recipeData['dietCategories'] as List? ?? []),
+                      ingredients: List<String>.from(
+                          recipeData['ingredients'] as List? ?? []),
+                      instructions: List<String>.from(
+                          recipeData['instructions'] as List? ?? []),
+                      grams: (recipeData['grams'] as num?)?.toDouble() ?? 0.0,
+                      cholesterol: NutrientStruct.maybeFromMap(
+                          recipeData['cholesterol']),
+                      sodium: NutrientStruct.maybeFromMap(recipeData['sodium']),
+                      minerals:
+                          MineralsStruct.maybeFromMap(recipeData['minerals']),
+                    ))
+                .toList();
 
             return SingleChildScrollView(
               child: Column(

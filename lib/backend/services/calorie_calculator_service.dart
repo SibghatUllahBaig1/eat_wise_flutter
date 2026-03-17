@@ -17,17 +17,17 @@ class CalorieCalculatorService {
   static const int maintenanceAdjustment = 0; // No adjustment
 
   /// Calculate Basal Metabolic Rate (BMR) using Mifflin-St Jeor formula
-  /// 
+  ///
   /// For Men: BMR = (10 × weight_kg) + (6.25 × height_cm) − (5 × age_years) + 5
   /// For Women: BMR = (10 × weight_kg) + (6.25 × height_cm) − (5 × age_years) − 161
-  /// 
+  ///
   /// Parameters:
   /// - [gender]: "Male", "Female", or "Other" (defaults to Female formula)
   /// - [age]: Age in years
   /// - [weightKg]: Weight in kilograms
   /// - [heightCm]: Height in centimeters
-  /// 
-  /// Returns: BMR in kcal/day
+  ///
+  /// Returns: BMR in cal/day
   static double calculateBMR({
     required String gender,
     required int age,
@@ -50,33 +50,34 @@ class CalorieCalculatorService {
   }
 
   /// Calculate Total Daily Energy Expenditure (TDEE)
-  /// 
+  ///
   /// TDEE = BMR × Activity_Factor
-  /// 
+  ///
   /// Parameters:
   /// - [bmr]: Basal Metabolic Rate
   /// - [activityLevel]: Activity level string (must match keys in activityFactors)
-  /// 
-  /// Returns: TDEE in kcal/day
+  ///
+  /// Returns: TDEE in cal/day
   static double calculateTDEE({
     required double bmr,
     required String activityLevel,
   }) {
-    final factor = activityFactors[activityLevel] ?? 1.2; // Default to Sedentary
+    final factor =
+        activityFactors[activityLevel] ?? 1.2; // Default to Sedentary
     return bmr * factor;
   }
 
   /// Calculate daily calorie goal based on user's goal
-  /// 
+  ///
   /// - Weight Loss: TDEE - 400
   /// - Maintenance: TDEE
   /// - Weight Gain: TDEE + 400
-  /// 
+  ///
   /// Parameters:
   /// - [tdee]: Total Daily Energy Expenditure
   /// - [goal]: "Lose Weight", "Maintain Weight", or "Gain Weight"
-  /// 
-  /// Returns: Daily calorie goal in kcal/day (rounded to nearest integer)
+  ///
+  /// Returns: Daily calorie goal in cal/day (rounded to nearest integer)
   static int calculateDailyCalorieGoal({
     required double tdee,
     required String goal,
@@ -93,9 +94,9 @@ class CalorieCalculatorService {
   }
 
   /// Complete calculation: BMR → TDEE → Daily Calorie Goal
-  /// 
+  ///
   /// This is the main method to use for calculating a user's daily calorie goal.
-  /// 
+  ///
   /// Parameters:
   /// - [gender]: "Male", "Female", or "Other"
   /// - [age]: Age in years
@@ -103,7 +104,7 @@ class CalorieCalculatorService {
   /// - [heightCm]: Height in centimeters
   /// - [activityLevel]: Activity level (see activityFactors keys)
   /// - [goal]: "Lose Weight", "Maintain Weight", or "Gain Weight"
-  /// 
+  ///
   /// Returns: Map with 'bmr', 'tdee', and 'dailyCalories' keys
   static Map<String, dynamic> calculateCalorieGoal({
     required String gender,
@@ -131,11 +132,12 @@ class CalorieCalculatorService {
     );
 
     debugPrint('Calorie Calculation:');
-    debugPrint('  Gender: $gender, Age: $age, Weight: ${weightKg}kg, Height: ${heightCm}cm');
+    debugPrint(
+        '  Gender: $gender, Age: $age, Weight: ${weightKg}kg, Height: ${heightCm}cm');
     debugPrint('  Activity: $activityLevel, Goal: $goal');
-    debugPrint('  BMR: ${bmr.round()} kcal/day');
-    debugPrint('  TDEE: ${tdee.round()} kcal/day');
-    debugPrint('  Daily Calorie Goal: $dailyCalories kcal/day');
+    debugPrint('  BMR: ${bmr.round()} cal/day');
+    debugPrint('  TDEE: ${tdee.round()} cal/day');
+    debugPrint('  Daily Calorie Goal: $dailyCalories cal/day');
 
     return {
       'bmr': bmr.round(),
@@ -144,4 +146,3 @@ class CalorieCalculatorService {
     };
   }
 }
-

@@ -75,7 +75,7 @@ class _ZFoodDetailsHeadarWidgetState extends State<ZFoodDetailsHeadarWidget> {
                       errorBuilder: (context, error, stackTrace) {
                         // Fallback to placeholder if network image fails
                         return Image.asset(
-                          'assets/images/food1.png',
+                          'assets/images/custom-images/default-food.jpeg',
                           width: double.infinity,
                           height: double.infinity,
                           fit: BoxFit.cover,
@@ -85,7 +85,7 @@ class _ZFoodDetailsHeadarWidgetState extends State<ZFoodDetailsHeadarWidget> {
                   } else {
                     // Show placeholder for text search
                     return Image.asset(
-                      'assets/images/food1.png',
+                      'assets/images/custom-images/default-food.jpeg',
                       width: double.infinity,
                       height: double.infinity,
                       fit: BoxFit.cover,

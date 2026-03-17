@@ -103,7 +103,7 @@ class _ZRecipeAppBarWidgetState extends State<ZRecipeAppBarWidget> {
                             ),
                             onPressed: () async {
                               await Share.share(
-                                widget!.recipeData!.title,
+                                widget!.recipeData!.name,
                                 sharePositionOrigin:
                                     getWidgetBoundingBox(context),
                               );

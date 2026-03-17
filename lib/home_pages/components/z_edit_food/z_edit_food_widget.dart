@@ -643,7 +643,7 @@ class _ZEditFoodWidgetState extends State<ZEditFoodWidget> {
                                 padding: EdgeInsetsDirectional.fromSTEB(
                                     0.0, 24.0, 0.0, 0.0),
                                 child: Text(
-                                  'Calorie (kcal)',
+                                  'Calorie (cal)',
                                   textAlign: TextAlign.start,
                                   style: FlutterFlowTheme.of(context)
                                       .bodyMedium
@@ -699,7 +699,7 @@ class _ZEditFoodWidgetState extends State<ZEditFoodWidget> {
                                                     .labelMedium
                                                     .fontStyle,
                                           ),
-                                      hintText: 'Calorie (kcal)',
+                                      hintText: 'Calorie (cal)',
                                       hintStyle: FlutterFlowTheme.of(context)
                                           .labelMedium
                                           .override(
@@ -1032,7 +1032,7 @@ class _ZEditFoodWidgetState extends State<ZEditFoodWidget> {
                                                     .labelMedium
                                                     .fontStyle,
                                           ),
-                                      hintText: 'Calorie (kcal)',
+                                      hintText: 'Calorie (cal)',
                                       hintStyle: FlutterFlowTheme.of(context)
                                           .labelMedium
                                           .override(

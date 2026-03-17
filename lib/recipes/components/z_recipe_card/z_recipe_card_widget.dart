@@ -87,7 +87,7 @@ class _ZRecipeCardWidgetState extends State<ZRecipeCardWidget> {
                     ),
                     child: Image.network(
                       valueOrDefault<String>(
-                        widget!.recipeData?.image,
+                        widget!.recipeData?.imageUrl,
                         'https://picsum.photos/seed/57/600',
                       ),
                       width: double.infinity,
@@ -154,7 +154,7 @@ class _ZRecipeCardWidgetState extends State<ZRecipeCardWidget> {
                 padding: EdgeInsetsDirectional.fromSTEB(16.0, 12.0, 16.0, 0.0),
                 child: Text(
                   valueOrDefault<String>(
-                    widget!.recipeData?.title,
+                    widget!.recipeData?.name,
                     'Vegan  Mocha Yogurt Bowl',
                   ),
                   maxLines: 2,
@@ -178,7 +178,7 @@ class _ZRecipeCardWidgetState extends State<ZRecipeCardWidget> {
               Padding(
                 padding: EdgeInsetsDirectional.fromSTEB(16.0, 14.0, 16.0, 16.0),
                 child: Text(
-                  '${widget!.recipeData?.kcal?.toString()} cal',
+                  '${widget!.recipeData?.calories?.toString()} cal',
                   style: FlutterFlowTheme.of(context).bodyMedium.override(
                         font: GoogleFonts.inter(
                           fontWeight: FlutterFlowTheme.of(context)

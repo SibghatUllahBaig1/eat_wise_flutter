@@ -579,6 +579,29 @@ class _RecipeEditDialogState extends State<_RecipeEditDialog> {
   late TextEditingController _fatController;
   late TextEditingController _timeController;
   late TextEditingController _difficultyController;
+  // Nutrition fields
+  late TextEditingController _gramsController;
+  late TextEditingController _cholesterolMgController;
+  late TextEditingController _cholesterolPctController;
+  late TextEditingController _sodiumMgController;
+  late TextEditingController _sodiumPctController;
+  // Mineral fields (mg + percentage)
+  late TextEditingController _calciumMgController;
+  late TextEditingController _calciumPctController;
+  late TextEditingController _ironMgController;
+  late TextEditingController _ironPctController;
+  late TextEditingController _potassiumMgController;
+  late TextEditingController _potassiumPctController;
+  late TextEditingController _magnesiumMgController;
+  late TextEditingController _magnesiumPctController;
+  late TextEditingController _phosphorusMgController;
+  late TextEditingController _phosphorusPctController;
+  late TextEditingController _zincMgController;
+  late TextEditingController _zincPctController;
+  late TextEditingController _copperMgController;
+  late TextEditingController _copperPctController;
+  late TextEditingController _seleniumMgController;
+  late TextEditingController _seleniumPctController;
   List<String> _selectedCategories = [];
   bool _isLoading = false;
   XFile? _selectedImage;
@@ -625,6 +648,75 @@ class _RecipeEditDialogState extends State<_RecipeEditDialog> {
     );
     _selectedCategories =
         List<String>.from(widget.recipeData?['dietCategories'] ?? []);
+
+    // Nutrition fields initialization
+    _gramsController = TextEditingController(
+      text: widget.recipeData?['grams']?.toString() ?? '',
+    );
+    final cholesterolData =
+        widget.recipeData?['cholesterol'] as Map<String, dynamic>? ?? {};
+    _cholesterolMgController = TextEditingController(
+      text: cholesterolData['mg']?.toString() ?? '',
+    );
+    _cholesterolPctController = TextEditingController(
+      text: cholesterolData['percentage']?.toString() ?? '',
+    );
+    final sodiumData =
+        widget.recipeData?['sodium'] as Map<String, dynamic>? ?? {};
+    _sodiumMgController = TextEditingController(
+      text: sodiumData['mg']?.toString() ?? '',
+    );
+    _sodiumPctController = TextEditingController(
+      text: sodiumData['percentage']?.toString() ?? '',
+    );
+
+    // Minerals initialization
+    final mineralsData =
+        widget.recipeData?['minerals'] as Map<String, dynamic>? ?? {};
+    final calciumData = mineralsData['calcium'] as Map<String, dynamic>? ?? {};
+    _calciumMgController =
+        TextEditingController(text: calciumData['mg']?.toString() ?? '');
+    _calciumPctController = TextEditingController(
+        text: calciumData['percentage']?.toString() ?? '');
+    final ironData = mineralsData['iron'] as Map<String, dynamic>? ?? {};
+    _ironMgController =
+        TextEditingController(text: ironData['mg']?.toString() ?? '');
+    _ironPctController =
+        TextEditingController(text: ironData['percentage']?.toString() ?? '');
+    final potassiumData =
+        mineralsData['potassium'] as Map<String, dynamic>? ?? {};
+    _potassiumMgController =
+        TextEditingController(text: potassiumData['mg']?.toString() ?? '');
+    _potassiumPctController = TextEditingController(
+        text: potassiumData['percentage']?.toString() ?? '');
+    final magnesiumData =
+        mineralsData['magnesium'] as Map<String, dynamic>? ?? {};
+    _magnesiumMgController =
+        TextEditingController(text: magnesiumData['mg']?.toString() ?? '');
+    _magnesiumPctController = TextEditingController(
+        text: magnesiumData['percentage']?.toString() ?? '');
+    final phosphorusData =
+        mineralsData['phosphorus'] as Map<String, dynamic>? ?? {};
+    _phosphorusMgController =
+        TextEditingController(text: phosphorusData['mg']?.toString() ?? '');
+    _phosphorusPctController = TextEditingController(
+        text: phosphorusData['percentage']?.toString() ?? '');
+    final zincData = mineralsData['zinc'] as Map<String, dynamic>? ?? {};
+    _zincMgController =
+        TextEditingController(text: zincData['mg']?.toString() ?? '');
+    _zincPctController =
+        TextEditingController(text: zincData['percentage']?.toString() ?? '');
+    final copperData = mineralsData['copper'] as Map<String, dynamic>? ?? {};
+    _copperMgController =
+        TextEditingController(text: copperData['mg']?.toString() ?? '');
+    _copperPctController =
+        TextEditingController(text: copperData['percentage']?.toString() ?? '');
+    final seleniumData =
+        mineralsData['selenium'] as Map<String, dynamic>? ?? {};
+    _seleniumMgController =
+        TextEditingController(text: seleniumData['mg']?.toString() ?? '');
+    _seleniumPctController = TextEditingController(
+        text: seleniumData['percentage']?.toString() ?? '');
   }
 
   @override
@@ -640,6 +732,27 @@ class _RecipeEditDialogState extends State<_RecipeEditDialog> {
     _fatController.dispose();
     _timeController.dispose();
     _difficultyController.dispose();
+    _gramsController.dispose();
+    _cholesterolMgController.dispose();
+    _cholesterolPctController.dispose();
+    _sodiumMgController.dispose();
+    _sodiumPctController.dispose();
+    _calciumMgController.dispose();
+    _calciumPctController.dispose();
+    _ironMgController.dispose();
+    _ironPctController.dispose();
+    _potassiumMgController.dispose();
+    _potassiumPctController.dispose();
+    _magnesiumMgController.dispose();
+    _magnesiumPctController.dispose();
+    _phosphorusMgController.dispose();
+    _phosphorusPctController.dispose();
+    _zincMgController.dispose();
+    _zincPctController.dispose();
+    _copperMgController.dispose();
+    _copperPctController.dispose();
+    _seleniumMgController.dispose();
+    _seleniumPctController.dispose();
     super.dispose();
   }
 
@@ -717,6 +830,49 @@ class _RecipeEditDialogState extends State<_RecipeEditDialog> {
         'time': int.tryParse(_timeController.text) ?? 0,
         'difficulty': _difficultyController.text.trim(),
         'dietCategories': _selectedCategories,
+        'grams': double.tryParse(_gramsController.text) ?? 0.0,
+        'cholesterol': {
+          'mg': double.tryParse(_cholesterolMgController.text) ?? 0.0,
+          'percentage': double.tryParse(_cholesterolPctController.text) ?? 0.0,
+        },
+        'sodium': {
+          'mg': double.tryParse(_sodiumMgController.text) ?? 0.0,
+          'percentage': double.tryParse(_sodiumPctController.text) ?? 0.0,
+        },
+        'minerals': {
+          'calcium': {
+            'mg': double.tryParse(_calciumMgController.text) ?? 0.0,
+            'percentage': double.tryParse(_calciumPctController.text) ?? 0.0,
+          },
+          'iron': {
+            'mg': double.tryParse(_ironMgController.text) ?? 0.0,
+            'percentage': double.tryParse(_ironPctController.text) ?? 0.0,
+          },
+          'potassium': {
+            'mg': double.tryParse(_potassiumMgController.text) ?? 0.0,
+            'percentage': double.tryParse(_potassiumPctController.text) ?? 0.0,
+          },
+          'magnesium': {
+            'mg': double.tryParse(_magnesiumMgController.text) ?? 0.0,
+            'percentage': double.tryParse(_magnesiumPctController.text) ?? 0.0,
+          },
+          'phosphorus': {
+            'mg': double.tryParse(_phosphorusMgController.text) ?? 0.0,
+            'percentage': double.tryParse(_phosphorusPctController.text) ?? 0.0,
+          },
+          'zinc': {
+            'mg': double.tryParse(_zincMgController.text) ?? 0.0,
+            'percentage': double.tryParse(_zincPctController.text) ?? 0.0,
+          },
+          'copper': {
+            'mg': double.tryParse(_copperMgController.text) ?? 0.0,
+            'percentage': double.tryParse(_copperPctController.text) ?? 0.0,
+          },
+          'selenium': {
+            'mg': double.tryParse(_seleniumMgController.text) ?? 0.0,
+            'percentage': double.tryParse(_seleniumPctController.text) ?? 0.0,
+          },
+        },
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
@@ -757,6 +913,32 @@ class _RecipeEditDialogState extends State<_RecipeEditDialog> {
     } finally {
       setState(() => _isLoading = false);
     }
+  }
+
+  Widget _buildMineralRow(
+    String label,
+    TextEditingController mgController,
+    TextEditingController pctController,
+  ) {
+    return Row(
+      children: [
+        Expanded(
+          child: TextFormField(
+            controller: mgController,
+            decoration: InputDecoration(labelText: '$label (mg)'),
+            keyboardType: TextInputType.number,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: TextFormField(
+            controller: pctController,
+            decoration: InputDecoration(labelText: '$label (%)'),
+            keyboardType: TextInputType.number,
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -1013,6 +1195,86 @@ class _RecipeEditDialogState extends State<_RecipeEditDialog> {
                                   keyboardType: TextInputType.number)),
                         ],
                       ),
+                      const SizedBox(height: 14),
+                      // Grams (total serving weight)
+                      TextFormField(
+                        controller: _gramsController,
+                        decoration: const InputDecoration(
+                            labelText: 'Total Grams (serving weight)',
+                            prefixIcon: Icon(Icons.scale_rounded)),
+                        keyboardType: TextInputType.number,
+                      ),
+                      const SizedBox(height: 14),
+                      // Cholesterol & Sodium
+                      Row(
+                        children: [
+                          Expanded(
+                              child: TextFormField(
+                                  controller: _cholesterolMgController,
+                                  decoration: const InputDecoration(
+                                      labelText: 'Cholesterol (mg)'),
+                                  keyboardType: TextInputType.number)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                              child: TextFormField(
+                                  controller: _cholesterolPctController,
+                                  decoration: const InputDecoration(
+                                      labelText: 'Cholesterol (%)'),
+                                  keyboardType: TextInputType.number)),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Expanded(
+                              child: TextFormField(
+                                  controller: _sodiumMgController,
+                                  decoration: const InputDecoration(
+                                      labelText: 'Sodium (mg)'),
+                                  keyboardType: TextInputType.number)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                              child: TextFormField(
+                                  controller: _sodiumPctController,
+                                  decoration: const InputDecoration(
+                                      labelText: 'Sodium (%)'),
+                                  keyboardType: TextInputType.number)),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      // Minerals Section Header
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text('Minerals',
+                            style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AdminTheme.textPrimary)),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildMineralRow('Calcium', _calciumMgController,
+                          _calciumPctController),
+                      const SizedBox(height: 10),
+                      _buildMineralRow(
+                          'Iron', _ironMgController, _ironPctController),
+                      const SizedBox(height: 10),
+                      _buildMineralRow('Potassium', _potassiumMgController,
+                          _potassiumPctController),
+                      const SizedBox(height: 10),
+                      _buildMineralRow('Magnesium', _magnesiumMgController,
+                          _magnesiumPctController),
+                      const SizedBox(height: 10),
+                      _buildMineralRow('Phosphorus', _phosphorusMgController,
+                          _phosphorusPctController),
+                      const SizedBox(height: 10),
+                      _buildMineralRow(
+                          'Zinc', _zincMgController, _zincPctController),
+                      const SizedBox(height: 10),
+                      _buildMineralRow(
+                          'Copper', _copperMgController, _copperPctController),
+                      const SizedBox(height: 10),
+                      _buildMineralRow('Selenium', _seleniumMgController,
+                          _seleniumPctController),
                       const SizedBox(height: 14),
                       Row(
                         children: [

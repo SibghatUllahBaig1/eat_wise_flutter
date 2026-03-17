@@ -428,7 +428,7 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
                                           ),
                                     ),
                                     Text(
-                                      'kcal',
+                                      'cal',
                                       style: FlutterFlowTheme.of(context)
                                           .bodyMedium
                                           .override(
@@ -761,62 +761,6 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
                           ],
                         ),
                       ),
-                      Padding(
-                        padding:
-                            EdgeInsetsDirectional.fromSTEB(0.0, 16.0, 0.0, 0.0),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.max,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'Sodium',
-                                style: FlutterFlowTheme.of(context)
-                                    .bodyMedium
-                                    .override(
-                                      font: GoogleFonts.inter(
-                                        fontWeight: FlutterFlowTheme.of(context)
-                                            .bodyMedium
-                                            .fontWeight,
-                                        fontStyle: FlutterFlowTheme.of(context)
-                                            .bodyMedium
-                                            .fontStyle,
-                                      ),
-                                      letterSpacing: 0.0,
-                                      fontWeight: FlutterFlowTheme.of(context)
-                                          .bodyMedium
-                                          .fontWeight,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .bodyMedium
-                                          .fontStyle,
-                                    ),
-                              ),
-                            ),
-                            Text(
-                              '${(_model.calculatedNutrition?.sodium.mg ?? 0).toStringAsFixed(1)} mg (${(_model.calculatedNutrition?.sodium.percentage ?? 0).toStringAsFixed(0)}%)',
-                              style: FlutterFlowTheme.of(context)
-                                  .titleSmall
-                                  .override(
-                                    font: GoogleFonts.inter(
-                                      fontWeight: FlutterFlowTheme.of(context)
-                                          .titleSmall
-                                          .fontWeight,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .titleSmall
-                                          .fontStyle,
-                                    ),
-                                    fontSize: 14.0,
-                                    letterSpacing: 0.0,
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .fontStyle,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -861,7 +805,7 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
                         children: [
                           Expanded(
                             child: Text(
-                              'Calcium',
+                              'Sodium',
                               style: FlutterFlowTheme.of(context)
                                   .bodyMedium
                                   .override(
@@ -884,7 +828,7 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
                             ),
                           ),
                           Text(
-                            '${(_model.calculatedNutrition?.minerals.calcium.mg ?? 0).toStringAsFixed(1)} mg (${(_model.calculatedNutrition?.minerals.calcium.percentage ?? 0).toStringAsFixed(0)}%)',
+                            '${(_model.calculatedNutrition?.sodium.mg ?? 0).toStringAsFixed(1)} mg (${(_model.calculatedNutrition?.sodium.percentage ?? 0).toStringAsFixed(0)}%)',
                             style: FlutterFlowTheme.of(context)
                                 .titleSmall
                                 .override(
@@ -907,6 +851,62 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
                                 ),
                           ),
                         ],
+                      ),
+                      Padding(
+                        padding:
+                            EdgeInsetsDirectional.fromSTEB(0.0, 16.0, 0.0, 0.0),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.max,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Calcium',
+                                style: FlutterFlowTheme.of(context)
+                                    .bodyMedium
+                                    .override(
+                                      font: GoogleFonts.inter(
+                                        fontWeight: FlutterFlowTheme.of(context)
+                                            .bodyMedium
+                                            .fontWeight,
+                                        fontStyle: FlutterFlowTheme.of(context)
+                                            .bodyMedium
+                                            .fontStyle,
+                                      ),
+                                      letterSpacing: 0.0,
+                                      fontWeight: FlutterFlowTheme.of(context)
+                                          .bodyMedium
+                                          .fontWeight,
+                                      fontStyle: FlutterFlowTheme.of(context)
+                                          .bodyMedium
+                                          .fontStyle,
+                                    ),
+                              ),
+                            ),
+                            Text(
+                              '${(_model.calculatedNutrition?.minerals.calcium.mg ?? 0).toStringAsFixed(1)} mg (${(_model.calculatedNutrition?.minerals.calcium.percentage ?? 0).toStringAsFixed(0)}%)',
+                              style: FlutterFlowTheme.of(context)
+                                  .titleSmall
+                                  .override(
+                                    font: GoogleFonts.inter(
+                                      fontWeight: FlutterFlowTheme.of(context)
+                                          .titleSmall
+                                          .fontWeight,
+                                      fontStyle: FlutterFlowTheme.of(context)
+                                          .titleSmall
+                                          .fontStyle,
+                                    ),
+                                    fontSize: 14.0,
+                                    letterSpacing: 0.0,
+                                    fontWeight: FlutterFlowTheme.of(context)
+                                        .titleSmall
+                                        .fontWeight,
+                                    fontStyle: FlutterFlowTheme.of(context)
+                                        .titleSmall
+                                        .fontStyle,
+                                  ),
+                            ),
+                          ],
+                        ),
                       ),
                       Padding(
                         padding:
@@ -996,62 +996,6 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
                             ),
                             Text(
                               '${(_model.calculatedNutrition?.minerals.potassium.mg ?? 0).toStringAsFixed(1)} mg (${(_model.calculatedNutrition?.minerals.potassium.percentage ?? 0).toStringAsFixed(0)}%)',
-                              style: FlutterFlowTheme.of(context)
-                                  .titleSmall
-                                  .override(
-                                    font: GoogleFonts.inter(
-                                      fontWeight: FlutterFlowTheme.of(context)
-                                          .titleSmall
-                                          .fontWeight,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .titleSmall
-                                          .fontStyle,
-                                    ),
-                                    fontSize: 14.0,
-                                    letterSpacing: 0.0,
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .fontStyle,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding:
-                            EdgeInsetsDirectional.fromSTEB(0.0, 16.0, 0.0, 0.0),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.max,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'Sodium',
-                                style: FlutterFlowTheme.of(context)
-                                    .bodyMedium
-                                    .override(
-                                      font: GoogleFonts.inter(
-                                        fontWeight: FlutterFlowTheme.of(context)
-                                            .bodyMedium
-                                            .fontWeight,
-                                        fontStyle: FlutterFlowTheme.of(context)
-                                            .bodyMedium
-                                            .fontStyle,
-                                      ),
-                                      letterSpacing: 0.0,
-                                      fontWeight: FlutterFlowTheme.of(context)
-                                          .bodyMedium
-                                          .fontWeight,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .bodyMedium
-                                          .fontStyle,
-                                    ),
-                              ),
-                            ),
-                            Text(
-                              ' 805 mg (34%)',
                               style: FlutterFlowTheme.of(context)
                                   .titleSmall
                                   .override(

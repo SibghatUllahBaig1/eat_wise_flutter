@@ -1085,7 +1085,7 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              'Profile updated successfully! Daily calorie goal: ${result['dailyCalories']} kcal',
+                              'Profile updated successfully! Daily calorie goal: ${result['dailyCalories']} cal',
                               style: TextStyle(
                                 color: FlutterFlowTheme.of(context).primaryText,
                               ),

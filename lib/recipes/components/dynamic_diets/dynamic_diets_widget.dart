@@ -6,9 +6,18 @@ import '/flutter_flow/flutter_flow_util.dart';
 import '/index.dart';
 
 /// Dynamic widget that fetches diet categories from Firestore and displays them
-/// in a wrap layout (for Pick Your Diet section)
-class DynamicDietsWidget extends StatelessWidget {
+/// in a wrap layout (for Pick Your Diet section).
+/// Uses a static cache so data is not reloaded on every navigation return.
+class DynamicDietsWidget extends StatefulWidget {
   const DynamicDietsWidget({super.key});
+
+  @override
+  State<DynamicDietsWidget> createState() => _DynamicDietsWidgetState();
+}
+
+class _DynamicDietsWidgetState extends State<DynamicDietsWidget> {
+  // Static cache shared across all instances — survives navigation
+  static List<Map<String, dynamic>>? _cachedDiets;
 
   @override
   Widget build(BuildContext context) {
@@ -18,17 +27,20 @@ class DynamicDietsWidget extends StatelessWidget {
           .orderBy('name')
           .snapshots(),
       builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Center(
-            child: Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text('Error loading diet categories'),
-            ),
-          );
+        // Update cache whenever fresh data arrives
+        if (snapshot.hasData) {
+          _cachedDiets = snapshot.data!.docs
+              .map((doc) => doc.data() as Map<String, dynamic>)
+              .toList();
         }
 
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(
+        // Use cached data immediately — no loading flash on navigation return
+        final categories = _cachedDiets ?? [];
+
+        // Only show spinner on the very first load (cache is empty)
+        if (categories.isEmpty &&
+            snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
             child: Padding(
               padding: EdgeInsets.all(16.0),
               child: CircularProgressIndicator(),
@@ -36,10 +48,8 @@ class DynamicDietsWidget extends StatelessWidget {
           );
         }
 
-        final categories = snapshot.data?.docs ?? [];
-
         if (categories.isEmpty) {
-          return Center(
+          return const Center(
             child: Padding(
               padding: EdgeInsets.all(16.0),
               child: Text('No diet categories available'),
@@ -48,7 +58,7 @@ class DynamicDietsWidget extends StatelessWidget {
         }
 
         return Padding(
-          padding: EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
+          padding: const EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
           child: Wrap(
             spacing: 12.0,
             runSpacing: 12.0,
@@ -58,11 +68,9 @@ class DynamicDietsWidget extends StatelessWidget {
             runAlignment: WrapAlignment.start,
             verticalDirection: VerticalDirection.down,
             clipBehavior: Clip.none,
-            children: categories.map((doc) {
-              final data = doc.data() as Map<String, dynamic>;
+            children: categories.map((data) {
               final emoji = data['emoji'] ?? '🍽️';
               final name = data['name'] ?? 'Unnamed';
-              final key = data['key'] ?? '';
 
               return InkWell(
                 splashColor: Colors.transparent,
@@ -73,10 +81,7 @@ class DynamicDietsWidget extends StatelessWidget {
                   context.pushNamed(
                     DietsWidget.routeName,
                     queryParameters: {
-                      'diets': serializeParam(
-                        name,
-                        ParamType.String,
-                      ),
+                      'diets': serializeParam(name, ParamType.String),
                     }.withoutNulls,
                   );
                 },
@@ -87,23 +92,21 @@ class DynamicDietsWidget extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12.0),
                   ),
                   child: Padding(
-                    padding: EdgeInsets.all(12.0),
+                    padding: const EdgeInsets.all(12.0),
                     child: Row(
                       mainAxisSize: MainAxisSize.max,
                       children: [
-                        // Emoji icon (no background)
                         SizedBox(
                           width: 40.0,
                           height: 40.0,
                           child: Center(
                             child: Text(
                               emoji,
-                              style: TextStyle(fontSize: 28.0),
+                              style: const TextStyle(fontSize: 28.0),
                             ),
                           ),
                         ),
-                        SizedBox(width: 12.0),
-                        // Category name
+                        const SizedBox(width: 12.0),
                         Expanded(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,

@@ -229,7 +229,7 @@ class _ZActivityTemplatesContentWidgetState
                                   ),
                         ),
                         Text(
-                          '$calories kcal, $duration min',
+                          '$calories cal, $duration min',
                           style:
                               FlutterFlowTheme.of(context).labelMedium.override(
                                     font: GoogleFonts.inter(

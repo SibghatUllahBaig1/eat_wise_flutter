@@ -883,7 +883,7 @@ class _ZFoodsWidgetState extends State<ZFoodsWidget> {
                           padding: EdgeInsetsDirectional.fromSTEB(
                               6.0, 0.0, 0.0, 1.0),
                           child: Text(
-                            'kcal',
+                            'cal',
                             style:
                                 FlutterFlowTheme.of(context).bodyLarge.override(
                                       font: GoogleFonts.inter(

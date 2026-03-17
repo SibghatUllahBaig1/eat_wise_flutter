@@ -22,7 +22,7 @@ Future<Map<String, dynamic>> uploadHardcodedRecipes() async {
           'https://firebasestorage.googleapis.com/v0/b/cookio-7cfc3.firebasestorage.app/o/articles%2FMargherita%20Pizza.jpg?alt=media&token=554d8b4e-f983-433e-8162-966b2ef326ce',
       'tags': ['Vegetarian Diet', 'Mediterranean Diet'],
       'cook_time': 85,
-      'kcal': 567,
+      'calories': 567,
     },
     {
       'title': 'Marinated zucchini with hazelnuts and ricotta',
@@ -34,7 +34,7 @@ Future<Map<String, dynamic>> uploadHardcodedRecipes() async {
           'https://firebasestorage.googleapis.com/v0/b/cookio-7cfc3.firebasestorage.app/o/recipes%2Frecipe.png?alt=media&token=c91690dd-35ad-435b-8f45-d90fa7837690',
       'tags': ['Vegetarian Diet', 'Mediterranean Diet'],
       'cook_time': 45,
-      'kcal': 752,
+      'calories': 752,
     },
     {
       'title': 'Watermelon Smoothie with Basil & Mint',
@@ -46,7 +46,7 @@ Future<Map<String, dynamic>> uploadHardcodedRecipes() async {
           'https://firebasestorage.googleapis.com/v0/b/cookio-7cfc3.firebasestorage.app/o/recipes%2Frecipe2.png?alt=media&token=7e87f236-7000-49d7-bf50-d4b30ac15d6c',
       'tags': ['Vegan Diet', 'Whole Foods Diet', 'Clean Eating'],
       'cook_time': 7,
-      'kcal': 345,
+      'calories': 345,
     },
     {
       'title': 'Vegetarian Butternut Squash Soup',
@@ -58,7 +58,7 @@ Future<Map<String, dynamic>> uploadHardcodedRecipes() async {
           'https://firebasestorage.googleapis.com/v0/b/cookio-7cfc3.firebasestorage.app/o/recipes%2Frecipe3.png?alt=media&token=e27bdcf7-7cde-4f28-80eb-3b7b84d7ab68',
       'tags': ['Vegetarian Diet', 'Vegan Diet', 'Whole Foods Diet'],
       'cook_time': 55,
-      'kcal': 434,
+      'calories': 434,
     },
     {
       'title': 'Buttermilk Mango Shake',
@@ -70,7 +70,7 @@ Future<Map<String, dynamic>> uploadHardcodedRecipes() async {
           'https://firebasestorage.googleapis.com/v0/b/cookio-7cfc3.firebasestorage.app/o/recipes%2Frecipe4.png?alt=media&token=2c0498fe-dc71-4cda-9164-ac611eb0fc57',
       'tags': ['Vegetarian Diet'],
       'cook_time': 3,
-      'kcal': 99,
+      'calories': 99,
     },
     {
       'title': 'Surimi Salad',
@@ -82,7 +82,7 @@ Future<Map<String, dynamic>> uploadHardcodedRecipes() async {
           'https://firebasestorage.googleapis.com/v0/b/cookio-7cfc3.firebasestorage.app/o/recipes%2Frecipe5.png?alt=media&token=80d7b3b5-f8cb-433c-b379-dd374076988b',
       'tags': ['Pescatarian Diet', 'Low-Carb Diet'],
       'cook_time': 15,
-      'kcal': 310,
+      'calories': 310,
     },
     {
       'title': 'Classic Caesar Salad',
@@ -94,7 +94,7 @@ Future<Map<String, dynamic>> uploadHardcodedRecipes() async {
           'https://firebasestorage.googleapis.com/v0/b/cookio-7cfc3.firebasestorage.app/o/recipes%2Frecipe6.png?alt=media&token=609745f9-d294-409a-888a-fdb4474f85b8',
       'tags': ['Vegetarian Diet', 'Low-Carb Diet'],
       'cook_time': 15,
-      'kcal': 308,
+      'calories': 308,
     },
     {
       'title': 'Semolina Casserole',
@@ -106,7 +106,7 @@ Future<Map<String, dynamic>> uploadHardcodedRecipes() async {
           'https://firebasestorage.googleapis.com/v0/b/cookio-7cfc3.firebasestorage.app/o/recipes%2Frecipe7.png?alt=media&token=0eedb004-1b6b-48cb-98c8-d6f45e964028',
       'tags': ['Vegetarian Diet', 'Whole Foods Diet'],
       'cook_time': 49,
-      'kcal': 352,
+      'calories': 352,
     },
     {
       'title': 'Sweet Potato Chips',
@@ -123,7 +123,7 @@ Future<Map<String, dynamic>> uploadHardcodedRecipes() async {
         'Gluten-Free Diet'
       ],
       'cook_time': 32,
-      'kcal': 301,
+      'calories': 301,
     },
     {
       'title': 'Lasagne Soup',
@@ -135,7 +135,7 @@ Future<Map<String, dynamic>> uploadHardcodedRecipes() async {
           'https://firebasestorage.googleapis.com/v0/b/cookio-7cfc3.firebasestorage.app/o/recipes%2Frecipe9%20(1).png?alt=media&token=7fc442fa-80c1-4cfb-a7df-f319bfaa16bb',
       'tags': ['Mediterranean Diet'],
       'cook_time': 35,
-      'kcal': 272,
+      'calories': 272,
     },
   ];
 
@@ -175,7 +175,7 @@ Future<Map<String, dynamic>> uploadHardcodedRecipes() async {
         'ingredients': ingredients,
         'instructions': instructions,
         'imageUrl': recipe['image'],
-        'calories': recipe['kcal'],
+        'calories': recipe['calories'],
         'protein': 0.0,
         'carbs': 0.0,
         'fat': 0.0,

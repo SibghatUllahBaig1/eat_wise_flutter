@@ -33,7 +33,8 @@ class FoodDetailsModel extends FlutterFlowModel<FoodDetailsWidget> {
 
   /// Save meal to Firestore
   Future<void> saveMeal(
-      BuildContext context, FoodNutritionStruct? nutritionData) async {
+      BuildContext context, FoodNutritionStruct? nutritionData,
+      {bool fromHistory = false}) async {
     // Use the updated nutrition data from the content model if available
     final dataToSave = contentModel?.calculatedNutrition ?? nutritionData;
 
@@ -114,7 +115,8 @@ class FoodDetailsModel extends FlutterFlowModel<FoodDetailsWidget> {
         },
       };
 
-      // Check if this is an update (has mealId) or a new meal
+      // Update if mealId exists (from Nutrition section)
+      // Create new if no mealId (new analysis or from Recents)
       final isUpdate = dataToSave.mealId.isNotEmpty;
 
       if (isUpdate) {
@@ -150,6 +152,11 @@ class FoodDetailsModel extends FlutterFlowModel<FoodDetailsWidget> {
           totalCarbs: dataToSave.macros.carbs.grams.round(),
           totalProtein: dataToSave.macros.protein.grams.round(),
           totalFat: dataToSave.macros.fat.grams.round(),
+          // Omit imageUrl at meal level when saving from Recents (fromHistory + no mealId)
+          // so the new meal does not appear in Recents tab (only the original source meal should)
+          imageUrl: (fromHistory && dataToSave.mealId.isEmpty)
+              ? null
+              : (dataToSave.imageUrl.isNotEmpty ? dataToSave.imageUrl : null),
         );
 
         print('✅ Meal saved successfully with ID: $mealId');

@@ -666,7 +666,7 @@ class _ZCreatFoodWidgetState extends State<ZCreatFoodWidget> {
                                 padding: EdgeInsetsDirectional.fromSTEB(
                                     0.0, 24.0, 0.0, 0.0),
                                 child: Text(
-                                  'Calorie (kcal)',
+                                  'Calorie (cal)',
                                   textAlign: TextAlign.start,
                                   style: FlutterFlowTheme.of(context)
                                       .bodyMedium

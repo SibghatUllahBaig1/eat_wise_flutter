@@ -185,7 +185,7 @@ class _ZAddFoodCardWidgetState extends State<ZAddFoodCardWidget> {
                                   ),
                         ),
                         Text(
-                          '${widget!.foodData?.kcal?.toString()}kcal, ${widget!.foodData?.gram?.toString()} gram',
+                          '${widget!.foodData?.kcal?.toString()} cal, ${widget!.foodData?.gram?.toString()} gram',
                           style:
                               FlutterFlowTheme.of(context).labelMedium.override(
                                     font: GoogleFonts.inter(

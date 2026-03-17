@@ -401,7 +401,7 @@ class _ZCreatActivityWidgetState extends State<ZCreatActivityWidget> {
                     padding:
                         EdgeInsetsDirectional.fromSTEB(16.0, 24.0, 16.0, 0.0),
                     child: Text(
-                      'Calorie (kcal)',
+                      'Calorie (cal)',
                       textAlign: TextAlign.start,
                       style: FlutterFlowTheme.of(context).bodyMedium.override(
                             font: GoogleFonts.inter(

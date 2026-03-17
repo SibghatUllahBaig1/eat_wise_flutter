@@ -218,7 +218,7 @@ class _ZManualEntryWidgetState extends State<ZManualEntryWidget> {
                                         ),
                                   ),
                                   Text(
-                                    'kcal',
+                                    'cal',
                                     style: FlutterFlowTheme.of(context)
                                         .bodyMedium
                                         .override(

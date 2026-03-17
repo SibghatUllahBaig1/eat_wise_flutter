@@ -85,7 +85,7 @@ class _ZRecipeCard2WidgetState extends State<ZRecipeCard2Widget> {
                     children: [
                       Text(
                         valueOrDefault<String>(
-                          widget!.articlesData?.title,
+                          widget!.articlesData?.name,
                           'Healthy Chocolate Cupcakes',
                         ).maybeHandleOverflow(
                           maxChars: 18,
@@ -141,7 +141,7 @@ class _ZRecipeCard2WidgetState extends State<ZRecipeCard2Widget> {
                         ),
                       ),
                       Text(
-                        '${widget!.articlesData?.kcal?.toString()} cal',
+                        '${widget!.articlesData?.calories?.toString()} cal',
                         style: FlutterFlowTheme.of(context).labelSmall.override(
                               font: GoogleFonts.inter(
                                 fontWeight: FlutterFlowTheme.of(context)
@@ -168,7 +168,7 @@ class _ZRecipeCard2WidgetState extends State<ZRecipeCard2Widget> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(12.0),
                 child: Image.network(
-                  widget!.articlesData!.image,
+                  widget!.articlesData!.imageUrl,
                   width: 120.0,
                   height: 120.0,
                   fit: BoxFit.cover,

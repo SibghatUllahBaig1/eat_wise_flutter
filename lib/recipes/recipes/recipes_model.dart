@@ -85,8 +85,9 @@ class RecipesModel extends FlutterFlowModel<RecipesWidget> {
     try {
       final backend = BackendManager();
       allRecipes = await backend.recipeService.getAllRecipes();
+      debugPrint('Loaded ${allRecipes.length} recipes from Firestore');
     } catch (e) {
-      print('Error loading recipes: $e');
+      debugPrint('Error loading recipes: $e');
     } finally {
       isLoadingRecipes = false;
     }

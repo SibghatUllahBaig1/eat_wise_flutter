@@ -138,7 +138,8 @@ class _FoodDetailsWidgetState extends State<FoodDetailsWidget> {
                         EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 16.0),
                     child: FFButtonWidget(
                       onPressed: () async {
-                        await _model.saveMeal(context, widget.nutritionData);
+                        await _model.saveMeal(context, widget.nutritionData,
+                            fromHistory: widget.fromHistory);
                       },
                       text: 'Save',
                       options: FFButtonOptions(

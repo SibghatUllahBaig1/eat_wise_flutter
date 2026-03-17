@@ -511,7 +511,7 @@ class _FoodCaptureWidgetState extends State<FoodCaptureWidget> {
                                       meal['foods'] as List<dynamic>? ?? [];
                                   final foodName = foods.isNotEmpty
                                       ? (foods[0] as Map<String, dynamic>)[
-                                              'name'] as String? ??
+                                              'title'] as String? ??
                                           'Unknown'
                                       : 'Unknown';
 
@@ -519,33 +519,77 @@ class _FoodCaptureWidgetState extends State<FoodCaptureWidget> {
                                     onTap: () async {
                                       // Navigate to food details with this meal's data
                                       if (foods.isNotEmpty) {
+                                        final food =
+                                            foods[0] as Map<String, dynamic>;
+                                        final grams =
+                                            (food['gram'] as num? ?? 0)
+                                                .toDouble();
                                         final carbsGrams =
-                                            (meal['totalCarbs'] as int? ?? 0)
+                                            (food['carbs'] as num? ?? 0)
                                                 .toDouble();
                                         final proteinGrams =
-                                            (meal['totalProtein'] as int? ?? 0)
+                                            (food['protein'] as num? ?? 0)
                                                 .toDouble();
                                         final fatGrams =
-                                            (meal['totalFat'] as int? ?? 0)
+                                            (food['fat'] as num? ?? 0)
                                                 .toDouble();
+                                        final foodCalories =
+                                            (food['kcal'] as num? ??
+                                                    totalCalories)
+                                                .toDouble();
+
+                                        // Calculate macro percentages from cal
+                                        final totalMacroKcal =
+                                            (carbsGrams * 4) +
+                                                (proteinGrams * 4) +
+                                                (fatGrams * 9);
+                                        final carbsPercent = totalMacroKcal > 0
+                                            ? (carbsGrams *
+                                                    4 /
+                                                    totalMacroKcal) *
+                                                100
+                                            : 0.0;
+                                        final proteinPercent =
+                                            totalMacroKcal > 0
+                                                ? (proteinGrams *
+                                                        4 /
+                                                        totalMacroKcal) *
+                                                    100
+                                                : 0.0;
+                                        final fatPercent = totalMacroKcal > 0
+                                            ? (fatGrams * 9 / totalMacroKcal) *
+                                                100
+                                            : 0.0;
 
                                         final nutritionData =
                                             FoodNutritionStruct(
-                                          foodName: foodName,
-                                          calories: totalCalories.toDouble(),
+                                          foodName: food['title'] as String? ??
+                                              'Unknown',
+                                          grams: grams,
+                                          calories: foodCalories,
                                           macros: MacrosStruct(
                                             carbs: MacroDetailStruct(
                                               grams: carbsGrams,
+                                              percentage: carbsPercent,
                                             ),
                                             protein: MacroDetailStruct(
                                               grams: proteinGrams,
+                                              percentage: proteinPercent,
                                             ),
                                             fat: MacroDetailStruct(
                                               grams: fatGrams,
+                                              percentage: fatPercent,
                                             ),
                                           ),
+                                          cholesterol:
+                                              NutrientStruct.maybeFromMap(
+                                                  food['cholesterol']),
+                                          sodium: NutrientStruct.maybeFromMap(
+                                              food['sodium']),
+                                          minerals: MineralsStruct.maybeFromMap(
+                                              food['minerals']),
                                           imageUrl: imageUrl,
-                                          mealId: meal['id'] as String? ?? '',
+                                          // No mealId: ensures a new meal is created (not an update)
                                         );
 
                                         context.pushNamed(
@@ -637,7 +681,7 @@ class _FoodCaptureWidgetState extends State<FoodCaptureWidget> {
                                                 ),
                                                 SizedBox(height: 4.0),
                                                 Text(
-                                                  '$totalCalories kcal',
+                                                  '$totalCalories cal',
                                                   style: FlutterFlowTheme.of(
                                                           context)
                                                       .bodySmall

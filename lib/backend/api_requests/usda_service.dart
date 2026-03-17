@@ -91,7 +91,7 @@ class USDAService {
 
     // Extract nutrition values (per 100g from USDA)
     print('🔍 Parsing nutrients from USDA data...');
-    final calories = getNutrientValue(['208'], 'Calories'); // Energy (kcal)
+    final calories = getNutrientValue(['208'], 'Calories'); // Energy (cal)
     final protein = getNutrientValue(['203'], 'Protein'); // Protein
     final carbs = getNutrientValue(['205'], 'Carbohydrate'); // Carbohydrate
     final fat = getNutrientValue(['204'], 'Fat'); // Total lipid (fat)
@@ -164,7 +164,7 @@ class USDAService {
       final nutritionData = await getFoodDetails(fdcId);
 
       print('📊 USDA Nutrition Data Retrieved:');
-      print('   Calories: ${nutritionData['calories']} kcal');
+      print('   Calories: ${nutritionData['calories']} cal');
       print('   Protein: ${nutritionData['protein']}g');
       print('   Carbs: ${nutritionData['carbs']}g');
       print('   Fat: ${nutritionData['fat']}g');

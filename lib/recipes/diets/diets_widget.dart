@@ -51,6 +51,19 @@ class _DietsWidgetState extends State<DietsWidget> {
           recipesSnapshot.docs.map((doc) => doc.data()).toList();
       debugPrint('Loaded ${_model.categoryRecipes.length} recipes');
 
+      // Debug: Log first recipe data
+      if (_model.categoryRecipes.isNotEmpty) {
+        final firstRecipe = _model.categoryRecipes[0];
+        debugPrint('First recipe data: $firstRecipe');
+        debugPrint('First recipe time: ${firstRecipe['time']}');
+        debugPrint('First recipe difficulty: ${firstRecipe['difficulty']}');
+        debugPrint('First recipe protein: ${firstRecipe['protein']}');
+        debugPrint('First recipe carbs: ${firstRecipe['carbs']}');
+        debugPrint('First recipe fat: ${firstRecipe['fat']}');
+        debugPrint(
+            'First recipe dietCategories: ${firstRecipe['dietCategories']}');
+      }
+
       // Load categories
       final categoriesSnapshot = await FirebaseFirestore.instance
           .collection('diet_categories')
@@ -307,18 +320,50 @@ class _DietsWidgetState extends State<DietsWidget> {
 
                               // Convert recipe data to RecipesStruct
                               final recipeStruct = RecipesStruct(
-                                title: recipeData['name'] ?? '',
+                                name: recipeData['name'] ?? '',
                                 description: recipeData['description'] ?? '',
-                                image: recipeData['imageUrl'] ?? '',
-                                kcal: recipeData['calories'] ?? 0,
-                                tags: List<String>.from(
+                                imageUrl: recipeData['imageUrl'] ?? '',
+                                calories: recipeData['calories'] ?? 0,
+                                dietCategories: List<String>.from(
                                     recipeData['dietCategories'] ?? []),
-                                content: (recipeData['instructions']
+                                instructions: (recipeData['instructions']
                                             as List<dynamic>?)
                                         ?.map((e) => e.toString())
-                                        .join('\n') ??
-                                    '',
+                                        .toList() ??
+                                    [],
+                                protein: (recipeData['protein'] as num?)
+                                        ?.toDouble() ??
+                                    0.0,
+                                carbs:
+                                    (recipeData['carbs'] as num?)?.toDouble() ??
+                                        0.0,
+                                fat: (recipeData['fat'] as num?)?.toDouble() ??
+                                    0.0,
+                                time: recipeData['time'] as int? ?? 0,
+                                difficulty:
+                                    recipeData['difficulty'] as String? ?? '',
+                                grams:
+                                    (recipeData['grams'] as num?)?.toDouble() ??
+                                        0.0,
+                                cholesterol: NutrientStruct.maybeFromMap(
+                                    recipeData['cholesterol']),
+                                sodium: NutrientStruct.maybeFromMap(
+                                    recipeData['sodium']),
+                                minerals: MineralsStruct.maybeFromMap(
+                                    recipeData['minerals']),
                               );
+
+                              // Debug: Log converted recipe struct
+                              debugPrint(
+                                  'RecipeStruct for ${recipeStruct.name}:');
+                              debugPrint('  time: ${recipeStruct.time}');
+                              debugPrint(
+                                  '  difficulty: ${recipeStruct.difficulty}');
+                              debugPrint('  protein: ${recipeStruct.protein}');
+                              debugPrint('  carbs: ${recipeStruct.carbs}');
+                              debugPrint('  fat: ${recipeStruct.fat}');
+                              debugPrint(
+                                  '  dietCategories: ${recipeStruct.dietCategories}');
 
                               return wrapWithModel(
                                 model: _model.zRecipeCardModels.getModel(
