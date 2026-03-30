@@ -2,6 +2,7 @@ import '/auth/firebase_auth/auth_util.dart';
 import '/backend/backend_manager.dart';
 import '/backend/firestore/user_service.dart';
 import '/backend/services/calorie_calculator_service.dart';
+import '/backend/services/permission_service.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -39,9 +40,9 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
 
     final userProfile = FFAppState().userProfile;
 
-    // Use actual user display name or empty string
-    _model.fullNameTextController ??=
-        TextEditingController(text: currentUserDisplayName);
+    // Use fullName from user profile or empty string
+    _model.fullNameTextController ??= TextEditingController(
+        text: userProfile.fullName.isNotEmpty ? userProfile.fullName : '');
     _model.fullNameFocusNode ??= FocusNode();
 
     // Use actual user email (read-only)
@@ -108,6 +109,18 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
       );
 
       if (source == null) return;
+      if (!mounted) return;
+
+      // Request the appropriate permission with a rationale dialog before
+      // invoking the system image picker.
+      final ps = PermissionService();
+      bool granted;
+      if (source == ImageSource.camera) {
+        granted = await ps.requestCameraPermission(context);
+      } else {
+        granted = await ps.requestPhotoPermission(context);
+      }
+      if (!granted || !mounted) return;
 
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(
@@ -552,6 +565,31 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
                     validator: _model.emailTextControllerValidator
                         .asValidator(context),
                   ),
+                ),
+              ),
+
+              // Calorie Goal Calculation heading
+              Padding(
+                padding: EdgeInsetsDirectional.fromSTEB(16.0, 24.0, 16.0, 0.0),
+                child: Text(
+                  'Calorie Goal Calculation',
+                  textAlign: TextAlign.start,
+                  style: FlutterFlowTheme.of(context).titleMedium.override(
+                        font: GoogleFonts.inter(),
+                        letterSpacing: 0.0,
+                      ),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsetsDirectional.fromSTEB(16.0, 8.0, 16.0, 0.0),
+                child: Text(
+                  'The following information is used to calculate your daily calorie goal',
+                  textAlign: TextAlign.start,
+                  style: FlutterFlowTheme.of(context).bodySmall.override(
+                        font: GoogleFonts.inter(),
+                        color: FlutterFlowTheme.of(context).secondaryText,
+                        letterSpacing: 0.0,
+                      ),
                 ),
               ),
 

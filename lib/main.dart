@@ -12,6 +12,7 @@ import 'backend/firebase/firebase_config.dart';
 import 'backend/api_requests/api_config.dart';
 import 'backend/services/pedometer_service.dart';
 import 'backend/services/legal_content_service.dart';
+import 'backend/services/meal_reminder_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import 'flutter_flow/flutter_flow_util.dart';
 import 'flutter_flow/nav/nav.dart';
@@ -34,6 +35,10 @@ void main() async {
 
   // Initialize default legal content in Firestore
   await LegalContentService().initializeDefaultContent();
+
+  // Initialize meal reminder service and re-register any saved reminders
+  // (OS clears pending alarms after force-kill / reboot; this restores them).
+  await MealReminderService().rescheduleAllReminders();
 
   await FlutterFlowTheme.initialize();
 

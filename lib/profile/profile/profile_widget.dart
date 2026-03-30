@@ -1,5 +1,6 @@
 import '/auth/firebase_auth/auth_util.dart';
 import '/backend/firestore/user_service.dart';
+import '/backend/schema/structs/index.dart';
 import '/buttons/icon_text_right/icon_text_right_widget.dart';
 import '/flutter_flow/flutter_flow_animations.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -378,16 +379,15 @@ class _ProfileWidgetState extends State<ProfileWidget>
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        FutureBuilder<Map<String, dynamic>?>(
+                                        FutureBuilder<UserProfileStruct?>(
                                           future: UserService()
-                                              .getUserProfile(currentUserUid),
+                                              .getUserProfileData(
+                                                  currentUserUid),
                                           builder: (context, snapshot) {
-                                            final displayName =
-                                                snapshot.data?['displayName']
-                                                        as String? ??
-                                                    currentUserDisplayName;
-                                            final name = displayName.isNotEmpty
-                                                ? displayName
+                                            final fullName =
+                                                snapshot.data?.fullName ?? '';
+                                            final name = fullName.isNotEmpty
+                                                ? fullName
                                                 : 'User';
 
                                             return Text(

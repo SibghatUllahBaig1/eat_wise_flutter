@@ -192,8 +192,8 @@ class _ZHomeCalendarWidgetState extends State<ZHomeCalendarWidget> {
                                           .fontStyle,
                                     ),
                               ),
-                              FutureBuilder<Map<String, dynamic>>(
-                                future: _model.getNutritionData(daysItem),
+                              StreamBuilder<Map<String, dynamic>>(
+                                stream: _model.streamNutritionData(daysItem),
                                 builder: (context, snapshot) {
                                   // Show loading or default state
                                   final data = snapshot.data ??

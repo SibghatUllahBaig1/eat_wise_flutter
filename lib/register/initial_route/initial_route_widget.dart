@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '/backend/services/permission_service.dart';
 import '/backend/services/onboarding_service.dart';
 import '/backend/firestore/user_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -26,10 +27,37 @@ class _InitialRouteWidgetState extends State<InitialRouteWidget> {
     _checkRouting();
   }
 
+  /// Request all runtime permissions the app needs.
+  /// Shows proper rationale dialogs before each system prompt.
+  /// Called after the first frame so the Android Activity is fully ready.
+  Future<void> _requestAllPermissions() async {
+    if (!mounted) return;
+    final ps = PermissionService();
+
+    // 1. Notifications — most important; ask first
+    await ps.requestNotificationPermission(context);
+    if (!mounted) return;
+
+    // 2. Fitness — activity recognition + body sensors together
+    await ps.requestFitnessPermission(context);
+    if (!mounted) return;
+
+    // 3. Exact alarm (Android 12+) — opens system settings if needed
+    await ps.requestExactAlarmPermission(context);
+    if (!mounted) return;
+
+    // 4. Battery optimization exemption — prevents OS from killing alarms
+    //    on aggressive battery-saver devices (Samsung, Xiaomi, OnePlus, etc.)
+    await ps.requestBatteryOptimizationExemption(context);
+  }
+
   Future<void> _checkRouting() async {
     // Wait for Firebase Auth to fully initialize and load persisted user
     // Increased delay to ensure auth state is loaded from storage
     await Future.delayed(const Duration(milliseconds: 1500));
+
+    // Request all permissions now that the Activity is ready
+    await _requestAllPermissions();
 
     if (!mounted) return;
 

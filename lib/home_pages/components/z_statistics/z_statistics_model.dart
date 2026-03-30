@@ -137,6 +137,11 @@ class ZStatisticsModel extends FlutterFlowModel<ZStatisticsWidget> {
   // Check if calories are exceeded
   bool get isCaloriesExceeded => (totalCalories - burnedCalories) > calorieGoal;
 
+  // Check if macros are exceeded
+  bool get isCarbsExceeded => carbsGoal > 0 && totalCarbs > carbsGoal;
+  bool get isProteinExceeded => proteinGoal > 0 && totalProtein > proteinGoal;
+  bool get isFatExceeded => fatGoal > 0 && totalFat > fatGoal;
+
   // Get calories left or excess
   int get caloriesLeft =>
       (calorieGoal - totalCalories + burnedCalories).clamp(0, calorieGoal * 2);

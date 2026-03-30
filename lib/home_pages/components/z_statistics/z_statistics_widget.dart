@@ -92,7 +92,9 @@ class _ZStatisticsWidgetState extends State<ZStatisticsWidget> {
                           width: 144.0,
                           height: 144.0,
                           progress: _model.calorieProgress,
-                          progressColor: FlutterFlowTheme.of(context).primary,
+                          progressColor: _model.isCaloriesExceeded
+                              ? const Color(0xFFF44336)
+                              : FlutterFlowTheme.of(context).primary,
                           backgroundColor: FlutterFlowTheme.of(context).divider,
                           text: '',
                           textColor: FlutterFlowTheme.of(context).info,
@@ -391,7 +393,9 @@ class _ZStatisticsWidgetState extends State<ZStatisticsWidget> {
                             lineHeight: 7.0,
                             animation: true,
                             animateFromLastPercent: true,
-                            progressColor: FlutterFlowTheme.of(context).primary,
+                            progressColor: _model.isCarbsExceeded
+                                ? const Color(0xFFF44336)
+                                : FlutterFlowTheme.of(context).primary,
                             backgroundColor:
                                 FlutterFlowTheme.of(context).divider,
                             barRadius: Radius.circular(6.0),
@@ -457,7 +461,9 @@ class _ZStatisticsWidgetState extends State<ZStatisticsWidget> {
                             lineHeight: 7.0,
                             animation: true,
                             animateFromLastPercent: true,
-                            progressColor: FlutterFlowTheme.of(context).primary,
+                            progressColor: _model.isProteinExceeded
+                                ? const Color(0xFFF44336)
+                                : FlutterFlowTheme.of(context).primary,
                             backgroundColor:
                                 FlutterFlowTheme.of(context).divider,
                             barRadius: Radius.circular(6.0),
@@ -523,7 +529,9 @@ class _ZStatisticsWidgetState extends State<ZStatisticsWidget> {
                             lineHeight: 7.0,
                             animation: true,
                             animateFromLastPercent: true,
-                            progressColor: FlutterFlowTheme.of(context).primary,
+                            progressColor: _model.isFatExceeded
+                                ? const Color(0xFFF44336)
+                                : FlutterFlowTheme.of(context).primary,
                             backgroundColor:
                                 FlutterFlowTheme.of(context).divider,
                             barRadius: Radius.circular(6.0),

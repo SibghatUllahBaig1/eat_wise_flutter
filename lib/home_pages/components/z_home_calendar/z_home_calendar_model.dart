@@ -29,26 +29,16 @@ class ZHomeCalendarModel extends FlutterFlowModel<ZHomeCalendarWidget> {
   void updateDatesAtIndex(int index, Function(DateTime) updateFn) =>
       dates[index] = updateFn(dates[index]);
 
-  // Cache for nutrition data by date
-  Map<String, Map<String, dynamic>> nutritionDataCache = {};
-
   @override
   void initState(BuildContext context) {}
 
   @override
   void dispose() {}
 
-  /// Get nutrition data for a specific date (progress and whether within goal)
-  Future<Map<String, dynamic>> getNutritionData(DateTime date) async {
+  /// Stream nutrition data for a specific date (real-time updates)
+  Stream<Map<String, dynamic>> streamNutritionData(DateTime date) {
     if (currentUserUid.isEmpty) {
-      return {'progress': 0.0, 'withinGoal': true};
-    }
-
-    final dateKey = '${date.year}-${date.month}-${date.day}';
-
-    // Return cached value if available
-    if (nutritionDataCache.containsKey(dateKey)) {
-      return nutritionDataCache[dateKey]!;
+      return Stream.value({'progress': 0.0, 'withinGoal': true});
     }
 
     try {
@@ -59,42 +49,37 @@ class ZHomeCalendarModel extends FlutterFlowModel<ZHomeCalendarWidget> {
               ? FFAppState().trackerSettings.calorie.goal
               : 2000);
 
-      // Get meals for the date
-      final meals = await _backend.mealService.getMealsByDate(
+      // Stream meals for the date and transform to nutrition data
+      return _backend.mealService
+          .streamMealsByDate(
         userId: currentUserUid,
         date: date,
-      );
+      )
+          .map((meals) {
+        // Calculate total calories from all meals
+        int totalCalories = 0;
+        for (final meal in meals) {
+          totalCalories += (meal['totalCalories'] as int?) ?? 0;
+        }
 
-      // Calculate total calories
-      int totalCalories = 0;
-      for (final meal in meals) {
-        totalCalories += (meal['totalCalories'] as int?) ?? 0;
-      }
+        // Calculate progress (allow > 1.0 for exceeded calories)
+        final progress = calorieGoal > 0 ? (totalCalories / calorieGoal) : 0.0;
 
-      // Calculate progress (allow > 1.0 for exceeded calories)
-      final progress = calorieGoal > 0 ? (totalCalories / calorieGoal) : 0.0;
+        // Determine if within goal (calories <= goal)
+        final withinGoal = totalCalories <= calorieGoal;
 
-      // Determine if within goal (calories <= goal)
-      final withinGoal = totalCalories <= calorieGoal;
-
-      final result = {
-        'progress': progress,
-        'withinGoal': withinGoal,
-      };
-
-      // Cache the result
-      nutritionDataCache[dateKey] = result;
-
-      return result;
+        return {
+          'progress': progress,
+          'withinGoal': withinGoal,
+        };
+      }).handleError((e) {
+        print(
+            'Error streaming nutrition data for ${date.toString().split(' ')[0]}: $e');
+        return {'progress': 0.0, 'withinGoal': true};
+      });
     } catch (e) {
-      print('Error loading nutrition data for $dateKey: $e');
-      return {'progress': 0.0, 'withinGoal': true};
+      print('Error setting up nutrition stream: $e');
+      return Stream.value({'progress': 0.0, 'withinGoal': true});
     }
-  }
-
-  /// Get nutrition progress for a specific date (for backward compatibility)
-  Future<double> getNutritionProgress(DateTime date) async {
-    final data = await getNutritionData(date);
-    return data['progress'] as double;
   }
 }

@@ -1,3 +1,4 @@
+import '/backend/services/permission_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -77,6 +78,11 @@ class _ZSelectScanTypeWidgetState extends State<ZSelectScanTypeWidget> {
                 hoverColor: Colors.transparent,
                 highlightColor: Colors.transparent,
                 onTap: () async {
+                  // Request camera permission with rationale before opening picker
+                  final cameraGranted = await PermissionService()
+                      .requestCameraPermission(context);
+                  if (!cameraGranted || !context.mounted) return;
+
                   final selectedMedia = await selectMedia(
                     multiImage: false,
                   );
@@ -187,6 +193,11 @@ class _ZSelectScanTypeWidgetState extends State<ZSelectScanTypeWidget> {
                 hoverColor: Colors.transparent,
                 highlightColor: Colors.transparent,
                 onTap: () async {
+                  // Request photo library permission with rationale before opening picker
+                  final photoGranted =
+                      await PermissionService().requestPhotoPermission(context);
+                  if (!photoGranted || !context.mounted) return;
+
                   final selectedMedia = await selectMedia(
                     mediaSource: MediaSource.photoGallery,
                     multiImage: false,

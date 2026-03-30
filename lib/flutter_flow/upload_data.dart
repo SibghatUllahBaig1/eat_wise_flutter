@@ -9,6 +9,7 @@ import 'package:mime_type/mime_type.dart';
 import 'package:video_player/video_player.dart';
 
 import '../auth/firebase_auth/auth_util.dart';
+import '/backend/services/permission_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import 'flutter_flow_util.dart';
 
@@ -138,6 +139,17 @@ Future<List<SelectedFile>?> selectMediaWithSourceBottomSheet({
   if (mediaSource == null) {
     return null;
   }
+
+  // Request the relevant permission with a rationale dialog before proceeding.
+  final ps = PermissionService();
+  if (mediaSource == MediaSource.camera) {
+    final granted = await ps.requestCameraPermission(context);
+    if (!granted) return null;
+  } else {
+    final granted = await ps.requestPhotoPermission(context);
+    if (!granted) return null;
+  }
+
   return selectMedia(
     storageFolderPath: storageFolderPath,
     maxWidth: maxWidth,

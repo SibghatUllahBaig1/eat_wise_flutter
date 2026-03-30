@@ -7,7 +7,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import '../../backend/firestore/recipe_service.dart';
 import '../theme/admin_theme.dart';
-import '../utils/upload_hardcoded_recipes.dart';
+import '../utils/prepopulate_recipes_usda.dart';
 
 class RecipeManagementPage extends StatefulWidget {
   const RecipeManagementPage({super.key});
@@ -56,17 +56,17 @@ class _RecipeManagementPageState extends State<RecipeManagementPage> {
                       ),
                     ),
                     ElevatedButton(
-                      onPressed: _uploadHardcodedRecipes,
+                      onPressed: _prepopulateFromUSDA,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
+                        backgroundColor: Colors.blue,
                       ),
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.upload_rounded, size: 20),
+                          Icon(Icons.auto_awesome_rounded, size: 20),
                           SizedBox(width: 8),
-                          Text('Upload Hardcoded Recipes'),
+                          Text('Prepopulate from USDA'),
                         ],
                       ),
                     ),
@@ -237,14 +237,14 @@ class _RecipeManagementPageState extends State<RecipeManagementPage> {
     );
   }
 
-  Future<void> _uploadHardcodedRecipes() async {
+  Future<void> _prepopulateFromUSDA() async {
     // Show confirmation dialog
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Upload Hardcoded Recipes'),
+        title: const Text('Prepopulate Recipes from USDA'),
         content: const Text(
-          'This will upload 10 hardcoded recipes to Firebase. This should only be done once. Continue?',
+          'This will fetch nutrition data (including minerals) from the USDA database for all recipes. This may take a few minutes. Continue?',
         ),
         actions: [
           TextButton(
@@ -254,10 +254,10 @@ class _RecipeManagementPageState extends State<RecipeManagementPage> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
+              backgroundColor: Colors.blue,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Upload'),
+            child: const Text('Prepopulate'),
           ),
         ],
       ),
@@ -278,7 +278,7 @@ class _RecipeManagementPageState extends State<RecipeManagementPage> {
                   children: [
                     CircularProgressIndicator(),
                     SizedBox(height: 16),
-                    Text('Uploading recipes...'),
+                    Text('Prepopulating recipes from USDA...'),
                   ],
                 ),
               ),
@@ -288,7 +288,7 @@ class _RecipeManagementPageState extends State<RecipeManagementPage> {
       }
 
       try {
-        final result = await uploadHardcodedRecipes();
+        final result = await PrepopulateRecipesUSDA.prepopulateAllRecipes();
 
         if (mounted) {
           Navigator.pop(context); // Close loading dialog
@@ -296,7 +296,7 @@ class _RecipeManagementPageState extends State<RecipeManagementPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Upload complete! Success: ${result['success']}, Errors: ${result['errors']}',
+                'Prepopulation complete! Success: ${result['success']}, Errors: ${result['errors']}',
               ),
               backgroundColor:
                   result['errors'] == 0 ? AdminTheme.success : Colors.orange,
@@ -311,7 +311,7 @@ class _RecipeManagementPageState extends State<RecipeManagementPage> {
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error uploading recipes: $e'),
+              content: Text('Error prepopulating recipes: $e'),
               backgroundColor: AdminTheme.error,
               behavior: SnackBarBehavior.floating,
             ),
