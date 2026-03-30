@@ -8,6 +8,8 @@ import '/home_pages/components/z_nutrition/z_nutrition_widget.dart';
 import '/home_pages/components/z_statistics/z_statistics_widget.dart';
 import '/tracker/components/z_step_tracker/z_step_tracker_widget.dart';
 import '/index.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -123,39 +125,71 @@ class _HomePageWidgetState extends State<HomePageWidget>
           ),
           actions: [
             Padding(
-              padding: EdgeInsetsDirectional.fromSTEB(0.0, 6.0, 6.0, 6.0),
-              child: Container(
+              padding: const EdgeInsetsDirectional.fromSTEB(0.0, 6.0, 6.0, 6.0),
+              child: SizedBox(
                 width: 44.0,
                 height: 44.0,
-                child: Stack(
-                  alignment: AlignmentDirectional(0.0, 0.0),
-                  children: [
-                    FlutterFlowIconButton(
-                      borderRadius: 22.0,
-                      borderWidth: 1.5,
-                      buttonSize: 44.0,
-                      icon: Icon(
-                        FFIcons.kbell,
-                        color: FlutterFlowTheme.of(context).primaryText,
-                        size: 22.0,
-                      ),
-                      onPressed: () async {
-                        context.pushNamed(NotificationWidget.routeName);
-                      },
-                    ),
-                    Padding(
-                      padding:
-                          EdgeInsetsDirectional.fromSTEB(12.0, 0.0, 0.0, 8.0),
-                      child: Container(
-                        width: 6.0,
-                        height: 6.0,
-                        decoration: BoxDecoration(
-                          color: FlutterFlowTheme.of(context).error,
-                          shape: BoxShape.circle,
+                child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  stream: FirebaseAuth.instance.currentUser == null
+                      ? null
+                      : FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(FirebaseAuth.instance.currentUser!.uid)
+                          .collection('notifications')
+                          .where('read', isEqualTo: false)
+                          .snapshots(),
+                  builder: (context, snapshot) {
+                    final unreadCount = snapshot.data?.docs.length ?? 0;
+                    return Stack(
+                      alignment: AlignmentDirectional.center,
+                      children: [
+                        FlutterFlowIconButton(
+                          borderRadius: 22.0,
+                          borderWidth: 1.5,
+                          buttonSize: 44.0,
+                          icon: Icon(
+                            FFIcons.kbell,
+                            color: FlutterFlowTheme.of(context).primaryText,
+                            size: 22.0,
+                          ),
+                          onPressed: () async {
+                            context.pushNamed(NotificationWidget.routeName);
+                          },
                         ),
-                      ),
-                    ),
-                  ],
+                        if (unreadCount > 0)
+                          Positioned(
+                            top: 6,
+                            right: 6,
+                            child: Container(
+                              constraints: const BoxConstraints(
+                                  minWidth: 14, minHeight: 14),
+                              decoration: BoxDecoration(
+                                color: FlutterFlowTheme.of(context).error,
+                                shape: unreadCount < 10
+                                    ? BoxShape.circle
+                                    : BoxShape.rectangle,
+                                borderRadius: unreadCount < 10
+                                    ? null
+                                    : BorderRadius.circular(7),
+                              ),
+                              alignment: Alignment.center,
+                              padding: unreadCount < 10
+                                  ? EdgeInsets.zero
+                                  : const EdgeInsets.symmetric(horizontal: 3),
+                              child: Text(
+                                unreadCount > 99 ? '99+' : '$unreadCount',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
                 ),
               ),
             ),

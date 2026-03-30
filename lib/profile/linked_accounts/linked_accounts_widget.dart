@@ -1,11 +1,9 @@
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
-import 'dart:ui';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 import 'linked_accounts_model.dart';
 export 'linked_accounts_model.dart';
 
@@ -35,6 +33,32 @@ class _LinkedAccountsWidgetState extends State<LinkedAccountsWidget> {
     _model.dispose();
 
     super.dispose();
+  }
+
+  /// Returns true if the current user has linked the given provider.
+  /// [providerId] is e.g. 'google.com', 'apple.com', 'password'.
+  bool _isLinked(String providerId) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return false;
+    return user.providerData.any((info) => info.providerId == providerId);
+  }
+
+  Widget _buildStatusText(bool linked, BuildContext context) {
+    return Text(
+      linked ? 'Linked' : 'Not Linked',
+      style: FlutterFlowTheme.of(context).labelLarge.override(
+            font: GoogleFonts.inter(
+              fontWeight: FontWeight.w600,
+              fontStyle: FlutterFlowTheme.of(context).labelLarge.fontStyle,
+            ),
+            color: linked
+                ? FlutterFlowTheme.of(context).primary
+                : FlutterFlowTheme.of(context).secondaryText,
+            letterSpacing: 0.0,
+            fontWeight: FontWeight.w600,
+            fontStyle: FlutterFlowTheme.of(context).labelLarge.fontStyle,
+          ),
+    );
   }
 
   @override
@@ -162,23 +186,7 @@ class _LinkedAccountsWidgetState extends State<LinkedAccountsWidget> {
                             ),
                           ),
                         ),
-                        Text(
-                          'Linked',
-                          style:
-                              FlutterFlowTheme.of(context).labelLarge.override(
-                                    font: GoogleFonts.inter(
-                                      fontWeight: FontWeight.w600,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .labelLarge
-                                          .fontStyle,
-                                    ),
-                                    letterSpacing: 0.0,
-                                    fontWeight: FontWeight.w600,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .labelLarge
-                                        .fontStyle,
-                                  ),
-                        ),
+                        _buildStatusText(_isLinked('google.com'), context),
                       ],
                     ),
                   ),
@@ -240,23 +248,7 @@ class _LinkedAccountsWidgetState extends State<LinkedAccountsWidget> {
                             ),
                           ),
                         ),
-                        Text(
-                          'Linked',
-                          style:
-                              FlutterFlowTheme.of(context).labelLarge.override(
-                                    font: GoogleFonts.inter(
-                                      fontWeight: FontWeight.w600,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .labelLarge
-                                          .fontStyle,
-                                    ),
-                                    letterSpacing: 0.0,
-                                    fontWeight: FontWeight.w600,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .labelLarge
-                                        .fontStyle,
-                                  ),
-                        ),
+                        _buildStatusText(_isLinked('apple.com'), context),
                       ],
                     ),
                   ),

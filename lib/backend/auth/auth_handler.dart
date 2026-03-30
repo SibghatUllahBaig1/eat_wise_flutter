@@ -29,6 +29,7 @@ class AuthHandler extends ChangeNotifier {
   // Loading states
   bool _isLoading = false;
   String? _error;
+  bool _isNewUser = false;
 
   // Getters
   User? get currentUser => _auth.currentUser;
@@ -36,6 +37,9 @@ class AuthHandler extends ChangeNotifier {
   bool get isAuthenticated => _auth.currentUser != null;
   bool get isLoading => _isLoading;
   String? get error => _error;
+
+  /// True if the last sign-in created a brand-new account.
+  bool get isNewUser => _isNewUser;
 
   // User info getters
   String get currentUserEmail => currentUser?.email ?? '';
@@ -215,18 +219,31 @@ class AuthHandler extends ChangeNotifier {
         credential = await _auth.signInWithCredential(googleCredential);
       }
 
+      _isNewUser = credential.additionalUserInfo?.isNewUser ?? false;
       _isLoading = false;
       notifyListeners();
       return credential.user;
     } on FirebaseAuthException catch (e) {
       _isLoading = false;
+      _isNewUser = false;
       _error = _getErrorMessage(e);
       notifyListeners();
       debugPrint('Google sign in error: ${e.code} - ${e.message}');
       return null;
     } catch (e) {
       _isLoading = false;
-      _error = 'Google sign in failed';
+      _isNewUser = false;
+      final msg = e.toString();
+      if (msg.contains('ApiException: 10') ||
+          msg.contains('DEVELOPER_ERROR') ||
+          msg.contains('sign_in_failed')) {
+        _error =
+            'Google sign in is not configured for this device. Please contact support.';
+      } else if (msg.contains('network') || msg.contains('Network')) {
+        _error = 'Network error. Please check your internet connection.';
+      } else {
+        _error = 'Google sign in failed. Please try again.';
+      }
       notifyListeners();
       debugPrint('Google sign in error: $e');
       return null;

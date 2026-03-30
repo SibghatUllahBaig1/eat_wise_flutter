@@ -1,15 +1,12 @@
-import '/backend/schema/structs/index.dart';
+import '/backend/services/meal_reminder_service.dart';
 import '/buttons/text_switch/text_switch_widget.dart';
 import '/buttons/text_text_right/text_text_right_widget.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
 import '/profile/components/z_daily_step_goal/z_daily_step_goal_widget.dart';
 import '/profile/components/z_reminder_time/z_reminder_time_widget.dart';
 import '/profile/components/z_repeat/z_repeat_widget.dart';
-import '/profile/components/z_ringtone/z_ringtone_widget.dart';
-import 'dart:ui';
 import '/flutter_flow/custom_functions.dart' as functions;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -187,24 +184,42 @@ class _StepCounterWidgetState extends State<StepCounterWidget> {
                         hoverColor: Colors.transparent,
                         highlightColor: Colors.transparent,
                         onTap: () async {
-                          if (FFAppState().trackerSettings.step.reminder ==
-                              true) {
-                            FFAppState().updateTrackerSettingsStruct(
-                              (e) => e
-                                ..updateStep(
-                                  (e) => e..reminder = false,
-                                ),
-                            );
-                            safeSetState(() {});
-                          } else {
-                            FFAppState().updateTrackerSettingsStruct(
-                              (e) => e
-                                ..updateStep(
-                                  (e) => e..reminder = true,
-                                ),
-                            );
-                            safeSetState(() {});
-                          }
+                          final newEnabled =
+                              !FFAppState().trackerSettings.step.reminder;
+                          FFAppState().updateTrackerSettingsStruct(
+                            (e) => e
+                              ..updateStep(
+                                (e) => e..reminder = newEnabled,
+                              ),
+                          );
+                          safeSetState(() {});
+                          // Sync to Firestore so the Cloud Function can
+                          // send/suppress FCM reminders based on this toggle.
+                          MealReminderService().syncTrackerReminder(
+                            trackerType: 2,
+                            enabled: newEnabled,
+                            hour: FFAppState()
+                                .trackerSettings
+                                .step
+                                .reminderTime
+                                .hour,
+                            minute: FFAppState()
+                                .trackerSettings
+                                .step
+                                .reminderTime
+                                .min,
+                            ampm: FFAppState()
+                                .trackerSettings
+                                .step
+                                .reminderTime
+                                .type,
+                            repeatDays: FFAppState()
+                                .trackerSettings
+                                .step
+                                .repeat
+                                .toList()
+                                .cast<String>(),
+                          );
                         },
                         child: wrapWithModel(
                           model: _model.textSwitchModel1,
@@ -292,7 +307,7 @@ class _StepCounterWidgetState extends State<StepCounterWidget> {
                                       builder: (context) {
                                         if (FFAppState()
                                                 .trackerSettings
-                                                .calorie
+                                                .step
                                                 .repeat
                                                 .length ==
                                             7) {
@@ -329,7 +344,7 @@ class _StepCounterWidgetState extends State<StepCounterWidget> {
                                           );
                                         } else if (FFAppState()
                                                 .trackerSettings
-                                                .calorie
+                                                .step
                                                 .repeat
                                                 .length ==
                                             0) {
@@ -483,121 +498,6 @@ class _StepCounterWidgetState extends State<StepCounterWidget> {
                               value:
                                   '${FFAppState().trackerSettings.step.reminderTime.hour}:${FFAppState().trackerSettings.step.reminderTime.min} ${FFAppState().trackerSettings.step.reminderTime.type}',
                             ),
-                          ),
-                        ),
-                      ),
-                      Builder(
-                        builder: (context) => InkWell(
-                          splashColor: Colors.transparent,
-                          focusColor: Colors.transparent,
-                          hoverColor: Colors.transparent,
-                          highlightColor: Colors.transparent,
-                          onTap: () async {
-                            await showDialog(
-                              barrierColor:
-                                  FlutterFlowTheme.of(context).barrier,
-                              context: context,
-                              builder: (dialogContext) {
-                                return Dialog(
-                                  elevation: 0,
-                                  insetPadding: EdgeInsets.zero,
-                                  backgroundColor: Colors.transparent,
-                                  alignment: AlignmentDirectional(0.0, 0.0)
-                                      .resolve(Directionality.of(context)),
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      FocusScope.of(dialogContext).unfocus();
-                                      FocusManager.instance.primaryFocus
-                                          ?.unfocus();
-                                    },
-                                    child: ZRingtoneWidget(
-                                      trackerType: 2,
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                          child: wrapWithModel(
-                            model: _model.textTextRightModel3,
-                            updateCallback: () => safeSetState(() {}),
-                            child: TextTextRightWidget(
-                              text: 'Ringtone',
-                              value: valueOrDefault<String>(
-                                FFAppState().trackerSettings.step.ringtone,
-                                'null',
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      InkWell(
-                        splashColor: Colors.transparent,
-                        focusColor: Colors.transparent,
-                        hoverColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap: () async {
-                          if (FFAppState().trackerSettings.step.vibration ==
-                              true) {
-                            FFAppState().updateTrackerSettingsStruct(
-                              (e) => e
-                                ..updateStep(
-                                  (e) => e..vibration = false,
-                                ),
-                            );
-                            safeSetState(() {});
-                          } else {
-                            FFAppState().updateTrackerSettingsStruct(
-                              (e) => e
-                                ..updateStep(
-                                  (e) => e..vibration = true,
-                                ),
-                            );
-                            safeSetState(() {});
-                          }
-                        },
-                        child: wrapWithModel(
-                          model: _model.textSwitchModel2,
-                          updateCallback: () => safeSetState(() {}),
-                          child: TextSwitchWidget(
-                            switchBoolean:
-                                FFAppState().trackerSettings.step.vibration,
-                            text: 'Vibration',
-                          ),
-                        ),
-                      ),
-                      InkWell(
-                        splashColor: Colors.transparent,
-                        focusColor: Colors.transparent,
-                        hoverColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap: () async {
-                          if (FFAppState().trackerSettings.step.stopWhen100p ==
-                              true) {
-                            FFAppState().updateTrackerSettingsStruct(
-                              (e) => e
-                                ..updateStep(
-                                  (e) => e..stopWhen100p = false,
-                                ),
-                            );
-                            safeSetState(() {});
-                          } else {
-                            FFAppState().updateTrackerSettingsStruct(
-                              (e) => e
-                                ..updateStep(
-                                  (e) => e..stopWhen100p = true,
-                                ),
-                            );
-                            safeSetState(() {});
-                          }
-                        },
-                        child: wrapWithModel(
-                          model: _model.textSwitchModel3,
-                          updateCallback: () => safeSetState(() {}),
-                          child: TextSwitchWidget(
-                            switchBoolean:
-                                FFAppState().trackerSettings.step.stopWhen100p,
-                            text: 'Stop When 100%',
                           ),
                         ),
                       ),

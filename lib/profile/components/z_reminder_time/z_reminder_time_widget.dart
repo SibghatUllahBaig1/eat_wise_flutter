@@ -1,4 +1,5 @@
 import '/backend/schema/structs/index.dart';
+import '/backend/services/meal_reminder_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -564,6 +565,21 @@ class _ZReminderTimeWidgetState extends State<ZReminderTimeWidget> {
                                 ),
                             );
                             FFAppState().update(() {});
+                            // Sync to Firestore for FCM reminder delivery
+                            MealReminderService().syncTrackerReminder(
+                              trackerType: 1,
+                              enabled:
+                                  FFAppState().trackerSettings.water.reminder,
+                              hour: _model.hour,
+                              minute: _model.min,
+                              ampm: _model.type,
+                              repeatDays: FFAppState()
+                                  .trackerSettings
+                                  .water
+                                  .repeat
+                                  .toList()
+                                  .cast<String>(),
+                            );
                           } else if (widget!.trackerType == 2) {
                             FFAppState().updateTrackerSettingsStruct(
                               (e) => e
@@ -577,6 +593,21 @@ class _ZReminderTimeWidgetState extends State<ZReminderTimeWidget> {
                                 ),
                             );
                             FFAppState().update(() {});
+                            // Sync to Firestore for FCM reminder delivery
+                            MealReminderService().syncTrackerReminder(
+                              trackerType: 2,
+                              enabled:
+                                  FFAppState().trackerSettings.step.reminder,
+                              hour: _model.hour,
+                              minute: _model.min,
+                              ampm: _model.type,
+                              repeatDays: FFAppState()
+                                  .trackerSettings
+                                  .step
+                                  .repeat
+                                  .toList()
+                                  .cast<String>(),
+                            );
                           } else {
                             FFAppState().updateTrackerSettingsStruct(
                               (e) => e
@@ -590,6 +621,21 @@ class _ZReminderTimeWidgetState extends State<ZReminderTimeWidget> {
                                 ),
                             );
                             FFAppState().update(() {});
+                            // Sync to Firestore for FCM reminder delivery
+                            MealReminderService().syncTrackerReminder(
+                              trackerType: 3,
+                              enabled:
+                                  FFAppState().trackerSettings.weight.reminder,
+                              hour: _model.hour,
+                              minute: _model.min,
+                              ampm: _model.type,
+                              repeatDays: FFAppState()
+                                  .trackerSettings
+                                  .weight
+                                  .repeat
+                                  .toList()
+                                  .cast<String>(),
+                            );
                           }
 
                           Navigator.pop(context);

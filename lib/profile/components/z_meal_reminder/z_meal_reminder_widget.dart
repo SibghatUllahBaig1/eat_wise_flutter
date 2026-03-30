@@ -2,6 +2,7 @@ import '/backend/services/meal_reminder_service.dart';
 import '/backend/services/meal_reminder_preferences.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'z_meal_reminder_model.dart';
@@ -43,48 +44,18 @@ class _ZMealReminderWidgetState extends State<ZMealReminderWidget> {
       _model.reminderEnabled = settings['enabled'] as bool;
       _model.hour = settings['hour'] as int;
       _model.minute = settings['minute'] as int;
-      _model.vibrationEnabled = settings['vibration'] as bool;
       _model.repeatDays = List<String>.from(settings['repeatDays'] as List);
     });
   }
 
   Future<void> _saveSettings() async {
-    await MealReminderPreferences.saveMealReminder(
+    await _reminderService.syncMealReminder(
       mealType: widget.mealType,
       enabled: _model.reminderEnabled,
       hour: _model.hour,
       minute: _model.minute,
-      vibration: _model.vibrationEnabled,
       repeatDays: _model.repeatDays,
     );
-
-    if (_model.reminderEnabled) {
-      await _reminderService.scheduleMealReminder(
-        id: _getMealReminderId(),
-        mealType: widget.mealType,
-        hour: _model.hour,
-        minute: _model.minute,
-        enableVibration: _model.vibrationEnabled,
-        repeatDays: _model.repeatDays,
-      );
-    } else {
-      await _reminderService.cancelMealReminder(_getMealReminderId());
-    }
-  }
-
-  int _getMealReminderId() {
-    switch (widget.mealType.toLowerCase()) {
-      case 'breakfast':
-        return 2001;
-      case 'lunch':
-        return 2002;
-      case 'dinner':
-        return 2003;
-      case 'snack':
-        return 2004;
-      default:
-        return 2000;
-    }
   }
 
   String _getMealTitle() {
@@ -173,38 +144,7 @@ class _ZMealReminderWidgetState extends State<ZMealReminderWidget> {
             focusColor: Colors.transparent,
             hoverColor: Colors.transparent,
             highlightColor: Colors.transparent,
-            onTap: () async {
-              final greenColor = FlutterFlowTheme.of(context).primary;
-              final TimeOfDay? picked = await showTimePicker(
-                context: context,
-                initialTime:
-                    TimeOfDay(hour: _model.hour, minute: _model.minute),
-                builder: (context, child) {
-                  return Theme(
-                    data: Theme.of(context).copyWith(
-                      colorScheme: Theme.of(context).colorScheme.copyWith(
-                            primary: greenColor,
-                            onPrimary: Colors.white,
-                            onSurface: FlutterFlowTheme.of(context).primaryText,
-                          ),
-                      textButtonTheme: TextButtonThemeData(
-                        style: TextButton.styleFrom(
-                          foregroundColor: greenColor,
-                        ),
-                      ),
-                    ),
-                    child: child!,
-                  );
-                },
-              );
-              if (picked != null) {
-                safeSetState(() {
-                  _model.hour = picked.hour;
-                  _model.minute = picked.minute;
-                });
-                await _saveSettings();
-              }
-            },
+            onTap: () => _showCarouselTimePicker(),
             child: Padding(
               padding: EdgeInsetsDirectional.fromSTEB(0.0, 20.0, 0.0, 20.0),
               child: Row(
@@ -231,7 +171,7 @@ class _ZMealReminderWidgetState extends State<ZMealReminderWidget> {
                   ),
                   Expanded(
                     child: Text(
-                      '${_model.hour.toString().padLeft(2, '0')}:${_model.minute.toString().padLeft(2, '0')}',
+                      _formatTime12h(_model.hour, _model.minute),
                       textAlign: TextAlign.end,
                       style: FlutterFlowTheme.of(context).bodyMedium.override(
                             font: GoogleFonts.inter(
@@ -257,56 +197,6 @@ class _ZMealReminderWidgetState extends State<ZMealReminderWidget> {
                   ),
                 ],
               ),
-            ),
-          ),
-          Divider(
-            height: 1.0,
-            thickness: 1.0,
-            color: FlutterFlowTheme.of(context).divider,
-          ),
-          // Vibration
-          InkWell(
-            splashColor: Colors.transparent,
-            focusColor: Colors.transparent,
-            hoverColor: Colors.transparent,
-            highlightColor: Colors.transparent,
-            onTap: () async {
-              safeSetState(
-                  () => _model.vibrationEnabled = !_model.vibrationEnabled);
-              await _saveSettings();
-            },
-            child: Row(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Padding(
-                    padding:
-                        EdgeInsetsDirectional.fromSTEB(0.0, 20.0, 15.0, 20.0),
-                    child: Text(
-                      'Vibration',
-                      style: FlutterFlowTheme.of(context).titleSmall.override(
-                            font: GoogleFonts.inter(
-                              fontWeight: FlutterFlowTheme.of(context)
-                                  .titleSmall
-                                  .fontWeight,
-                              fontStyle: FlutterFlowTheme.of(context)
-                                  .titleSmall
-                                  .fontStyle,
-                            ),
-                            letterSpacing: 0.0,
-                            fontWeight: FlutterFlowTheme.of(context)
-                                .titleSmall
-                                .fontWeight,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .titleSmall
-                                .fontStyle,
-                          ),
-                    ),
-                  ),
-                ),
-                _buildToggle(_model.vibrationEnabled),
-              ],
             ),
           ),
           Divider(
@@ -383,6 +273,227 @@ class _ZMealReminderWidgetState extends State<ZMealReminderWidget> {
           ),
         ],
       ],
+    );
+  }
+
+  /// Converts 24h integers to a display string like "07:30 AM".
+  String _formatTime12h(int hour24, int minute) {
+    final ampm = hour24 < 12 ? 'AM' : 'PM';
+    final h = hour24 % 12; // 0 for 12 AM/PM, 1-11 otherwise
+    final hStr = h.toString().padLeft(2, '0');
+    final mStr = minute.toString().padLeft(2, '0');
+    return '$hStr:$mStr $ampm';
+  }
+
+  /// Shows the custom carousel-based time picker dialog.
+  void _showCarouselTimePicker() {
+    // Convert current 24h model values to 12h carousel strings.
+    final h = _model.hour % 12; // 0-11 (0 = 12 on the clock)
+    final String initHour = h.toString().padLeft(2, '0');
+    final String initMin = _model.minute.toString().padLeft(2, '0');
+    final String initAmpm = _model.hour < 12 ? 'AM' : 'PM';
+
+    final hourList = List.generate(12, (i) => i.toString().padLeft(2, '0'));
+    final minList = List.generate(60, (i) => i.toString().padLeft(2, '0'));
+    const typeList = ['AM', 'PM'];
+
+    // Controllers created once; not recreated on StatefulBuilder rebuilds.
+    final hourCtrl = CarouselSliderController();
+    final minCtrl = CarouselSliderController();
+    final typeCtrl = CarouselSliderController();
+
+    String localHour = initHour;
+    String localMin = initMin;
+    String localAmpm = initAmpm;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            final greenColor = FlutterFlowTheme.of(context).primary;
+            return Dialog(
+              elevation: 0,
+              insetPadding:
+                  const EdgeInsets.symmetric(horizontal: 32.0, vertical: 0.0),
+              backgroundColor: Colors.transparent,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: FlutterFlowTheme.of(context).secondaryBackground,
+                  borderRadius: BorderRadius.circular(24.0),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Reminder Time',
+                        style: FlutterFlowTheme.of(context).titleLarge.override(
+                              font: GoogleFonts.inter(
+                                fontWeight: FlutterFlowTheme.of(context)
+                                    .titleLarge
+                                    .fontWeight,
+                              ),
+                              letterSpacing: 0.0,
+                              lineHeight: 1.0,
+                            ),
+                      ),
+                      const SizedBox(height: 24.0),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildCarouselColumn(
+                              items: hourList,
+                              selectedItem: localHour,
+                              controller: hourCtrl,
+                              initialPage:
+                                  max(0, min(hourList.indexOf(initHour), 11)),
+                              onChanged: (v) =>
+                                  setDialogState(() => localHour = v),
+                            ),
+                          ),
+                          const SizedBox(width: 24.0),
+                          Expanded(
+                            child: _buildCarouselColumn(
+                              items: minList,
+                              selectedItem: localMin,
+                              controller: minCtrl,
+                              initialPage:
+                                  max(0, min(minList.indexOf(initMin), 59)),
+                              onChanged: (v) =>
+                                  setDialogState(() => localMin = v),
+                            ),
+                          ),
+                          const SizedBox(width: 24.0),
+                          Expanded(
+                            child: _buildCarouselColumn(
+                              items: typeList,
+                              selectedItem: localAmpm,
+                              controller: typeCtrl,
+                              initialPage: initAmpm == 'AM' ? 0 : 1,
+                              onChanged: (v) =>
+                                  setDialogState(() => localAmpm = v),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24.0),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(dialogContext),
+                            child: Text(
+                              'Cancel',
+                              style: FlutterFlowTheme.of(context)
+                                  .bodyMedium
+                                  .override(
+                                    font: GoogleFonts.inter(),
+                                    color: FlutterFlowTheme.of(context)
+                                        .secondaryText,
+                                    letterSpacing: 0.0,
+                                  ),
+                            ),
+                          ),
+                          const SizedBox(width: 4.0),
+                          ElevatedButton(
+                            onPressed: () async {
+                              final nav = Navigator.of(dialogContext);
+                              // Convert 12h carousel back to 24h int.
+                              final int hParsed = int.parse(localHour);
+                              final int hour24 =
+                                  localAmpm == 'AM' ? hParsed : hParsed + 12;
+                              final int minute = int.parse(localMin);
+                              safeSetState(() {
+                                _model.hour = hour24;
+                                _model.minute = minute;
+                              });
+                              await _saveSettings();
+                              nav.pop();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: greenColor,
+                              foregroundColor: Colors.white,
+                              elevation: 0.0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                              ),
+                              padding: const EdgeInsetsDirectional.fromSTEB(
+                                  24.0, 0.0, 24.0, 0.0),
+                              minimumSize: const Size(0.0, 40.0),
+                            ),
+                            child: Text(
+                              'OK',
+                              style: FlutterFlowTheme.of(context)
+                                  .titleSmall
+                                  .override(
+                                    font: GoogleFonts.inter(
+                                        fontWeight: FontWeight.w600),
+                                    color: Colors.white,
+                                    letterSpacing: 0.0,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// Builds a single vertical carousel column for the time picker dialog.
+  Widget _buildCarouselColumn({
+    required List<String> items,
+    required String selectedItem,
+    required CarouselSliderController controller,
+    required int initialPage,
+    required ValueChanged<String> onChanged,
+  }) {
+    return SizedBox(
+      width: 120.0,
+      height: 180.0,
+      child: CarouselSlider.builder(
+        itemCount: items.length,
+        itemBuilder: (context, index, _) {
+          final item = items[index];
+          return Align(
+            alignment: AlignmentDirectional.center,
+            child: Text(
+              item,
+              style: FlutterFlowTheme.of(context).titleLarge.override(
+                    font: GoogleFonts.inter(fontWeight: FontWeight.normal),
+                    color: item == selectedItem
+                        ? FlutterFlowTheme.of(context).primaryText
+                        : FlutterFlowTheme.of(context).secondaryText,
+                    fontSize: 24.0,
+                    letterSpacing: 0.0,
+                    fontWeight: FontWeight.normal,
+                    lineHeight: 1.0,
+                  ),
+            ),
+          );
+        },
+        carouselController: controller,
+        options: CarouselOptions(
+          initialPage: initialPage,
+          viewportFraction: 0.21,
+          disableCenter: true,
+          enlargeCenterPage: true,
+          enlargeFactor: 0.25,
+          enableInfiniteScroll: false,
+          scrollDirection: Axis.vertical,
+          autoPlay: false,
+          onPageChanged: (index, _) => onChanged(items[index]),
+        ),
+      ),
     );
   }
 

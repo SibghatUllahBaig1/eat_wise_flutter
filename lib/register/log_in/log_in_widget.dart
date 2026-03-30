@@ -789,32 +789,36 @@ class _LogInWidgetState extends State<LogInWidget>
                 child: Row(
                   mainAxisSize: MainAxisSize.max,
                   children: [
+                    // Google Sign-In button
                     Expanded(
-                      child: Container(
-                        width: 100.0,
-                        height: 50.0,
-                        decoration: BoxDecoration(
-                          color:
-                              FlutterFlowTheme.of(context).secondaryBackground,
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
-                        child: Align(
-                          alignment: AlignmentDirectional(0.0, 0.0),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(50.0),
-                            child: Image.asset(
-                              'assets/images/gg.png',
-                              width: 24.0,
-                              height: 24.0,
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Hide Apple Sign-In on Android
-                    if (!Platform.isAndroid)
-                      Expanded(
+                      child: GestureDetector(
+                        onTap: () async {
+                          final authHandler = AuthHandler();
+                          final user = await authHandler.signInWithGoogle();
+
+                          if (!context.mounted) return;
+
+                          if (user == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(authHandler.error ??
+                                    'Google sign in failed.'),
+                                backgroundColor:
+                                    FlutterFlowTheme.of(context).error,
+                              ),
+                            );
+                            return;
+                          }
+
+                          // Existing users land on the app; new users go through onboarding.
+                          if (authHandler.isNewUser) {
+                            context.goNamedAuth(OnboardingStep1Widget.routeName,
+                                context.mounted);
+                          } else {
+                            context.goNamedAuth(
+                                InitialRouteWidget.routeName, context.mounted);
+                          }
+                        },
                         child: Container(
                           width: 100.0,
                           height: 50.0,
@@ -825,13 +829,69 @@ class _LogInWidgetState extends State<LogInWidget>
                           ),
                           child: Align(
                             alignment: AlignmentDirectional(0.0, 0.0),
-                            child: Padding(
-                              padding: EdgeInsetsDirectional.fromSTEB(
-                                  0.0, 0.0, 1.0, 1.0),
-                              child: Icon(
-                                FFIcons.kfruit,
-                                color: FlutterFlowTheme.of(context).primaryText,
-                                size: 24.0,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(50.0),
+                              child: Image.asset(
+                                'assets/images/gg.png',
+                                width: 24.0,
+                                height: 24.0,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Hide Apple Sign-In on Android
+                    if (!Platform.isAndroid)
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () async {
+                            final authHandler = AuthHandler();
+                            final user = await authHandler.signInWithApple();
+
+                            if (!context.mounted) return;
+
+                            if (user == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(authHandler.error ??
+                                      'Apple sign in failed.'),
+                                  backgroundColor:
+                                      FlutterFlowTheme.of(context).error,
+                                ),
+                              );
+                              return;
+                            }
+
+                            if (authHandler.isNewUser) {
+                              context.goNamedAuth(
+                                  OnboardingStep1Widget.routeName,
+                                  context.mounted);
+                            } else {
+                              context.goNamedAuth(InitialRouteWidget.routeName,
+                                  context.mounted);
+                            }
+                          },
+                          child: Container(
+                            width: 100.0,
+                            height: 50.0,
+                            decoration: BoxDecoration(
+                              color: FlutterFlowTheme.of(context)
+                                  .secondaryBackground,
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                            child: Align(
+                              alignment: AlignmentDirectional(0.0, 0.0),
+                              child: Padding(
+                                padding: EdgeInsetsDirectional.fromSTEB(
+                                    0.0, 0.0, 1.0, 1.0),
+                                child: Icon(
+                                  FFIcons.kfruit,
+                                  color:
+                                      FlutterFlowTheme.of(context).primaryText,
+                                  size: 24.0,
+                                ),
                               ),
                             ),
                           ),

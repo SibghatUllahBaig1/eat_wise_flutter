@@ -1,15 +1,12 @@
-import '/backend/schema/structs/index.dart';
+import '/backend/services/meal_reminder_service.dart';
 import '/buttons/text_switch/text_switch_widget.dart';
 import '/buttons/text_text_right/text_text_right_widget.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
 import '/profile/components/z_daily_water_goal/z_daily_water_goal_widget.dart';
 import '/profile/components/z_reminder_time/z_reminder_time_widget.dart';
 import '/profile/components/z_repeat/z_repeat_widget.dart';
-import '/profile/components/z_ringtone/z_ringtone_widget.dart';
-import 'dart:ui';
 import '/flutter_flow/custom_functions.dart' as functions;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -236,24 +233,42 @@ class _WaterTrackerWidgetState extends State<WaterTrackerWidget> {
                         hoverColor: Colors.transparent,
                         highlightColor: Colors.transparent,
                         onTap: () async {
-                          if (FFAppState().trackerSettings.water.reminder ==
-                              true) {
-                            FFAppState().updateTrackerSettingsStruct(
-                              (e) => e
-                                ..updateWater(
-                                  (e) => e..reminder = false,
-                                ),
-                            );
-                            safeSetState(() {});
-                          } else {
-                            FFAppState().updateTrackerSettingsStruct(
-                              (e) => e
-                                ..updateWater(
-                                  (e) => e..reminder = true,
-                                ),
-                            );
-                            safeSetState(() {});
-                          }
+                          final newEnabled =
+                              !FFAppState().trackerSettings.water.reminder;
+                          FFAppState().updateTrackerSettingsStruct(
+                            (e) => e
+                              ..updateWater(
+                                (e) => e..reminder = newEnabled,
+                              ),
+                          );
+                          safeSetState(() {});
+                          // Sync to Firestore so the Cloud Function can
+                          // send/suppress FCM reminders based on this toggle.
+                          MealReminderService().syncTrackerReminder(
+                            trackerType: 1,
+                            enabled: newEnabled,
+                            hour: FFAppState()
+                                .trackerSettings
+                                .water
+                                .reminderTime
+                                .hour,
+                            minute: FFAppState()
+                                .trackerSettings
+                                .water
+                                .reminderTime
+                                .min,
+                            ampm: FFAppState()
+                                .trackerSettings
+                                .water
+                                .reminderTime
+                                .type,
+                            repeatDays: FFAppState()
+                                .trackerSettings
+                                .water
+                                .repeat
+                                .toList()
+                                .cast<String>(),
+                          );
                         },
                         child: wrapWithModel(
                           model: _model.textSwitchModel1,
@@ -532,121 +547,6 @@ class _WaterTrackerWidgetState extends State<WaterTrackerWidget> {
                               value:
                                   '${FFAppState().trackerSettings.water.reminderTime.hour}:${FFAppState().trackerSettings.water.reminderTime.min} ${FFAppState().trackerSettings.water.reminderTime.type}',
                             ),
-                          ),
-                        ),
-                      ),
-                      Builder(
-                        builder: (context) => InkWell(
-                          splashColor: Colors.transparent,
-                          focusColor: Colors.transparent,
-                          hoverColor: Colors.transparent,
-                          highlightColor: Colors.transparent,
-                          onTap: () async {
-                            await showDialog(
-                              barrierColor:
-                                  FlutterFlowTheme.of(context).barrier,
-                              context: context,
-                              builder: (dialogContext) {
-                                return Dialog(
-                                  elevation: 0,
-                                  insetPadding: EdgeInsets.zero,
-                                  backgroundColor: Colors.transparent,
-                                  alignment: AlignmentDirectional(0.0, 0.0)
-                                      .resolve(Directionality.of(context)),
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      FocusScope.of(dialogContext).unfocus();
-                                      FocusManager.instance.primaryFocus
-                                          ?.unfocus();
-                                    },
-                                    child: ZRingtoneWidget(
-                                      trackerType: 1,
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                          child: wrapWithModel(
-                            model: _model.textTextRightModel4,
-                            updateCallback: () => safeSetState(() {}),
-                            child: TextTextRightWidget(
-                              text: 'Ringtone',
-                              value: valueOrDefault<String>(
-                                FFAppState().trackerSettings.water.ringtone,
-                                'null',
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      InkWell(
-                        splashColor: Colors.transparent,
-                        focusColor: Colors.transparent,
-                        hoverColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap: () async {
-                          if (FFAppState().trackerSettings.water.vibration ==
-                              true) {
-                            FFAppState().updateTrackerSettingsStruct(
-                              (e) => e
-                                ..updateWater(
-                                  (e) => e..vibration = false,
-                                ),
-                            );
-                            safeSetState(() {});
-                          } else {
-                            FFAppState().updateTrackerSettingsStruct(
-                              (e) => e
-                                ..updateWater(
-                                  (e) => e..vibration = true,
-                                ),
-                            );
-                            safeSetState(() {});
-                          }
-                        },
-                        child: wrapWithModel(
-                          model: _model.textSwitchModel2,
-                          updateCallback: () => safeSetState(() {}),
-                          child: TextSwitchWidget(
-                            switchBoolean:
-                                FFAppState().trackerSettings.water.vibration,
-                            text: 'Vibration',
-                          ),
-                        ),
-                      ),
-                      InkWell(
-                        splashColor: Colors.transparent,
-                        focusColor: Colors.transparent,
-                        hoverColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap: () async {
-                          if (FFAppState().trackerSettings.water.stopWhen100p ==
-                              true) {
-                            FFAppState().updateTrackerSettingsStruct(
-                              (e) => e
-                                ..updateWater(
-                                  (e) => e..stopWhen100p = false,
-                                ),
-                            );
-                            safeSetState(() {});
-                          } else {
-                            FFAppState().updateTrackerSettingsStruct(
-                              (e) => e
-                                ..updateWater(
-                                  (e) => e..stopWhen100p = true,
-                                ),
-                            );
-                            safeSetState(() {});
-                          }
-                        },
-                        child: wrapWithModel(
-                          model: _model.textSwitchModel3,
-                          updateCallback: () => safeSetState(() {}),
-                          child: TextSwitchWidget(
-                            switchBoolean:
-                                FFAppState().trackerSettings.water.stopWhen100p,
-                            text: 'Stop When 100%',
                           ),
                         ),
                       ),

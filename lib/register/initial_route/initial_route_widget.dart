@@ -41,14 +41,6 @@ class _InitialRouteWidgetState extends State<InitialRouteWidget> {
     // 2. Fitness — activity recognition + body sensors together
     await ps.requestFitnessPermission(context);
     if (!mounted) return;
-
-    // 3. Exact alarm (Android 12+) — opens system settings if needed
-    await ps.requestExactAlarmPermission(context);
-    if (!mounted) return;
-
-    // 4. Battery optimization exemption — prevents OS from killing alarms
-    //    on aggressive battery-saver devices (Samsung, Xiaomi, OnePlus, etc.)
-    await ps.requestBatteryOptimizationExemption(context);
   }
 
   Future<void> _checkRouting() async {

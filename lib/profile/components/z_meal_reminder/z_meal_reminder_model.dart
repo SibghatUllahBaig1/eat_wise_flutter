@@ -7,7 +7,6 @@ class ZMealReminderModel extends FlutterFlowModel<ZMealReminderWidget> {
   bool reminderEnabled = false;
   int hour = 7;
   int minute = 0;
-  bool vibrationEnabled = true;
   List<String> repeatDays = [
     'Monday',
     'Tuesday',
@@ -24,4 +23,3 @@ class ZMealReminderModel extends FlutterFlowModel<ZMealReminderWidget> {
   @override
   void dispose() {}
 }
-

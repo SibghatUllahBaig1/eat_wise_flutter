@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
-import '/backend/services/meal_reminder_service.dart';
 
 /// Centralized permission service following App Store / Play Store best practices.
 /// Always shows a rationale dialog BEFORE the system prompt, and handles the
@@ -155,35 +154,6 @@ class PermissionService {
       );
     }
     return result.isGranted;
-  }
-
-  /// Request exact-alarm permission (Android 12+) via MealReminderService.
-  Future<void> requestExactAlarmPermission(BuildContext context) async {
-    await MealReminderService().requestPermissions();
-  }
-
-  /// Request battery-optimization exemption (Android only).
-  /// Without this, aggressive battery savers on Samsung, Xiaomi, etc. can
-  /// delay or block background alarms entirely.
-  Future<void> requestBatteryOptimizationExemption(BuildContext context) async {
-    if (!Platform.isAndroid) return;
-
-    final status = await Permission.ignoreBatteryOptimizations.status;
-    if (status.isGranted) return;
-
-    final allowed = await _showRationaleDialog(
-      context,
-      icon: Icons.battery_charging_full_rounded,
-      title: 'Keep Reminders Reliable',
-      description:
-          'Your device\'s battery saver can delay or block background alarms. '
-          'Allowing EatWise to run unrestricted ensures your meal reminders '
-          'always arrive on time — it has no impact on battery life.',
-    );
-    if (!context.mounted) return;
-    if (allowed) {
-      await Permission.ignoreBatteryOptimizations.request();
-    }
   }
 
   // ──────────────────────────────────────────────

@@ -7,7 +7,6 @@ class MealReminderPreferences {
     required bool enabled,
     required int hour,
     required int minute,
-    required bool vibration,
     required List<String> repeatDays,
   }) async {
     final prefs = await SharedPreferences.getInstance();
@@ -16,24 +15,21 @@ class MealReminderPreferences {
     await prefs.setBool('${prefix}_enabled', enabled);
     await prefs.setInt('${prefix}_hour', hour);
     await prefs.setInt('${prefix}_minute', minute);
-    await prefs.setBool('${prefix}_vibration', vibration);
     await prefs.setStringList('${prefix}_repeat', repeatDays);
   }
 
   /// Load meal reminder settings
-  static Future<Map<String, dynamic>> loadMealReminder(
-      String mealType) async {
+  static Future<Map<String, dynamic>> loadMealReminder(String mealType) async {
     final prefs = await SharedPreferences.getInstance();
     final prefix = 'meal_reminder_${mealType.toLowerCase()}';
 
     final defaultHour = _getDefaultHour(mealType);
-    final defaultMinute = 0;
+    const defaultMinute = 0;
 
     return {
       'enabled': prefs.getBool('${prefix}_enabled') ?? false,
       'hour': prefs.getInt('${prefix}_hour') ?? defaultHour,
       'minute': prefs.getInt('${prefix}_minute') ?? defaultMinute,
-      'vibration': prefs.getBool('${prefix}_vibration') ?? true,
       'repeatDays': prefs.getStringList('${prefix}_repeat') ??
           [
             'Monday',
@@ -63,4 +59,3 @@ class MealReminderPreferences {
     }
   }
 }
-

@@ -1,19 +1,16 @@
-import '/backend/schema/structs/index.dart';
+import '/backend/services/meal_reminder_service.dart';
 import '/buttons/text_switch/text_switch_widget.dart';
 import '/buttons/text_text_right/text_text_right_widget.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
 import '/profile/components/z_current_weight/z_current_weight_widget.dart';
 import '/profile/components/z_goal_weight/z_goal_weight_widget.dart';
 import '/profile/components/z_height/z_height_widget.dart';
 import '/profile/components/z_height_unit/z_height_unit_widget.dart';
 import '/profile/components/z_reminder_time/z_reminder_time_widget.dart';
 import '/profile/components/z_repeat/z_repeat_widget.dart';
-import '/profile/components/z_ringtone/z_ringtone_widget.dart';
 import '/profile/components/z_weight_unit/z_weight_unit_widget.dart';
-import 'dart:ui';
 import '/flutter_flow/custom_functions.dart' as functions;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -390,24 +387,42 @@ class _WeightTrackerWidgetState extends State<WeightTrackerWidget> {
                         hoverColor: Colors.transparent,
                         highlightColor: Colors.transparent,
                         onTap: () async {
-                          if (FFAppState().trackerSettings.weight.reminder ==
-                              true) {
-                            FFAppState().updateTrackerSettingsStruct(
-                              (e) => e
-                                ..updateWeight(
-                                  (e) => e..reminder = false,
-                                ),
-                            );
-                            safeSetState(() {});
-                          } else {
-                            FFAppState().updateTrackerSettingsStruct(
-                              (e) => e
-                                ..updateWeight(
-                                  (e) => e..reminder = true,
-                                ),
-                            );
-                            safeSetState(() {});
-                          }
+                          final newEnabled =
+                              !FFAppState().trackerSettings.weight.reminder;
+                          FFAppState().updateTrackerSettingsStruct(
+                            (e) => e
+                              ..updateWeight(
+                                (e) => e..reminder = newEnabled,
+                              ),
+                          );
+                          safeSetState(() {});
+                          // Sync to Firestore so the Cloud Function can
+                          // send/suppress FCM reminders based on this toggle.
+                          MealReminderService().syncTrackerReminder(
+                            trackerType: 3,
+                            enabled: newEnabled,
+                            hour: FFAppState()
+                                .trackerSettings
+                                .weight
+                                .reminderTime
+                                .hour,
+                            minute: FFAppState()
+                                .trackerSettings
+                                .weight
+                                .reminderTime
+                                .min,
+                            ampm: FFAppState()
+                                .trackerSettings
+                                .weight
+                                .reminderTime
+                                .type,
+                            repeatDays: FFAppState()
+                                .trackerSettings
+                                .weight
+                                .repeat
+                                .toList()
+                                .cast<String>(),
+                          );
                         },
                         child: wrapWithModel(
                           model: _model.textSwitchModel2,
@@ -502,7 +517,7 @@ class _WeightTrackerWidgetState extends State<WeightTrackerWidget> {
                                       builder: (context) {
                                         if (FFAppState()
                                                 .trackerSettings
-                                                .water
+                                                .weight
                                                 .repeat
                                                 .length ==
                                             7) {
@@ -539,7 +554,7 @@ class _WeightTrackerWidgetState extends State<WeightTrackerWidget> {
                                           );
                                         } else if (FFAppState()
                                                 .trackerSettings
-                                                .water
+                                                .weight
                                                 .repeat
                                                 .length ==
                                             0) {
@@ -686,124 +701,6 @@ class _WeightTrackerWidgetState extends State<WeightTrackerWidget> {
                               value:
                                   '${FFAppState().trackerSettings.weight.reminderTime.hour}:${FFAppState().trackerSettings.weight.reminderTime.min} ${FFAppState().trackerSettings.weight.reminderTime.type}',
                             ),
-                          ),
-                        ),
-                      ),
-                      Builder(
-                        builder: (context) => InkWell(
-                          splashColor: Colors.transparent,
-                          focusColor: Colors.transparent,
-                          hoverColor: Colors.transparent,
-                          highlightColor: Colors.transparent,
-                          onTap: () async {
-                            await showDialog(
-                              barrierColor:
-                                  FlutterFlowTheme.of(context).barrier,
-                              context: context,
-                              builder: (dialogContext) {
-                                return Dialog(
-                                  elevation: 0,
-                                  insetPadding: EdgeInsets.zero,
-                                  backgroundColor: Colors.transparent,
-                                  alignment: AlignmentDirectional(0.0, 0.0)
-                                      .resolve(Directionality.of(context)),
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      FocusScope.of(dialogContext).unfocus();
-                                      FocusManager.instance.primaryFocus
-                                          ?.unfocus();
-                                    },
-                                    child: ZRingtoneWidget(
-                                      trackerType: 3,
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                          child: wrapWithModel(
-                            model: _model.textTextRightModel7,
-                            updateCallback: () => safeSetState(() {}),
-                            child: TextTextRightWidget(
-                              text: 'Ringtone',
-                              value:
-                                  FFAppState().trackerSettings.weight.ringtone,
-                            ),
-                          ),
-                        ),
-                      ),
-                      InkWell(
-                        splashColor: Colors.transparent,
-                        focusColor: Colors.transparent,
-                        hoverColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap: () async {
-                          if (FFAppState().trackerSettings.weight.vibration ==
-                              true) {
-                            FFAppState().updateTrackerSettingsStruct(
-                              (e) => e
-                                ..updateWeight(
-                                  (e) => e..vibration = false,
-                                ),
-                            );
-                            safeSetState(() {});
-                          } else {
-                            FFAppState().updateTrackerSettingsStruct(
-                              (e) => e
-                                ..updateWeight(
-                                  (e) => e..vibration = true,
-                                ),
-                            );
-                            safeSetState(() {});
-                          }
-                        },
-                        child: wrapWithModel(
-                          model: _model.textSwitchModel3,
-                          updateCallback: () => safeSetState(() {}),
-                          child: TextSwitchWidget(
-                            switchBoolean:
-                                FFAppState().trackerSettings.weight.vibration,
-                            text: 'Vibration',
-                          ),
-                        ),
-                      ),
-                      InkWell(
-                        splashColor: Colors.transparent,
-                        focusColor: Colors.transparent,
-                        hoverColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap: () async {
-                          if (FFAppState()
-                                  .trackerSettings
-                                  .weight
-                                  .stopWhen100p ==
-                              true) {
-                            FFAppState().updateTrackerSettingsStruct(
-                              (e) => e
-                                ..updateWeight(
-                                  (e) => e..stopWhen100p = false,
-                                ),
-                            );
-                            safeSetState(() {});
-                          } else {
-                            FFAppState().updateTrackerSettingsStruct(
-                              (e) => e
-                                ..updateWeight(
-                                  (e) => e..stopWhen100p = true,
-                                ),
-                            );
-                            safeSetState(() {});
-                          }
-                        },
-                        child: wrapWithModel(
-                          model: _model.textSwitchModel4,
-                          updateCallback: () => safeSetState(() {}),
-                          child: TextSwitchWidget(
-                            switchBoolean: FFAppState()
-                                .trackerSettings
-                                .weight
-                                .stopWhen100p,
-                            text: 'Stop When 100%',
                           ),
                         ),
                       ),

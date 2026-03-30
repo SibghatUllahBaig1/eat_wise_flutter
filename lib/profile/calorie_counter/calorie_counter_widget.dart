@@ -157,42 +157,12 @@ class _CalorieCounterWidgetState extends State<CalorieCounterWidget> {
                         },
                       ),
                       Builder(
-                        builder: (context) => InkWell(
-                          splashColor: Colors.transparent,
-                          focusColor: Colors.transparent,
-                          hoverColor: Colors.transparent,
-                          highlightColor: Colors.transparent,
-                          onTap: () async {
-                            await showDialog(
-                              barrierColor:
-                                  FlutterFlowTheme.of(context).barrier,
-                              context: context,
-                              builder: (dialogContext) {
-                                return Dialog(
-                                  elevation: 0,
-                                  insetPadding: EdgeInsets.zero,
-                                  backgroundColor: Colors.transparent,
-                                  alignment: AlignmentDirectional(0.0, 0.0)
-                                      .resolve(Directionality.of(context)),
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      FocusScope.of(dialogContext).unfocus();
-                                      FocusManager.instance.primaryFocus
-                                          ?.unfocus();
-                                    },
-                                    child: ZCalorieUnitWidget(),
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                          child: wrapWithModel(
-                            model: _model.textTextRightModel2,
-                            updateCallback: () => safeSetState(() {}),
-                            child: TextTextRightWidget(
-                              text: 'Calorie Units',
-                              value: FFAppState().trackerSettings.calorie.unit,
-                            ),
+                        builder: (context) => wrapWithModel(
+                          model: _model.textTextRightModel2,
+                          updateCallback: () => safeSetState(() {}),
+                          child: TextTextRightWidget(
+                            text: 'Calorie Units',
+                            value: FFAppState().trackerSettings.calorie.unit,
                           ),
                         ),
                       ),

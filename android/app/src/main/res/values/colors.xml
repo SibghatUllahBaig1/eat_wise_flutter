@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- EatWise primary green — used as FCM notification accent color -->
+    <color name="notification_color">#4CAF50</color>
+</resources>
+

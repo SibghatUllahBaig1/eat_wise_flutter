@@ -1,52 +1,28 @@
-import '/backend/schema/structs/index.dart';
 import '/buttons/text_switch/text_switch_widget.dart';
 import '/buttons/text_text_right/text_text_right_widget.dart';
-import '/flutter_flow/flutter_flow_icon_button.dart';
-import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
-import '/profile/components/z_current_weight/z_current_weight_widget.dart';
-import '/profile/components/z_goal_weight/z_goal_weight_widget.dart';
-import '/profile/components/z_height/z_height_widget.dart';
-import '/profile/components/z_height_unit/z_height_unit_widget.dart';
-import '/profile/components/z_reminder_time/z_reminder_time_widget.dart';
-import '/profile/components/z_repeat/z_repeat_widget.dart';
-import '/profile/components/z_ringtone/z_ringtone_widget.dart';
-import '/profile/components/z_weight_unit/z_weight_unit_widget.dart';
-import 'dart:ui';
-import '/flutter_flow/custom_functions.dart' as functions;
 import 'weight_tracker_widget.dart' show WeightTrackerWidget;
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 
 class WeightTrackerModel extends FlutterFlowModel<WeightTrackerWidget> {
   ///  State fields for stateful widgets in this page.
 
-  // Model for TextTextRight component.
+  // Model for TextTextRight component (Current Weight).
   late TextTextRightModel textTextRightModel1;
-  // Model for TextTextRight component.
+  // Model for TextTextRight component (Goal Weight).
   late TextTextRightModel textTextRightModel2;
-  // Model for TextTextRight component.
+  // Model for TextTextRight component (Height).
   late TextTextRightModel textTextRightModel3;
-  // Model for TextTextRight component.
+  // Model for TextTextRight component (Weight Units).
   late TextTextRightModel textTextRightModel4;
-  // Model for TextTextRight component.
+  // Model for TextTextRight component (Height Units).
   late TextTextRightModel textTextRightModel5;
-  // Model for TextSwitch component.
+  // Model for TextSwitch component (BMI).
   late TextSwitchModel textSwitchModel1;
-  // Model for TextSwitch component.
+  // Model for TextSwitch component (Weight Logging Reminder toggle).
   late TextSwitchModel textSwitchModel2;
-  // Model for TextTextRight component.
+  // Model for TextTextRight component (Reminder Time).
   late TextTextRightModel textTextRightModel6;
-  // Model for TextTextRight component.
-  late TextTextRightModel textTextRightModel7;
-  // State field(s) for Slider widget.
-  double? sliderValue;
-  // Model for TextSwitch component.
-  late TextSwitchModel textSwitchModel3;
-  // Model for TextSwitch component.
-  late TextSwitchModel textSwitchModel4;
 
   @override
   void initState(BuildContext context) {
@@ -58,9 +34,6 @@ class WeightTrackerModel extends FlutterFlowModel<WeightTrackerWidget> {
     textSwitchModel1 = createModel(context, () => TextSwitchModel());
     textSwitchModel2 = createModel(context, () => TextSwitchModel());
     textTextRightModel6 = createModel(context, () => TextTextRightModel());
-    textTextRightModel7 = createModel(context, () => TextTextRightModel());
-    textSwitchModel3 = createModel(context, () => TextSwitchModel());
-    textSwitchModel4 = createModel(context, () => TextSwitchModel());
   }
 
   @override
@@ -73,8 +46,5 @@ class WeightTrackerModel extends FlutterFlowModel<WeightTrackerWidget> {
     textSwitchModel1.dispose();
     textSwitchModel2.dispose();
     textTextRightModel6.dispose();
-    textTextRightModel7.dispose();
-    textSwitchModel3.dispose();
-    textSwitchModel4.dispose();
   }
 }

@@ -111,20 +111,24 @@ class _GetStartedWidgetState extends State<GetStartedWidget> {
 
                     if (user == null) {
                       // Show error message
-                      if (authHandler.error != null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(authHandler.error!),
-                            backgroundColor: FlutterFlowTheme.of(context).error,
-                          ),
-                        );
-                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                              authHandler.error ?? 'Google sign in failed.'),
+                          backgroundColor: FlutterFlowTheme.of(context).error,
+                        ),
+                      );
                       return;
                     }
 
-                    // Navigate to new onboarding flow (Step 1)
-                    context.goNamedAuth(
-                        OnboardingStep1Widget.routeName, context.mounted);
+                    // New users go through onboarding; existing users go straight to the app.
+                    if (authHandler.isNewUser) {
+                      context.goNamedAuth(
+                          OnboardingStep1Widget.routeName, context.mounted);
+                    } else {
+                      context.goNamedAuth(
+                          InitialRouteWidget.routeName, context.mounted);
+                    }
                   },
                   child: Container(
                     width: double.infinity,
@@ -200,22 +204,24 @@ class _GetStartedWidgetState extends State<GetStartedWidget> {
                       if (!context.mounted) return;
 
                       if (user == null) {
-                        // Show error message
-                        if (authHandler.error != null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(authHandler.error!),
-                              backgroundColor:
-                                  FlutterFlowTheme.of(context).error,
-                            ),
-                          );
-                        }
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                                authHandler.error ?? 'Apple sign in failed.'),
+                            backgroundColor: FlutterFlowTheme.of(context).error,
+                          ),
+                        );
                         return;
                       }
 
-                      // Navigate to new onboarding flow (Step 1)
-                      context.goNamedAuth(
-                          OnboardingStep1Widget.routeName, context.mounted);
+                      // New users go through onboarding; existing users go to the app.
+                      if (authHandler.isNewUser) {
+                        context.goNamedAuth(
+                            OnboardingStep1Widget.routeName, context.mounted);
+                      } else {
+                        context.goNamedAuth(
+                            InitialRouteWidget.routeName, context.mounted);
+                      }
                     },
                     child: Container(
                       width: double.infinity,

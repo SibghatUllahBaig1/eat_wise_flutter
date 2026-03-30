@@ -12,12 +12,32 @@ import 'backend/firebase/firebase_config.dart';
 import 'backend/api_requests/api_config.dart';
 import 'backend/services/pedometer_service.dart';
 import 'backend/services/legal_content_service.dart';
-import 'backend/services/meal_reminder_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import 'flutter_flow/flutter_flow_util.dart';
 import 'flutter_flow/nav/nav.dart';
 import 'index.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
+/// The single notification channel used for all EatWise FCM messages.
+const AndroidNotificationChannel _eatwiseChannel = AndroidNotificationChannel(
+  'eatwise_notifications', // must match default_notification_channel_id in manifest
+  'EatWise Notifications',
+  description: 'Reminders, tips, and updates from EatWise.',
+  importance: Importance.high,
+);
+
+final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
+/// Background message handler — must be a top-level function.
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  // Background messages are delivered by the OS when the app is terminated.
+  // No action needed here; the OS shows the notification automatically.
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +45,56 @@ void main() async {
   usePathUrlStrategy();
 
   await initFirebase();
+
+  // ── FCM setup ──────────────────────────────────────────────────────────────
+  // Register the background handler (must be done before any other FCM calls).
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // Create the high-importance Android notification channel.
+  // Without this, notifications sent to 'eatwise_notifications' are silently
+  // dropped on Android 8+ because the channel doesn't exist.
+  await _flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
+      ?.createNotificationChannel(_eatwiseChannel);
+
+  // Initialize flutter_local_notifications so foreground FCM messages can be
+  // shown as heads-up notifications.
+  await _flutterLocalNotificationsPlugin.initialize(
+    const InitializationSettings(
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+    ),
+  );
+
+  // Request permission on iOS / Android 13+ (Android < 13 is auto-granted).
+  await FirebaseMessaging.instance.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+
+  // Show FCM messages as local notifications while the app is in the foreground.
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    final notification = message.notification;
+    if (notification == null) return;
+
+    _flutterLocalNotificationsPlugin.show(
+      notification.hashCode,
+      notification.title,
+      notification.body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _eatwiseChannel.id,
+          _eatwiseChannel.name,
+          channelDescription: _eatwiseChannel.description,
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+        ),
+      ),
+    );
+  });
+  // ──────────────────────────────────────────────────────────────────────────
 
   // Try to load API keys from Firestore (may fail if user not authenticated yet)
   // Keys will be reloaded after authentication in AuthHandler
@@ -35,10 +105,6 @@ void main() async {
 
   // Initialize default legal content in Firestore
   await LegalContentService().initializeDefaultContent();
-
-  // Initialize meal reminder service and re-register any saved reminders
-  // (OS clears pending alarms after force-kill / reboot; this restores them).
-  await MealReminderService().rescheduleAllReminders();
 
   await FlutterFlowTheme.initialize();
 
@@ -99,16 +165,47 @@ class _MyAppState extends State<MyApp> {
     userStream = eatWiseFirebaseUserStream()
       ..listen((user) {
         _appStateNotifier.update(user);
-        // Initialize pedometer service when user logs in
         if (user.loggedIn) {
+          // Initialize pedometer service when user logs in
           PedometerService().initialize();
+          // Sync FCM token to Firestore so Cloud Functions can send notifications
+          final uid = user.uid;
+          if (uid != null) _syncFcmToken(uid);
         }
       });
+
+    // Refresh FCM token in Firestore whenever it rotates
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+      final uid = currentUserUid;
+      if (uid.isNotEmpty) _storeFcmToken(uid, newToken);
+    });
     jwtTokenStream.listen((_) {});
     Future.delayed(
       Duration(milliseconds: 1000),
       () => _appStateNotifier.stopShowingSplashImage(),
     );
+  }
+
+  /// Retrieve the current FCM token and persist it to Firestore.
+  Future<void> _syncFcmToken(String uid) async {
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token != null) await _storeFcmToken(uid, token);
+    } catch (e) {
+      print('⚠️ FCM token sync failed: $e');
+    }
+  }
+
+  /// Write (or overwrite) the FCM token to `users/{uid}` in Firestore.
+  Future<void> _storeFcmToken(String uid, String token) async {
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(uid).set(
+        {'fcmToken': token, 'fcmTokenUpdatedAt': FieldValue.serverTimestamp()},
+        SetOptions(merge: true),
+      );
+    } catch (e) {
+      print('⚠️ FCM token store failed: $e');
+    }
   }
 
   void setThemeMode(ThemeMode mode) => safeSetState(() {
