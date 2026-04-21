@@ -152,28 +152,29 @@ class _ZRecipeCard1WidgetState extends State<ZRecipeCard1Widget> {
             ),
             Padding(
               padding: EdgeInsetsDirectional.fromSTEB(12.0, 8.0, 12.0, 0.0),
-              child: Text(
-                valueOrDefault<String>(
-                  widget!.articlesData?.name,
-                  'Healthy Chocolate Cupcakes',
-                ).maybeHandleOverflow(
-                  maxChars: 30,
-                  replacement: '…',
-                ),
-                maxLines: 2,
-                style: FlutterFlowTheme.of(context).bodyMedium.override(
-                      font: GoogleFonts.inter(
+              child: SizedBox(
+                height: 36.0,
+                child: Text(
+                  valueOrDefault<String>(
+                    widget!.articlesData?.name,
+                    'Healthy Chocolate Cupcakes',
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: FlutterFlowTheme.of(context).bodyMedium.override(
+                        font: GoogleFonts.inter(
+                          fontWeight: FontWeight.w500,
+                          fontStyle:
+                              FlutterFlowTheme.of(context).bodyMedium.fontStyle,
+                        ),
+                        fontSize: 12.0,
+                        letterSpacing: 0.0,
                         fontWeight: FontWeight.w500,
                         fontStyle:
                             FlutterFlowTheme.of(context).bodyMedium.fontStyle,
+                        lineHeight: 1.5,
                       ),
-                      fontSize: 12.0,
-                      letterSpacing: 0.0,
-                      fontWeight: FontWeight.w500,
-                      fontStyle:
-                          FlutterFlowTheme.of(context).bodyMedium.fontStyle,
-                      lineHeight: 1.5,
-                    ),
+                ),
               ),
             ),
             Padding(

@@ -8,6 +8,8 @@ import '/home_pages/components/z_nutrition/z_nutrition_widget.dart';
 import '/home_pages/components/z_statistics/z_statistics_widget.dart';
 import '/tracker/components/z_step_tracker/z_step_tracker_widget.dart';
 import '/index.dart';
+import '/backend/backend_manager.dart';
+import '/backend/schema/structs/index.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -32,10 +34,67 @@ class HomePageWidget extends StatefulWidget {
 class _HomePageWidgetState extends State<HomePageWidget>
     with TickerProviderStateMixin {
   late HomePageModel _model;
+  final _backend = BackendManager();
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
   final animationsMap = <String, AnimationInfo>{};
+
+  /// Load today's step data from Firestore into FFAppState so the home screen
+  /// step card shows the correct count without requiring a visit to the step
+  /// tracker screen first.
+  Future<void> _loadTodaySteps() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || uid.isEmpty) return;
+
+    try {
+      final today = DateTime.now();
+      final summary = await _backend.stepTrackerService.getStepSummary(
+        userId: uid,
+        date: today,
+      );
+
+      if (summary == null) return;
+
+      final totalSteps = summary['totalSteps'] as int? ?? 0;
+      final goal =
+          summary['goal'] as int? ?? FFAppState().trackerSettings.step.goal;
+      final progress = summary['progress'] as double? ?? 0.0;
+
+      FFAppState().updateTrackerStruct((tracker) {
+        final existingIndex = tracker.step.indexWhere(
+          (e) =>
+              e.date != null &&
+              e.date!.year == today.year &&
+              e.date!.month == today.month &&
+              e.date!.day == today.day,
+        );
+
+        final entry = TrackerValueStruct(
+          date: today,
+          value: totalSteps,
+          progress: progress,
+          unit: 'steps',
+        );
+
+        if (existingIndex >= 0) {
+          tracker.step[existingIndex] = entry;
+        } else {
+          tracker.step.add(entry);
+        }
+      });
+
+      if (goal != FFAppState().trackerSettings.step.goal) {
+        FFAppState().updateTrackerSettingsStruct((settings) {
+          settings.step.goal = goal;
+        });
+      }
+    } catch (e) {
+      // Non-fatal — the widget will just show 0 until the user opens the
+      // step tracker screen.
+      print('HomePage: failed to load today steps: $e');
+    }
+  }
 
   @override
   void initState() {
@@ -46,6 +105,9 @@ class _HomePageWidgetState extends State<HomePageWidget>
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       FFAppState().NavBar = 0;
       safeSetState(() {});
+      // Pre-load today's step count so the home card is correct immediately.
+      await _loadTodaySteps();
+      if (mounted) safeSetState(() {});
     });
 
     animationsMap.addAll({

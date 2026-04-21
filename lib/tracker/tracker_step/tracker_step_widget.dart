@@ -10,6 +10,8 @@ import '/custom_code/widgets/index.dart' as custom_widgets;
 import '/index.dart';
 import '/backend/backend_manager.dart';
 import '/backend/schema/structs/index.dart';
+import '/backend/services/permission_service.dart';
+import '/backend/services/pedometer_service.dart';
 import '/auth/firebase_auth/auth_util.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -33,6 +35,7 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
   final backend = BackendManager();
   List<Map<String, dynamic>>? _stepEntries;
   bool _isLoading = false;
+  bool _isSyncing = false;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -40,6 +43,54 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => TrackerStepModel());
+
+    // Request activity-recognition permission, then (re)start the pedometer.
+    SchedulerBinding.instance.addPostFrameCallback((_) async {
+      await PermissionService.instance.requestFitnessPermission(context);
+      if (currentUserUid.isNotEmpty) {
+        await PedometerService().startListening(currentUserUid);
+      }
+    });
+  }
+
+  Future<void> _resyncSteps() async {
+    if (_isSyncing) return;
+    setState(() => _isSyncing = true);
+
+    print('🦶 [RESYNC] Manual resync triggered by user');
+
+    try {
+      // Restart the pedometer stream
+      if (currentUserUid.isNotEmpty) {
+        await PedometerService().startListening(currentUserUid);
+      }
+
+      // Reload step data from Firestore
+      await _loadStepData();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Steps synced successfully'),
+            duration: Duration(seconds: 2),
+            backgroundColor: FlutterFlowTheme.of(context).primary,
+          ),
+        );
+      }
+    } catch (e) {
+      print('🦶 [RESYNC] Error during resync: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Sync failed. Please try again.'),
+            duration: Duration(seconds: 2),
+            backgroundColor: FlutterFlowTheme.of(context).error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSyncing = false);
+    }
   }
 
   @override
@@ -222,6 +273,41 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
                 ),
           ),
           actions: [
+            // Resync button
+            Align(
+              alignment: AlignmentDirectional(0.0, 0.0),
+              child: Padding(
+                padding: EdgeInsetsDirectional.fromSTEB(0.0, 6.0, 0.0, 6.0),
+                child: _isSyncing
+                    ? SizedBox(
+                        width: 44.0,
+                        height: 44.0,
+                        child: Center(
+                          child: SizedBox(
+                            width: 20.0,
+                            height: 20.0,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.0,
+                              color: FlutterFlowTheme.of(context).primary,
+                            ),
+                          ),
+                        ),
+                      )
+                    : FlutterFlowIconButton(
+                        borderColor: Colors.transparent,
+                        borderRadius: 22.0,
+                        borderWidth: 1.0,
+                        buttonSize: 44.0,
+                        icon: Icon(
+                          Icons.sync_rounded,
+                          color: FlutterFlowTheme.of(context).primaryText,
+                          size: 24.0,
+                        ),
+                        onPressed: _resyncSteps,
+                      ),
+              ),
+            ),
+            // Settings button
             Align(
               alignment: AlignmentDirectional(0.0, 0.0),
               child: Padding(

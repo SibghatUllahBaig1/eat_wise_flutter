@@ -346,6 +346,47 @@ class StepTrackerService extends FirestoreService {
     }
   }
 
+  /// Creates or updates the single "pedometer" auto-tracking entry for the day.
+  ///
+  /// Unlike [addStepEntry] (which appends a new document each call), this method
+  /// uses a fixed document ID (`pedometer`) so the same document is overwritten
+  /// on every update. The daily-total is recalculated after each write.
+  Future<void> upsertPedometerEntry({
+    required String userId,
+    required DateTime date,
+    required int steps,
+  }) async {
+    try {
+      final dateKey =
+          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+
+      final docRef = usersCollection
+          .doc(userId)
+          .collection('step_tracker')
+          .doc(dateKey)
+          .collection('steps')
+          .doc('pedometer'); // fixed ID so we overwrite instead of append
+
+      final calories = _calculateCalories(steps);
+      final distance = _calculateDistance(steps);
+
+      await docRef.set({
+        'userId': userId,
+        'steps': steps,
+        'duration': 0,
+        'calories': calories,
+        'distance': distance,
+        'source': 'pedometer',
+        'timestamp': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: false));
+
+      await _updateDailyTotal(userId, date);
+    } catch (e) {
+      throw Exception(handleFirestoreError(e));
+    }
+  }
+
   /// Legacy method for backward compatibility
   /// Use addStepEntry instead for new implementations
   @Deprecated('Use addStepEntry instead')

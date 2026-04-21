@@ -1,3 +1,5 @@
 // Conditional export for PedometerService
-// Uses stub implementation for both web and mobile (temporarily)
-export 'pedometer_service_stub.dart';
+// Web: stub (no hardware sensor access)
+// Mobile (Android / iOS): real pedometer implementation
+export 'pedometer_service_mobile.dart'
+    if (dart.library.html) 'pedometer_service_web.dart';

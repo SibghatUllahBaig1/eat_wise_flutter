@@ -166,11 +166,16 @@ class _MyAppState extends State<MyApp> {
       ..listen((user) {
         _appStateNotifier.update(user);
         if (user.loggedIn) {
-          // Initialize pedometer service when user logs in
-          PedometerService().initialize();
-          // Sync FCM token to Firestore so Cloud Functions can send notifications
+          // Start real hardware step counting for this user.
           final uid = user.uid;
-          if (uid != null) _syncFcmToken(uid);
+          if (uid != null) {
+            PedometerService().startListening(uid);
+            // Sync FCM token to Firestore so Cloud Functions can send notifications
+            _syncFcmToken(uid);
+          }
+        } else {
+          // User logged out — stop the step counter.
+          PedometerService().stopListening();
         }
       });
 
