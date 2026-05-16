@@ -34,7 +34,11 @@ class ZStatisticsModel extends FlutterFlowModel<ZStatisticsWidget> {
 
   @override
   void initState(BuildContext context) {
-    loadNutritionData();
+    // Intentionally do NOT kick off loadNutritionData() here.
+    // The widget's initState / didUpdateWidget already drive reloads; calling
+    // it from both places creates overlapping async runs that race on the
+    // shared instance fields (burnedCalories, stepCalories) and inflate the
+    // "Burned" value on every re-entry.
   }
 
   @override
@@ -43,13 +47,16 @@ class ZStatisticsModel extends FlutterFlowModel<ZStatisticsWidget> {
   Future<void> loadNutritionData() async {
     if (currentUserUid.isEmpty) return;
 
+    // Re-entrancy guard: if a load is already in flight, skip this call so
+    // two concurrent runs cannot both add stepCalories to burnedCalories.
+    if (isLoading) return;
     isLoading = true;
 
     try {
       final selectedDate = FFAppState().tracker.selectedDate ?? DateTime.now();
 
       // Get calorie goal from user profile (from onboarding) or tracker settings
-      calorieGoal = FFAppState().userProfile.dailyCalorieGoal > 0
+      final int localCalorieGoal = FFAppState().userProfile.dailyCalorieGoal > 0
           ? FFAppState().userProfile.dailyCalorieGoal
           : (FFAppState().trackerSettings.calorie.goal > 0
               ? FFAppState().trackerSettings.calorie.goal
@@ -57,9 +64,9 @@ class ZStatisticsModel extends FlutterFlowModel<ZStatisticsWidget> {
 
       // Calculate macros goals based on calorie goal (example ratios)
       // 50% carbs, 30% protein, 20% fat
-      carbsGoal = ((calorieGoal * 0.5) / 4).round(); // 4 cal per gram
-      proteinGoal = ((calorieGoal * 0.3) / 4).round(); // 4 cal per gram
-      fatGoal = ((calorieGoal * 0.2) / 9).round(); // 9 cal per gram
+      final int localCarbsGoal = ((localCalorieGoal * 0.5) / 4).round();
+      final int localProteinGoal = ((localCalorieGoal * 0.3) / 4).round();
+      final int localFatGoal = ((localCalorieGoal * 0.2) / 9).round();
 
       // Load meals for the selected date
       final meals = await _backend.mealService.getMealsByDate(
@@ -67,17 +74,16 @@ class ZStatisticsModel extends FlutterFlowModel<ZStatisticsWidget> {
         date: selectedDate,
       );
 
-      // Calculate totals
-      totalCalories = 0;
-      totalCarbs = 0;
-      totalProtein = 0;
-      totalFat = 0;
+      int localTotalCalories = 0;
+      int localTotalCarbs = 0;
+      int localTotalProtein = 0;
+      int localTotalFat = 0;
 
       for (final meal in meals) {
-        totalCalories += (meal['totalCalories'] as int?) ?? 0;
-        totalCarbs += (meal['totalCarbs'] as int?) ?? 0;
-        totalProtein += (meal['totalProtein'] as int?) ?? 0;
-        totalFat += (meal['totalFat'] as int?) ?? 0;
+        localTotalCalories += (meal['totalCalories'] as int?) ?? 0;
+        localTotalCarbs += (meal['totalCarbs'] as int?) ?? 0;
+        localTotalProtein += (meal['totalProtein'] as int?) ?? 0;
+        localTotalFat += (meal['totalFat'] as int?) ?? 0;
       }
 
       // Load activities for the selected date to get burned calories
@@ -86,10 +92,9 @@ class ZStatisticsModel extends FlutterFlowModel<ZStatisticsWidget> {
         date: selectedDate,
       );
 
-      // Calculate total burned calories from activities
-      burnedCalories = 0;
+      int localActivityBurned = 0;
       for (final activity in activities) {
-        burnedCalories += (activity['caloriesBurned'] as int?) ?? 0;
+        localActivityBurned += (activity['caloriesBurned'] as int?) ?? 0;
       }
 
       // Load step data for the selected date to get step-based calories
@@ -98,15 +103,27 @@ class ZStatisticsModel extends FlutterFlowModel<ZStatisticsWidget> {
         date: selectedDate,
       );
 
-      // Calculate calories burned from steps (steps × 0.04)
-      stepCalories = 0;
+      int localStepCalories = 0;
       if (stepSummary != null) {
         final totalSteps = (stepSummary['totalSteps'] as int?) ?? 0;
-        stepCalories = (totalSteps * 0.04).round();
+        localStepCalories = (totalSteps * 0.04).round();
       }
 
-      // Add step calories to total burned calories
-      burnedCalories += stepCalories;
+      final int localBurnedCalories = localActivityBurned + localStepCalories;
+
+      // Commit all results atomically at the very end so an interleaved
+      // second run (if any ever sneaks past the guard) cannot produce a
+      // partially-accumulated value.
+      calorieGoal = localCalorieGoal;
+      carbsGoal = localCarbsGoal;
+      proteinGoal = localProteinGoal;
+      fatGoal = localFatGoal;
+      totalCalories = localTotalCalories;
+      totalCarbs = localTotalCarbs;
+      totalProtein = localTotalProtein;
+      totalFat = localTotalFat;
+      stepCalories = localStepCalories;
+      burnedCalories = localBurnedCalories;
 
       print(
           '📊 Nutrition Summary for ${selectedDate.toString().split(' ')[0]}:');
@@ -114,7 +131,7 @@ class ZStatisticsModel extends FlutterFlowModel<ZStatisticsWidget> {
       print('   Carbs: $totalCarbs / $carbsGoal g');
       print('   Protein: $totalProtein / $proteinGoal g');
       print('   Fat: $totalFat / $fatGoal g');
-      print('   Burned from activities: ${burnedCalories - stepCalories} kcal');
+      print('   Burned from activities: $localActivityBurned kcal');
       print('   Burned from steps: $stepCalories kcal');
       print('   Total burned: $burnedCalories kcal');
     } catch (e) {
