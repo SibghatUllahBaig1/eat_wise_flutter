@@ -12,6 +12,7 @@ import 'backend/firebase/firebase_config.dart';
 import 'backend/api_requests/api_config.dart';
 import 'backend/services/pedometer_service.dart';
 import 'backend/services/legal_content_service.dart';
+import 'backend/services/revenuecat_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -106,6 +107,9 @@ void main() async {
   // Initialize default legal content in Firestore
   await LegalContentService().initializeDefaultContent();
 
+  // Configure RevenueCat (in-app subscriptions). Safe on web — uses a no-op stub.
+  await RevenueCatService().initialize();
+
   await FlutterFlowTheme.initialize();
 
   final appState = FFAppState(); // Initialize FFAppState
@@ -172,10 +176,13 @@ class _MyAppState extends State<MyApp> {
             PedometerService().startListening(uid);
             // Sync FCM token to Firestore so Cloud Functions can send notifications
             _syncFcmToken(uid);
+            // Identify the user to RevenueCat so purchases follow them.
+            RevenueCatService().setUserId(uid);
           }
         } else {
-          // User logged out — stop the step counter.
+          // User logged out — stop the step counter and detach RevenueCat user.
           PedometerService().stopListening();
+          RevenueCatService().logOut();
         }
       });
 

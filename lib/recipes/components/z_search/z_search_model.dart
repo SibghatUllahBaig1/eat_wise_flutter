@@ -3,7 +3,6 @@ import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
-import '/recipes/components/z_categories_wrap/z_categories_wrap_widget.dart';
 import '/recipes/components/z_filter/z_filter_widget.dart';
 import '/recipes/components/z_recipe_card/z_recipe_card_widget.dart';
 import 'dart:ui';
@@ -25,8 +24,6 @@ class ZSearchModel extends FlutterFlowModel<ZSearchWidget> {
   late FlutterFlowDynamicModels<ZRecipeCardModel> zRecipeCardModels1;
   // Models for zRecipeCard dynamic component.
   late FlutterFlowDynamicModels<ZRecipeCardModel> zRecipeCardModels2;
-  // Model for zCategoriesWrap component.
-  late ZCategoriesWrapModel zCategoriesWrapModel;
   // Models for zRecipeCard dynamic component.
   late FlutterFlowDynamicModels<ZRecipeCardModel> zRecipeCardModels3;
 
@@ -34,7 +31,6 @@ class ZSearchModel extends FlutterFlowModel<ZSearchWidget> {
   void initState(BuildContext context) {
     zRecipeCardModels1 = FlutterFlowDynamicModels(() => ZRecipeCardModel());
     zRecipeCardModels2 = FlutterFlowDynamicModels(() => ZRecipeCardModel());
-    zCategoriesWrapModel = createModel(context, () => ZCategoriesWrapModel());
     zRecipeCardModels3 = FlutterFlowDynamicModels(() => ZRecipeCardModel());
   }
 
@@ -45,7 +41,6 @@ class ZSearchModel extends FlutterFlowModel<ZSearchWidget> {
 
     zRecipeCardModels1.dispose();
     zRecipeCardModels2.dispose();
-    zCategoriesWrapModel.dispose();
     zRecipeCardModels3.dispose();
   }
 }

@@ -12,7 +12,8 @@ class NotificationService {
   Future<void> initialize() async {
     if (_isInitialized) return;
     _isInitialized = true;
-    debugPrint('NotificationService (Web Stub): Notifications not available on web');
+    debugPrint(
+        'NotificationService (Web Stub): Notifications not available on web');
   }
 
   Future<void> requestPermissions() async {
@@ -26,15 +27,18 @@ class NotificationService {
     required DateTime scheduledDate,
     String? payload,
   }) async {
-    debugPrint('NotificationService (Web Stub): Cannot schedule notification on web');
+    debugPrint(
+        'NotificationService (Web Stub): Cannot schedule notification on web');
   }
 
   Future<void> cancelNotification(int id) async {
-    debugPrint('NotificationService (Web Stub): Cannot cancel notification on web');
+    debugPrint(
+        'NotificationService (Web Stub): Cannot cancel notification on web');
   }
 
   Future<void> cancelAllNotifications() async {
-    debugPrint('NotificationService (Web Stub): Cannot cancel notifications on web');
+    debugPrint(
+        'NotificationService (Web Stub): Cannot cancel notifications on web');
   }
 
   Future<void> showNotification({
@@ -43,7 +47,7 @@ class NotificationService {
     required String body,
     String? payload,
   }) async {
-    debugPrint('NotificationService (Web Stub): Cannot show notification on web');
+    debugPrint(
+        'NotificationService (Web Stub): Cannot show notification on web');
   }
 }
-

@@ -9,10 +9,15 @@ class PaywallWidget extends StatefulWidget {
   const PaywallWidget({
     super.key,
     required this.featureName,
+    this.displayName,
     this.onUpgrade,
   });
 
+  /// Internal feature key used by [SubscriptionService.hasFeatureAccess].
   final String featureName;
+
+  /// Optional user-facing label. Falls back to a humanized [featureName] when omitted.
+  final String? displayName;
   final VoidCallback? onUpgrade;
 
   @override
@@ -50,7 +55,7 @@ class _PaywallWidgetState extends State<PaywallWidget> {
             ),
             SizedBox(height: 8.0),
             Text(
-              'Upgrade to access ${widget.featureName}',
+              'Upgrade to access ${widget.displayName ?? _humanize(widget.featureName)}',
               textAlign: TextAlign.center,
               style: FlutterFlowTheme.of(context).bodyMedium.override(
                     fontFamily: 'Readex Pro',
@@ -108,10 +113,25 @@ class _PaywallWidgetState extends State<PaywallWidget> {
   }
 }
 
-/// Helper function to check feature access and show paywall if needed
+/// Humanize a `snake_case` feature key for display (e.g.
+/// `ai_food_analysis` -> `AI Food Analysis`).
+String _humanize(String featureName) {
+  if (featureName.isEmpty) return featureName;
+  return featureName
+      .split('_')
+      .map((w) => w.isEmpty
+          ? w
+          : (w.toLowerCase() == 'ai'
+              ? 'AI'
+              : '${w[0].toUpperCase()}${w.substring(1)}'))
+      .join(' ');
+}
+
+/// Helper function to check feature access and show paywall if needed.
 Future<bool> checkFeatureAccess({
   required BuildContext context,
   required String featureName,
+  String? displayName,
   VoidCallback? onUpgrade,
 }) async {
   final backend = BackendManager();
@@ -125,11 +145,13 @@ Future<bool> checkFeatureAccess({
   );
 
   if (!hasAccess) {
+    if (!context.mounted) return false;
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
         content: PaywallWidget(
           featureName: featureName,
+          displayName: displayName,
           onUpgrade: onUpgrade,
         ),
         contentPadding: EdgeInsets.zero,
@@ -143,4 +165,3 @@ Future<bool> checkFeatureAccess({
 
   return true;
 }
-

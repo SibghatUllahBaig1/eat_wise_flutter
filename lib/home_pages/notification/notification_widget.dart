@@ -87,6 +87,12 @@ class _NotificationWidgetState extends State<NotificationWidget> {
         return Icon(Icons.emoji_events_rounded, color: color, size: 22);
       case 'inactivity_reminder':
         return Icon(Icons.restaurant_rounded, color: color, size: 22);
+      case 'water_reminder':
+        return Icon(Icons.water_drop_rounded, color: color, size: 22);
+      case 'step_reminder':
+        return Icon(Icons.directions_walk_rounded, color: color, size: 22);
+      case 'weight_reminder':
+        return Icon(Icons.monitor_weight_rounded, color: color, size: 22);
       case 'test_notification':
         return Icon(Icons.notifications_active_rounded, color: color, size: 22);
       default:

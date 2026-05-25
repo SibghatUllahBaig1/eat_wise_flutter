@@ -42,7 +42,7 @@ void main() async {
       print('Ingredients: ${data['ingredients'] ?? []}');
       print('Instructions: ${data['instructions'] ?? []}');
       print('Diet Categories: ${data['dietCategories'] ?? []}');
-      print('Time: ${data['time'] ?? 'N/A']} min');
+      print('Time: ${data['time'] ?? 'N/A'} min');
       print('Difficulty: ${data['difficulty'] ?? 'N/A'}');
       print('-' * 80);
     }
@@ -52,4 +52,3 @@ void main() async {
     print('❌ Error fetching recipes: $e');
   }
 }
-

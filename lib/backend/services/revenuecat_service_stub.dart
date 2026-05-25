@@ -19,6 +19,10 @@ class RevenueCatService {
     debugPrint('RevenueCatService (Web Stub): Cannot set user ID on web');
   }
 
+  Future<void> logOut() async {
+    debugPrint('RevenueCatService (Web Stub): logOut no-op on web');
+  }
+
   Future<dynamic> getOfferings() async {
     return null;
   }

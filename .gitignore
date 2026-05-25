@@ -153,3 +153,6 @@ test_driver/
 **/android/key.properties
 *.jks
 
+# Reference documents
+REFERENCE_food_analysis_implementation.md
+

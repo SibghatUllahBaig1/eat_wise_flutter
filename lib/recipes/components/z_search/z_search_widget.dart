@@ -3,7 +3,6 @@ import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
-import '/recipes/components/z_categories_wrap/z_categories_wrap_widget.dart';
 import '/recipes/components/z_filter/z_filter_widget.dart';
 import '/recipes/components/z_recipe_card/z_recipe_card_widget.dart';
 import 'dart:ui';
@@ -480,15 +479,6 @@ class _ZSearchWidgetState extends State<ZSearchWidget> {
                                           lineHeight: 1.5,
                                         ),
                                   ),
-                                ),
-                              ),
-                              Padding(
-                                padding: EdgeInsetsDirectional.fromSTEB(
-                                    0.0, 24.0, 0.0, 0.0),
-                                child: wrapWithModel(
-                                  model: _model.zCategoriesWrapModel,
-                                  updateCallback: () => safeSetState(() {}),
-                                  child: ZCategoriesWrapWidget(),
                                 ),
                               ),
                             ]

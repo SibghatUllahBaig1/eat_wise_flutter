@@ -681,22 +681,7 @@ class FFAppState extends ChangeNotifier {
     recipes.insert(index, value);
   }
 
-  List<NutritionStruct> _nutritionChart = [
-    NutritionStruct.fromSerializableMap(jsonDecode(
-        '{\"day\":\"24\",\"carbs\":\"30\",\"protein\":\"15\",\"fat\":\"55\"}')),
-    NutritionStruct.fromSerializableMap(jsonDecode(
-        '{\"day\":\"25\",\"carbs\":\"20\",\"protein\":\"30\",\"fat\":\"50\"}')),
-    NutritionStruct.fromSerializableMap(jsonDecode(
-        '{\"day\":\"26\",\"carbs\":\"30\",\"protein\":\"40\",\"fat\":\"30\"}')),
-    NutritionStruct.fromSerializableMap(jsonDecode(
-        '{\"day\":\"27\",\"carbs\":\"45\",\"protein\":\"20\",\"fat\":\"35\"}')),
-    NutritionStruct.fromSerializableMap(jsonDecode(
-        '{\"day\":\"28\",\"carbs\":\"30\",\"protein\":\"30\",\"fat\":\"40\"}')),
-    NutritionStruct.fromSerializableMap(jsonDecode(
-        '{\"day\":\"29\",\"carbs\":\"45\",\"protein\":\"35\",\"fat\":\"20\"}')),
-    NutritionStruct.fromSerializableMap(jsonDecode(
-        '{\"day\":\"30\",\"carbs\":\"45\",\"protein\":\"20\",\"fat\":\"35\"}'))
-  ];
+  List<NutritionStruct> _nutritionChart = [];
   List<NutritionStruct> get nutritionChart => _nutritionChart;
   set nutritionChart(List<NutritionStruct> value) {
     _nutritionChart = value;
@@ -725,22 +710,7 @@ class FFAppState extends ChangeNotifier {
     nutritionChart.insert(index, value);
   }
 
-  List<FoodStruct> _foods = [
-    FoodStruct.fromSerializableMap(jsonDecode(
-        '{\"title\":\"Cheesburger\",\"kcal\":\"303\",\"gram\":\"150\"}')),
-    FoodStruct.fromSerializableMap(
-        jsonDecode('{\"title\":\"Oatmeal\",\"kcal\":\"150\",\"gram\":\"40\"}')),
-    FoodStruct.fromSerializableMap(jsonDecode(
-        '{\"title\":\"Grilled Chicken Salad\",\"kcal\":\"350\",\"gram\":\"300\"}')),
-    FoodStruct.fromSerializableMap(jsonDecode(
-        '{\"title\":\"Scrambled Eggs\",\"kcal\":\"160\",\"gram\":\"100\"}')),
-    FoodStruct.fromSerializableMap(jsonDecode(
-        '{\"title\":\"Sushi Roll\",\"kcal\":\"250\",\"gram\":\"180\"}')),
-    FoodStruct.fromSerializableMap(jsonDecode(
-        '{\"title\":\"Mashed Potatoes\",\"kcal\":\"240\",\"gram\":\"200\"}')),
-    FoodStruct.fromSerializableMap(jsonDecode(
-        '{\"title\":\"Shrimp Scampi\",\"kcal\":\"150\",\"gram\":\"120\"}'))
-  ];
+  List<FoodStruct> _foods = [];
   List<FoodStruct> get foods => _foods;
   set foods(List<FoodStruct> value) {
     _foods = value;

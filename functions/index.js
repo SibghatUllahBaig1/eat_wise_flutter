@@ -121,7 +121,7 @@ exports.sendSubscriptionRenewalReminders = functions.pubsub
                 getFcmToken(userData),
                 'subscription_renewal',
                 '⏰ Subscription Renews Tomorrow',
-                `Your EatWise Premium subscription renews tomorrow. Stay consistent and keep crushing your goals!`,
+                `Your EatWise Premium subscription renews tomorrow. Review your payment details so your access continues without interruption.`,
                 {daysLeft: '1'},
             );
           }
@@ -146,15 +146,15 @@ exports.sendUpgradePrompts = functions.pubsub
       const upgradeMessages = [
         {
           title: '🌟 Unlock Your Full Potential',
-          body: 'Upgrade to EatWise Premium and get AI-powered meal analysis, detailed nutrient breakdowns, and unlimited recipe access.',
+          body: 'Upgrade to EatWise Premium for AI-powered meal analysis, advanced analytics, and access to our full recipe library.',
         },
         {
           title: '🚀 Take Your Nutrition to the Next Level',
-          body: 'Premium members lose weight 2× faster with advanced calorie tracking and personalised macro targets. Upgrade today!',
+          body: 'Unlock AI-powered meal analysis, advanced analytics, and personalized macro tracking with EatWise Premium.',
         },
         {
           title: '💪 Premium Features Await You',
-          body: 'Get deeper insights into your health trends, custom diet plans, and priority support — only in EatWise Premium.',
+          body: 'Get deeper insights into your health trends, custom meal plans, and advanced recipes — only in EatWise Premium.',
         },
       ];
 
@@ -252,37 +252,53 @@ exports.sendMonthlyEncouragement = functions.pubsub
           const wantsToLose = /los|deficit|cut/i.test(goal);
           const wantsToGain = /gain|bulk|muscle/i.test(goal);
 
+          // Skip users with no meaningful activity data this period.
+          if (daysLoggedCount === 0 && weightDelta === null) continue;
+
           // Decide: evolution (positive progress) or involution (regression)
           let isEvolution = true;
           let weightSummary = '';
           if (weightDelta !== null) {
-            const lostKg = Math.abs(weightDelta).toFixed(1);
+            const deltaKg = Math.abs(weightDelta).toFixed(1);
             if (wantsToLose) {
               isEvolution = weightDelta <= 0;
               weightSummary = weightDelta <= 0
-                ? `You lost ${lostKg} kg this month — outstanding!`
-                : `You gained ${lostKg} kg this month — let's refocus together.`;
+                ? `You lost ${deltaKg} kg over the past 30 days — outstanding!`
+                : `You gained ${deltaKg} kg over the past 30 days — let's refocus together.`;
             } else if (wantsToGain) {
               isEvolution = weightDelta >= 0;
               weightSummary = weightDelta >= 0
-                ? `You gained ${lostKg} kg of healthy mass this month — great work!`
-                : `You lost ${lostKg} kg this month — let's dial in your nutrition.`;
+                ? `You gained ${deltaKg} kg over the past 30 days — great progress toward your goal!`
+                : `You lost ${deltaKg} kg over the past 30 days — let's adjust your nutrition plan.`;
             } else {
               isEvolution = Math.abs(weightDelta) < 1;
               weightSummary = Math.abs(weightDelta) < 1
                 ? 'Your weight stayed stable — well maintained!'
-                : `Your weight shifted by ${lostKg} kg. Let's review your plan.`;
+                : `Your weight shifted by ${deltaKg} kg. Let's review your plan.`;
             }
+          } else {
+            // No weight data — base the tone on meal-logging consistency only.
+            isEvolution = consistencyPct >= 50;
           }
+
+          const loggingSummary =
+            `you logged meals on ${daysLoggedCount} of 30 days (${consistencyPct}% consistency).`;
+          const weightLine = weightSummary ? ` ${weightSummary}` : '';
 
           // Build personalised message
           let title; let body;
-          if (isEvolution) {
+          if (isEvolution && consistencyPct >= 50) {
             title = '🎉 Amazing Progress This Month!';
-            body = `You logged meals on ${daysLoggedCount} of 30 days (${consistencyPct}% consistency). ${weightSummary} Keep it up — your hard work is paying off!`;
+            body = `Over the past 30 days, ${loggingSummary}${weightLine} Keep it up — your hard work is paying off!`;
+          } else if (isEvolution) {
+            title = '📈 Good Start — Room to Grow';
+            body = `You logged meals on ${daysLoggedCount} of 30 days (${consistencyPct}% consistency).${weightLine} Try logging a little more often to get the most out of EatWise.`;
+          } else if (consistencyPct >= 50) {
+            title = '💪 Keep Logging — We Can Adjust';
+            body = `You logged meals on ${daysLoggedCount} of 30 days (${consistencyPct}% consistency).${weightLine} Your consistency is strong — small plan tweaks can help you get back on track.`;
           } else {
             title = '💪 Let\'s Make This Month Even Better!';
-            body = `You logged meals on ${daysLoggedCount} of 30 days last month. ${weightSummary} Every small step counts — we\'re here to support you!`;
+            body = `Over the past 30 days, ${loggingSummary}${weightLine} Small, steady changes add up — we're here to support you!`;
           }
 
           await sendPushAndStore(
@@ -401,7 +417,7 @@ exports.sendInactivityReminders = functions.pubsub
             },
             {
               title: '💚 Check In with Your Health',
-              body: 'A day of tracking is better than none! Log your meals before bed to keep your streak going.',
+              body: 'A day of tracking is better than none! Log your meals before bed to stay on top of your goals.',
             },
           ];
 
@@ -610,7 +626,7 @@ exports.sendWaterReminders = functions.pubsub
       const messages = [
         {
           title: '💧 Time to Hydrate!',
-          body: 'You\'ve been busy — don\'t forget to drink water. Staying hydrated keeps your energy high and your metabolism running!',
+          body: 'Time for a water break — staying hydrated keeps your energy up and supports your nutrition goals.',
         },
         {
           title: '🚰 Drink Up!',
@@ -657,7 +673,7 @@ exports.sendStepReminders = functions.pubsub
         },
         {
           title: '⚡ Stay Active!',
-          body: 'Don\'t let a sedentary hour become a sedentary day. Stand up, stretch, and take a brisk walk to hit your step target!',
+          body: 'A quick walk now can help you reach your daily step goal. Stand up, stretch, and get moving!',
         },
       ];
       try {
@@ -683,7 +699,7 @@ exports.sendWeightReminders = functions.pubsub
           body: 'Step on the scale and record today\'s reading. Consistent tracking is the #1 habit of people who successfully reach their weight goals!',
         },
         {
-          title: '📉 Weight Check-In',
+          title: '⚖️ Weight Check-In',
           body: 'Your weight data tells your progress story. Log today\'s weight in EatWise and watch your trend unfold over time.',
         },
         {
@@ -692,7 +708,7 @@ exports.sendWeightReminders = functions.pubsub
         },
         {
           title: '💪 Track Your Progress',
-          body: 'You\'re working hard — make sure your effort shows in your data! Log your weight today to keep your progress chart moving.',
+          body: 'Logging your weight regularly helps you spot trends over time. Add today\'s reading to keep your progress chart up to date.',
         },
       ];
       try {

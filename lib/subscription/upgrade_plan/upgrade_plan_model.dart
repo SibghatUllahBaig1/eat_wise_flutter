@@ -50,17 +50,17 @@ class UpgradePlanModel extends FlutterFlowModel<UpgradePlanWidget> {
 
     try {
       final customerInfo = await _revenueCat.purchasePackage(package);
-      
+
       if (customerInfo != null) {
         // Sync to Firestore
         await _revenueCat.syncSubscriptionToFirestore(currentUserUid);
-        
+
         // Update current tier
         currentTier = await _revenueCat.getActiveSubscriptionTier();
-        
+
         return true;
       }
-      
+
       errorMessage = 'Purchase failed';
       return false;
     } catch (e) {
@@ -81,17 +81,17 @@ class UpgradePlanModel extends FlutterFlowModel<UpgradePlanWidget> {
 
     try {
       final customerInfo = await _revenueCat.restorePurchases();
-      
+
       if (customerInfo != null) {
         // Sync to Firestore
         await _revenueCat.syncSubscriptionToFirestore(currentUserUid);
-        
+
         // Update current tier
         currentTier = await _revenueCat.getActiveSubscriptionTier();
-        
+
         return true;
       }
-      
+
       errorMessage = 'No purchases to restore';
       return false;
     } catch (e) {
@@ -106,7 +106,7 @@ class UpgradePlanModel extends FlutterFlowModel<UpgradePlanWidget> {
   /// Get package by identifier
   Package? getPackageByIdentifier(String identifier) {
     if (offerings == null || offerings!.current == null) return null;
-    
+
     try {
       return offerings!.current!.availablePackages.firstWhere(
         (pkg) => pkg.identifier.contains(identifier),
@@ -114,6 +114,13 @@ class UpgradePlanModel extends FlutterFlowModel<UpgradePlanWidget> {
     } catch (e) {
       return null;
     }
+  }
+
+  /// Localized price string for the matching tier package, or `null` if the
+  /// offering hasn't loaded yet (e.g., RevenueCat not configured / no network).
+  String? priceFor(String identifier) {
+    final pkg = getPackageByIdentifier(identifier);
+    return pkg?.storeProduct.priceString;
   }
 
   /// Check if user has specific tier
@@ -124,4 +131,3 @@ class UpgradePlanModel extends FlutterFlowModel<UpgradePlanWidget> {
   @override
   void dispose() {}
 }
-

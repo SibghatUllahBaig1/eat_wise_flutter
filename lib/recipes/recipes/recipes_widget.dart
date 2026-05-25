@@ -5,17 +5,13 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/home_pages/components/z_naw_bar/z_naw_bar_widget.dart';
-import '/recipes/components/z_diets/z_diets_widget.dart';
 import '/recipes/components/z_energy_wrap/z_energy_wrap_widget.dart';
 import '/recipes/components/z_filter/z_filter_widget.dart';
-import '/recipes/components/z_popular_categories/z_popular_categories_widget.dart';
 import '/recipes/components/z_recipe_card/z_recipe_card_widget.dart';
 import '/recipes/components/z_recipe_card1/z_recipe_card1_widget.dart';
-import '/recipes/components/z_recipe_card2/z_recipe_card2_widget.dart';
 import '/recipes/components/z_search/z_search_widget.dart';
 import '/recipes/components/dynamic_categories/dynamic_categories_widget.dart';
 import '/recipes/components/dynamic_diets/dynamic_diets_widget.dart';
-import 'dart:math';
 import 'dart:ui';
 import '/index.dart';
 import 'package:flutter/material.dart';
@@ -839,125 +835,6 @@ class _RecipesWidgetState extends State<RecipesWidget>
                                             lineHeight: 1.5,
                                           ),
                                     ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(
-                                      16.0, 24.0, 16.0, 0.0),
-                                  child: Builder(
-                                    builder: (context) {
-                                      final popularCategories = FFAppState()
-                                          .categories
-                                          .popularCategories
-                                          .toList();
-
-                                      return Column(
-                                        mainAxisSize: MainAxisSize.max,
-                                        children: List.generate(
-                                            popularCategories.length,
-                                            (popularCategoriesIndex) {
-                                          final popularCategoriesItem =
-                                              popularCategories[
-                                                  popularCategoriesIndex];
-                                          return InkWell(
-                                            splashColor: Colors.transparent,
-                                            focusColor: Colors.transparent,
-                                            hoverColor: Colors.transparent,
-                                            highlightColor: Colors.transparent,
-                                            onTap: () async {
-                                              if (popularCategoriesItem.type ==
-                                                  'meal') {
-                                                context.pushNamed(
-                                                  MealsWidget.routeName,
-                                                  queryParameters: {
-                                                    'meals': serializeParam(
-                                                      popularCategoriesItem
-                                                          .title,
-                                                      ParamType.String,
-                                                    ),
-                                                  }.withoutNulls,
-                                                );
-                                              } else if (popularCategoriesItem
-                                                      .type ==
-                                                  'diet') {
-                                                context.pushNamed(
-                                                  DietsWidget.routeName,
-                                                  queryParameters: {
-                                                    'diets': serializeParam(
-                                                      popularCategoriesItem
-                                                          .title,
-                                                      ParamType.String,
-                                                    ),
-                                                  }.withoutNulls,
-                                                );
-                                              } else {
-                                                context.pushNamed(
-                                                  EnergyValueWidget.routeName,
-                                                  queryParameters: {
-                                                    'energy': serializeParam(
-                                                      popularCategoriesItem
-                                                          .title,
-                                                      ParamType.String,
-                                                    ),
-                                                  }.withoutNulls,
-                                                );
-                                              }
-                                            },
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.max,
-                                              children: [
-                                                ClipRRect(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          8.0),
-                                                  child: Image.network(
-                                                    valueOrDefault<String>(
-                                                      popularCategoriesItem
-                                                          .image,
-                                                      'https://picsum.photos/seed/257/600',
-                                                    ),
-                                                    width: 32.0,
-                                                    height: 32.0,
-                                                    fit: BoxFit.cover,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  popularCategoriesItem.title,
-                                                  style: FlutterFlowTheme.of(
-                                                          context)
-                                                      .bodyMedium
-                                                      .override(
-                                                        font: GoogleFonts.inter(
-                                                          fontWeight:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .bodyMedium
-                                                                  .fontWeight,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .bodyMedium
-                                                                  .fontStyle,
-                                                        ),
-                                                        letterSpacing: 0.0,
-                                                        fontWeight:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .bodyMedium
-                                                                .fontWeight,
-                                                        fontStyle:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .bodyMedium
-                                                                .fontStyle,
-                                                      ),
-                                                ),
-                                              ].divide(SizedBox(width: 16.0)),
-                                            ),
-                                          );
-                                        }).divide(SizedBox(height: 16.0)),
-                                      );
-                                    },
                                   ),
                                 ),
                               ]

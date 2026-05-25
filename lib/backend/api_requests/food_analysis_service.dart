@@ -177,6 +177,24 @@ class FoodAnalysisService {
     }
   }
 
+  // FDA Reference Daily Intake values (used to compute "% Daily Value"
+  // labels exactly the way nutrition facts panels do).
+  // Source: 21 CFR 101.9(c) (2016 update).
+  static const double _dvCholesterolMg = 300.0;
+  static const double _dvSodiumMg = 2300.0;
+  static const double _dvCalciumMg = 1300.0;
+  static const double _dvIronMg = 18.0;
+  static const double _dvPotassiumMg = 4700.0;
+  static const double _dvMagnesiumMg = 420.0;
+  static const double _dvPhosphorusMg = 1250.0;
+  static const double _dvZincMg = 11.0;
+  static const double _dvCopperMg = 0.9;
+  static const double _dvSeleniumMg = 0.055; // 55 µg expressed in mg
+
+  /// Returns `amountMg / dv * 100`, clamped to a non-negative number.
+  static double _dvPercent(double amountMg, double dv) =>
+      dv <= 0 ? 0 : (amountMg / dv * 100).clamp(0.0, double.infinity);
+
   /// Calculate nutrition values based on grams
   /// USDA data is per 100g, so we scale it to the actual portion size
   static Map<String, dynamic> _calculateNutrition(
@@ -214,47 +232,54 @@ class FoodAnalysisService {
               totalCalories > 0 ? (fatGrams * 9 / totalCalories * 100) : 0,
         ),
       ),
-      'cholesterol': NutrientStruct(
-        mg: (usdaData['cholesterol'] as double) * scale,
-        percentage: 0, // TODO: Calculate based on daily value (300mg)
-      ),
-      'sodium': NutrientStruct(
-        mg: (usdaData['sodium'] as double) * scale,
-        percentage: 0, // TODO: Calculate based on daily value (2300mg)
-      ),
+      'cholesterol': () {
+        final mg = (usdaData['cholesterol'] as double) * scale;
+        return NutrientStruct(
+            mg: mg, percentage: _dvPercent(mg, _dvCholesterolMg));
+      }(),
+      'sodium': () {
+        final mg = (usdaData['sodium'] as double) * scale;
+        return NutrientStruct(mg: mg, percentage: _dvPercent(mg, _dvSodiumMg));
+      }(),
       'minerals': MineralsStruct(
-        calcium: NutrientStruct(
-          mg: (usdaData['calcium'] as double) * scale,
-          percentage: 0, // TODO: Calculate based on daily value
-        ),
-        iron: NutrientStruct(
-          mg: (usdaData['iron'] as double) * scale,
-          percentage: 0,
-        ),
-        potassium: NutrientStruct(
-          mg: (usdaData['potassium'] as double) * scale,
-          percentage: 0,
-        ),
-        magnesium: NutrientStruct(
-          mg: (usdaData['magnesium'] as double) * scale,
-          percentage: 0,
-        ),
-        phosphorus: NutrientStruct(
-          mg: (usdaData['phosphorus'] as double) * scale,
-          percentage: 0,
-        ),
-        zinc: NutrientStruct(
-          mg: (usdaData['zinc'] as double) * scale,
-          percentage: 0,
-        ),
-        copper: NutrientStruct(
-          mg: (usdaData['copper'] as double) * scale,
-          percentage: 0,
-        ),
-        selenium: NutrientStruct(
-          mg: (usdaData['selenium'] as double) * scale,
-          percentage: 0,
-        ),
+        calcium: () {
+          final mg = (usdaData['calcium'] as double) * scale;
+          return NutrientStruct(
+              mg: mg, percentage: _dvPercent(mg, _dvCalciumMg));
+        }(),
+        iron: () {
+          final mg = (usdaData['iron'] as double) * scale;
+          return NutrientStruct(mg: mg, percentage: _dvPercent(mg, _dvIronMg));
+        }(),
+        potassium: () {
+          final mg = (usdaData['potassium'] as double) * scale;
+          return NutrientStruct(
+              mg: mg, percentage: _dvPercent(mg, _dvPotassiumMg));
+        }(),
+        magnesium: () {
+          final mg = (usdaData['magnesium'] as double) * scale;
+          return NutrientStruct(
+              mg: mg, percentage: _dvPercent(mg, _dvMagnesiumMg));
+        }(),
+        phosphorus: () {
+          final mg = (usdaData['phosphorus'] as double) * scale;
+          return NutrientStruct(
+              mg: mg, percentage: _dvPercent(mg, _dvPhosphorusMg));
+        }(),
+        zinc: () {
+          final mg = (usdaData['zinc'] as double) * scale;
+          return NutrientStruct(mg: mg, percentage: _dvPercent(mg, _dvZincMg));
+        }(),
+        copper: () {
+          final mg = (usdaData['copper'] as double) * scale;
+          return NutrientStruct(
+              mg: mg, percentage: _dvPercent(mg, _dvCopperMg));
+        }(),
+        selenium: () {
+          final mg = (usdaData['selenium'] as double) * scale;
+          return NutrientStruct(
+              mg: mg, percentage: _dvPercent(mg, _dvSeleniumMg));
+        }(),
       ),
     };
   }

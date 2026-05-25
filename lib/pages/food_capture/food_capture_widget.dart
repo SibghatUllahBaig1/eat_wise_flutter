@@ -5,6 +5,7 @@ import '/flutter_flow/flutter_flow_widgets.dart';
 import '/flutter_flow/upload_data.dart';
 import '/backend/api_requests/food_analysis_service.dart';
 import '/backend/schema/structs/index.dart';
+import '/components/paywall_widget.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
@@ -729,6 +730,14 @@ class _FoodCaptureWidgetState extends State<FoodCaptureWidget> {
                         EdgeInsetsDirectional.fromSTEB(0.0, 16.0, 0.0, 0.0),
                     child: FFButtonWidget(
                       onPressed: () async {
+                        // Gate AI food analysis behind premium subscription.
+                        final hasAccess = await checkFeatureAccess(
+                          context: context,
+                          featureName: 'ai_food_analysis',
+                          displayName: 'AI Food Analysis',
+                        );
+                        if (!hasAccess || !context.mounted) return;
+
                         // Show loading indicator
                         showDialog(
                           context: context,

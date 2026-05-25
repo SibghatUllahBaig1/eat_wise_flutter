@@ -26,7 +26,7 @@ class ZStatisticsModel extends FlutterFlowModel<ZStatisticsWidget> {
   int proteinGoal = 150;
   int fatGoal = 65;
 
-  // Burned calories (placeholder - can be integrated with activity tracking)
+  // Burned calories = sum of logged activities + estimated step calories.
   int burnedCalories = 0;
   int stepCalories = 0;
 
@@ -106,7 +106,13 @@ class ZStatisticsModel extends FlutterFlowModel<ZStatisticsWidget> {
       int localStepCalories = 0;
       if (stepSummary != null) {
         final totalSteps = (stepSummary['totalSteps'] as int?) ?? 0;
-        localStepCalories = (totalSteps * 0.04).round();
+        // ~0.04 kcal/step is the population average for a 70 kg adult walking
+        // at a moderate pace; scale linearly by body mass when known so heavier
+        // users see proportionally higher burn.
+        final double weightKg = FFAppState().userProfile.weightKg;
+        final double kcalPerStep =
+            weightKg > 0 ? 0.04 * (weightKg / 70.0) : 0.04;
+        localStepCalories = (totalSteps * kcalPerStep).round();
       }
 
       final int localBurnedCalories = localActivityBurned + localStepCalories;

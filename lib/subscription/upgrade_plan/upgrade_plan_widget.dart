@@ -168,7 +168,8 @@ class _UpgradePlanWidgetState extends State<UpgradePlanWidget> {
                           _buildPlanCard(
                             context,
                             title: 'Standard',
-                            price: '\$9.99/month',
+                            price: _model.priceFor('standard') ??
+                                'Price unavailable',
                             features: [
                               'Meal tracking',
                               'Activity tracking',
@@ -177,25 +178,7 @@ class _UpgradePlanWidgetState extends State<UpgradePlanWidget> {
                               'Water & step tracking',
                             ],
                             isCurrentPlan: _model.hasTier('standard'),
-                            onTap: () async {
-                              final package =
-                                  _model.getPackageByIdentifier('standard');
-                              if (package != null) {
-                                final success =
-                                    await _model.purchasePackage(package);
-                                if (success) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                          'Successfully subscribed to Standard!'),
-                                      backgroundColor:
-                                          FlutterFlowTheme.of(context).success,
-                                    ),
-                                  );
-                                  setState(() {});
-                                }
-                              }
-                            },
+                            onTap: () => _handlePurchase('standard'),
                           ),
 
                           SizedBox(height: 16.0),
@@ -203,7 +186,8 @@ class _UpgradePlanWidgetState extends State<UpgradePlanWidget> {
                           _buildPlanCard(
                             context,
                             title: 'Premium',
-                            price: '\$14.99/month',
+                            price: _model.priceFor('premium') ??
+                                'Price unavailable',
                             features: [
                               'Everything in Standard',
                               'AI food analysis',
@@ -214,25 +198,7 @@ class _UpgradePlanWidgetState extends State<UpgradePlanWidget> {
                             ],
                             isCurrentPlan: _model.hasTier('premium'),
                             isPremium: true,
-                            onTap: () async {
-                              final package =
-                                  _model.getPackageByIdentifier('premium');
-                              if (package != null) {
-                                final success =
-                                    await _model.purchasePackage(package);
-                                if (success) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                          'Successfully subscribed to Premium!'),
-                                      backgroundColor:
-                                          FlutterFlowTheme.of(context).success,
-                                    ),
-                                  );
-                                  setState(() {});
-                                }
-                              }
-                            },
+                            onTap: () => _handlePurchase('premium'),
                           ),
 
                           SizedBox(height: 32.0),
@@ -279,6 +245,39 @@ class _UpgradePlanWidgetState extends State<UpgradePlanWidget> {
         ),
       ),
     );
+  }
+
+  Future<void> _handlePurchase(String tier) async {
+    final package = _model.getPackageByIdentifier(tier);
+    if (package == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              'This plan is not available right now. Please try again later.'),
+          backgroundColor: FlutterFlowTheme.of(context).error,
+        ),
+      );
+      return;
+    }
+    final success = await _model.purchasePackage(package);
+    if (!mounted) return;
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              'Successfully subscribed to ${tier[0].toUpperCase()}${tier.substring(1)}!'),
+          backgroundColor: FlutterFlowTheme.of(context).success,
+        ),
+      );
+      setState(() {});
+    } else if (_model.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_model.errorMessage!),
+          backgroundColor: FlutterFlowTheme.of(context).error,
+        ),
+      );
+    }
   }
 
   Widget _buildPlanCard(

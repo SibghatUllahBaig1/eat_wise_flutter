@@ -1,5 +1,7 @@
 import '/auth/firebase_auth/auth_util.dart';
+import '/backend/backend_manager.dart';
 import '/backend/firestore/user_service.dart';
+import '/backend/services/subscription_service.dart';
 import '/backend/schema/structs/index.dart';
 import '/buttons/icon_text_right/icon_text_right_widget.dart';
 import '/flutter_flow/flutter_flow_animations.dart';
@@ -713,6 +715,7 @@ class _ProfileWidgetState extends State<ProfileWidget>
                     //     ),
                     //   ),
                     // ),
+                    _buildSubscriptionCard(context),
                     Padding(
                       padding:
                           EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 0.0),
@@ -1321,6 +1324,91 @@ class _ProfileWidgetState extends State<ProfileWidget>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Subscription status card shown above the settings list.
+  /// Pulls the active tier from [SubscriptionService] and offers an Upgrade
+  /// (free tier) or Manage Subscription (paid tier) action.
+  Widget _buildSubscriptionCard(BuildContext context) {
+    final uid = currentUserUid;
+    return Padding(
+      padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 0.0),
+      child: FutureBuilder<SubscriptionTier>(
+        future: uid.isEmpty
+            ? Future.value(SubscriptionTier.free)
+            : BackendManager().subscriptionService.getSubscriptionTier(uid),
+        builder: (context, snapshot) {
+          final tier = snapshot.data ?? SubscriptionTier.free;
+          final isPaid = tier != SubscriptionTier.free;
+          final tierLabel = tier == SubscriptionTier.premium
+              ? 'Premium'
+              : tier == SubscriptionTier.standard
+                  ? 'Standard'
+                  : 'Free';
+          return Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: FlutterFlowTheme.of(context).secondaryBackground,
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  Icon(
+                    isPaid
+                        ? Icons.workspace_premium
+                        : Icons.workspace_premium_outlined,
+                    color: FlutterFlowTheme.of(context).primary,
+                    size: 28.0,
+                  ),
+                  SizedBox(width: 12.0),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Subscription',
+                          style: FlutterFlowTheme.of(context)
+                              .bodySmall
+                              .override(
+                                fontFamily: 'Readex Pro',
+                                color:
+                                    FlutterFlowTheme.of(context).secondaryText,
+                                letterSpacing: 0.0,
+                              ),
+                        ),
+                        Text(
+                          '$tierLabel plan',
+                          style:
+                              FlutterFlowTheme.of(context).titleSmall.override(
+                                    fontFamily: 'Outfit',
+                                    letterSpacing: 0.0,
+                                  ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => context.pushNamed('UpgradePlan'),
+                    child: Text(
+                      isPaid ? 'Manage' : 'Upgrade',
+                      style: FlutterFlowTheme.of(context).bodyMedium.override(
+                            fontFamily: 'Readex Pro',
+                            color: FlutterFlowTheme.of(context).primary,
+                            letterSpacing: 0.0,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
