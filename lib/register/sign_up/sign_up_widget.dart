@@ -89,6 +89,7 @@ class _SignUpWidgetState extends State<SignUpWidget>
       },
       child: Scaffold(
         key: scaffoldKey,
+        resizeToAvoidBottomInset: true,
         backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
         appBar: AppBar(
           backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
@@ -126,7 +127,12 @@ class _SignUpWidgetState extends State<SignUpWidget>
         body: Form(
           key: _model.formKey,
           autovalidateMode: AutovalidateMode.disabled,
-          child: Column(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.viewInsetsOf(context).bottom + 24.0,
+            ),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            child: Column(
             mainAxisSize: MainAxisSize.max,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -166,7 +172,7 @@ class _SignUpWidgetState extends State<SignUpWidget>
                   padding:
                       EdgeInsetsDirectional.fromSTEB(24.0, 12.0, 24.0, 0.0),
                   child: Text(
-                    'Join Calorio and take the first step toward a healthier lifestyle. It’s quick, easy, and the results are worth it.',
+                    'Join EatWise and take the first step toward a healthier lifestyle. It’s quick, easy, and the results are worth it.',
                     textAlign: TextAlign.center,
                     style: FlutterFlowTheme.of(context).labelMedium.override(
                           font: GoogleFonts.inter(
@@ -1130,6 +1136,7 @@ class _SignUpWidgetState extends State<SignUpWidget>
                 ),
               ),
             ],
+            ),
           ),
         ),
       ),

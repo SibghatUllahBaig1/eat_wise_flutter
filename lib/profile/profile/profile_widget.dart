@@ -1328,6 +1328,13 @@ class _ProfileWidgetState extends State<ProfileWidget>
     );
   }
 
+  Future<Map<String, dynamic>> _loadSubscriptionSummary(String uid) async {
+    final service = BackendManager().subscriptionService;
+    final tier = await service.getSubscriptionTier(uid);
+    final isTrial = await service.isInTrial(uid);
+    return {'tier': tier, 'isTrial': isTrial};
+  }
+
   /// Subscription status card shown above the settings list.
   /// Pulls the active tier from [SubscriptionService] and offers an Upgrade
   /// (free tier) or Manage Subscription (paid tier) action.
@@ -1335,18 +1342,22 @@ class _ProfileWidgetState extends State<ProfileWidget>
     final uid = currentUserUid;
     return Padding(
       padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 0.0),
-      child: FutureBuilder<SubscriptionTier>(
+      child: FutureBuilder<Map<String, dynamic>>(
         future: uid.isEmpty
-            ? Future.value(SubscriptionTier.free)
-            : BackendManager().subscriptionService.getSubscriptionTier(uid),
+            ? Future.value({'tier': SubscriptionTier.free, 'isTrial': false})
+            : _loadSubscriptionSummary(uid),
         builder: (context, snapshot) {
-          final tier = snapshot.data ?? SubscriptionTier.free;
-          final isPaid = tier != SubscriptionTier.free;
-          final tierLabel = tier == SubscriptionTier.premium
-              ? 'Premium'
-              : tier == SubscriptionTier.standard
-                  ? 'Standard'
-                  : 'Free';
+          final tier =
+              snapshot.data?['tier'] as SubscriptionTier? ?? SubscriptionTier.free;
+          final isTrial = snapshot.data?['isTrial'] == true;
+          final isPaid = tier != SubscriptionTier.free || isTrial;
+          final tierLabel = isTrial
+              ? 'Premium trial'
+              : tier == SubscriptionTier.premium
+                  ? 'Premium'
+                  : tier == SubscriptionTier.standard
+                      ? 'Standard'
+                      : 'Free';
           return Container(
             width: double.infinity,
             decoration: BoxDecoration(

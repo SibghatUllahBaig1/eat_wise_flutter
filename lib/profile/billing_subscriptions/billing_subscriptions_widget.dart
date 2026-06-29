@@ -117,7 +117,7 @@ class _BillingSubscriptionsWidgetState
                         padding:
                             EdgeInsetsDirectional.fromSTEB(0.0, 24.0, 0.0, 0.0),
                         child: Text(
-                          'Calorio Premium',
+                          'EatWise Premium',
                           style:
                               FlutterFlowTheme.of(context).titleSmall.override(
                                     font: GoogleFonts.inter(

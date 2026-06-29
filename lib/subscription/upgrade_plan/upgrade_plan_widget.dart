@@ -1,8 +1,13 @@
+import 'dart:io';
+
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'upgrade_plan_model.dart';
 export 'upgrade_plan_model.dart';
 
@@ -18,7 +23,6 @@ class UpgradePlanWidget extends StatefulWidget {
 
 class _UpgradePlanWidgetState extends State<UpgradePlanWidget> {
   late UpgradePlanModel _model;
-
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
@@ -32,6 +36,60 @@ class _UpgradePlanWidgetState extends State<UpgradePlanWidget> {
     _model.dispose();
     super.dispose();
   }
+
+  Future<void> _reload() async {
+    await _model.loadOfferings();
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _handleSubscribe(String planId) async {
+    final success = await _model.purchasePlan(planId);
+    if (!mounted) return;
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Welcome to EatWise ${_capitalize(planId)}!'),
+          backgroundColor: FlutterFlowTheme.of(context).success,
+        ),
+      );
+      setState(() {});
+    } else if (_model.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_model.errorMessage!),
+          backgroundColor: FlutterFlowTheme.of(context).error,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleRestore() async {
+    final success = await _model.restorePurchases();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(success
+            ? 'Purchases restored successfully.'
+            : (_model.errorMessage ?? 'No purchases to restore.')),
+        backgroundColor: success
+            ? FlutterFlowTheme.of(context).success
+            : FlutterFlowTheme.of(context).error,
+      ),
+    );
+    if (success) setState(() {});
+  }
+
+  Future<void> _openSubscriptionManagement() async {
+    final uri = !kIsWeb && Platform.isIOS
+        ? Uri.parse('https://apps.apple.com/account/subscriptions')
+        : Uri.parse('https://play.google.com/store/account/subscriptions');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  String _capitalize(String value) =>
+      value.isEmpty ? value : '${value[0].toUpperCase()}${value.substring(1)}';
 
   @override
   Widget build(BuildContext context) {
@@ -56,18 +114,15 @@ class _UpgradePlanWidgetState extends State<UpgradePlanWidget> {
               color: FlutterFlowTheme.of(context).primaryText,
               size: 30.0,
             ),
-            onPressed: () async {
-              context.pop();
-            },
+            onPressed: () async => context.pop(),
           ),
           title: Text(
-            'Upgrade Plan',
+            'Subscription',
             style: FlutterFlowTheme.of(context).headlineMedium.override(
                   fontFamily: 'Outfit',
                   letterSpacing: 0.0,
                 ),
           ),
-          actions: [],
           centerTitle: false,
           elevation: 0.0,
         ),
@@ -81,325 +136,401 @@ class _UpgradePlanWidgetState extends State<UpgradePlanWidget> {
                     ),
                   ),
                 )
-              : _model.errorMessage != null
-                  ? Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(24.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.error_outline,
-                              size: 64.0,
-                              color: FlutterFlowTheme.of(context).error,
-                            ),
-                            SizedBox(height: 16.0),
-                            Text(
-                              _model.errorMessage!,
-                              textAlign: TextAlign.center,
-                              style: FlutterFlowTheme.of(context).bodyLarge,
-                            ),
-                            SizedBox(height: 24.0),
-                            FFButtonWidget(
-                              onPressed: () async {
-                                setState(() {
-                                  _model.loadOfferings();
-                                });
-                              },
-                              text: 'Retry',
-                              options: FFButtonOptions(
-                                height: 50.0,
-                                padding: EdgeInsetsDirectional.fromSTEB(
-                                    24.0, 0.0, 24.0, 0.0),
-                                iconPadding: EdgeInsetsDirectional.fromSTEB(
-                                    0.0, 0.0, 0.0, 0.0),
-                                color: FlutterFlowTheme.of(context).primary,
-                                textStyle: FlutterFlowTheme.of(context)
-                                    .titleSmall
-                                    .override(
-                                      fontFamily: 'Readex Pro',
-                                      color: Colors.white,
-                                      letterSpacing: 0.0,
-                                    ),
-                                elevation: 3.0,
-                                borderRadius: BorderRadius.circular(25.0),
-                              ),
-                            ),
-                          ],
+              : RefreshIndicator(
+                  onRefresh: _reload,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (_model.isOnTrial) _buildTrialBanner(context),
+                        _buildHeader(context),
+                        if (_model.errorMessage != null &&
+                            !_model.revenueCatAvailable)
+                          _buildInfoBanner(context, _model.errorMessage!),
+                        _buildBillingToggle(context),
+                        ...UpgradePlanModel.plans.map(
+                          (plan) => _buildPlanCard(context, plan),
                         ),
-                      ),
-                    )
-                  : SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.max,
-                        children: [
-                          // Header section
-                          Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(
-                                24.0, 24.0, 24.0, 32.0),
-                            child: Column(
-                              children: [
-                                Text(
-                                  'Choose Your Plan',
-                                  style: FlutterFlowTheme.of(context)
-                                      .headlineLarge
-                                      .override(
-                                        fontFamily: 'Outfit',
-                                        letterSpacing: 0.0,
-                                      ),
-                                ),
-                                SizedBox(height: 8.0),
-                                Text(
-                                  '7-day free trial • Cancel anytime',
-                                  style: FlutterFlowTheme.of(context)
-                                      .bodyMedium
-                                      .override(
-                                        fontFamily: 'Readex Pro',
-                                        color: FlutterFlowTheme.of(context)
-                                            .secondaryText,
-                                        letterSpacing: 0.0,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          // Subscription plans
-                          _buildPlanCard(
-                            context,
-                            title: 'Standard',
-                            price: _model.priceFor('standard') ??
-                                'Price unavailable',
-                            features: [
-                              'Meal tracking',
-                              'Activity tracking',
-                              'Basic recipes',
-                              'Progress charts',
-                              'Water & step tracking',
-                            ],
-                            isCurrentPlan: _model.hasTier('standard'),
-                            onTap: () => _handlePurchase('standard'),
-                          ),
-
-                          SizedBox(height: 16.0),
-
-                          _buildPlanCard(
-                            context,
-                            title: 'Premium',
-                            price: _model.priceFor('premium') ??
-                                'Price unavailable',
-                            features: [
-                              'Everything in Standard',
-                              'AI food analysis',
-                              'Advanced recipes',
-                              'Custom meal plans',
-                              'Advanced analytics',
-                              'Export data',
-                            ],
-                            isCurrentPlan: _model.hasTier('premium'),
-                            isPremium: true,
-                            onTap: () => _handlePurchase('premium'),
-                          ),
-
-                          SizedBox(height: 32.0),
-
-                          // Restore purchases button
-                          TextButton(
-                            onPressed: () async {
-                              final success = await _model.restorePurchases();
-                              if (success) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Purchases restored!'),
-                                    backgroundColor:
-                                        FlutterFlowTheme.of(context).success,
-                                  ),
-                                );
-                                setState(() {});
-                              } else if (_model.errorMessage != null) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(_model.errorMessage!),
-                                    backgroundColor:
-                                        FlutterFlowTheme.of(context).error,
-                                  ),
-                                );
-                              }
-                            },
-                            child: Text(
-                              'Restore Purchases',
-                              style: FlutterFlowTheme.of(context)
-                                  .bodyMedium
-                                  .override(
-                                    fontFamily: 'Readex Pro',
-                                    color: FlutterFlowTheme.of(context).primary,
-                                    letterSpacing: 0.0,
-                                  ),
-                            ),
-                          ),
-
-                          SizedBox(height: 32.0),
-                        ],
-                      ),
+                        const SizedBox(height: 8),
+                        _buildFooter(context),
+                        const SizedBox(height: 24),
+                      ],
                     ),
+                  ),
+                ),
         ),
       ),
     );
   }
 
-  Future<void> _handlePurchase(String tier) async {
-    final package = _model.getPackageByIdentifier(tier);
-    if (package == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              'This plan is not available right now. Please try again later.'),
-          backgroundColor: FlutterFlowTheme.of(context).error,
+  Widget _buildTrialBanner(BuildContext context) {
+    final days = _model.trialDaysRemaining();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: FlutterFlowTheme.of(context).primary.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: FlutterFlowTheme.of(context).primary.withValues(alpha: 0.3),
+          ),
         ),
-      );
-      return;
-    }
-    final success = await _model.purchasePackage(package);
-    if (!mounted) return;
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              'Successfully subscribed to ${tier[0].toUpperCase()}${tier.substring(1)}!'),
-          backgroundColor: FlutterFlowTheme.of(context).success,
+        child: Row(
+          children: [
+            Icon(
+              Icons.workspace_premium,
+              color: FlutterFlowTheme.of(context).primary,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                days != null
+                    ? 'Premium trial active · $days day${days == 1 ? '' : 's'} left'
+                    : 'Premium trial active',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  color: FlutterFlowTheme.of(context).primaryText,
+                ),
+              ),
+            ),
+          ],
         ),
-      );
-      setState(() {});
-    } else if (_model.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_model.errorMessage!),
-          backgroundColor: FlutterFlowTheme.of(context).error,
-        ),
-      );
-    }
+      ),
+    );
   }
 
-  Widget _buildPlanCard(
+  Widget _buildInfoBanner(BuildContext context, String message) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: FlutterFlowTheme.of(context).accent1,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          message,
+          style: FlutterFlowTheme.of(context).bodySmall.override(
+                fontFamily: 'Readex Pro',
+                color: FlutterFlowTheme.of(context).secondaryText,
+                letterSpacing: 0.0,
+              ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
+      child: Column(
+        children: [
+          Text(
+            'Choose Your Plan',
+            textAlign: TextAlign.center,
+            style: FlutterFlowTheme.of(context).headlineLarge.override(
+                  fontFamily: 'Outfit',
+                  letterSpacing: 0.0,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '7-day free trial on Premium · Cancel anytime',
+            textAlign: TextAlign.center,
+            style: FlutterFlowTheme.of(context).bodyMedium.override(
+                  fontFamily: 'Readex Pro',
+                  color: FlutterFlowTheme.of(context).secondaryText,
+                  letterSpacing: 0.0,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBillingToggle(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        decoration: BoxDecoration(
+          color: FlutterFlowTheme.of(context).secondaryBackground,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            _billingChip(
+              context,
+              label: 'Annual',
+              badge: 'Save 33%',
+              selected: _model.billingPeriod == BillingPeriod.annual,
+              onTap: () => setState(
+                  () => _model.billingPeriod = BillingPeriod.annual),
+            ),
+            _billingChip(
+              context,
+              label: 'Monthly',
+              selected: _model.billingPeriod == BillingPeriod.monthly,
+              onTap: () => setState(
+                  () => _model.billingPeriod = BillingPeriod.monthly),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _billingChip(
     BuildContext context, {
-    required String title,
-    required String price,
-    required List<String> features,
-    required bool isCurrentPlan,
-    bool isPremium = false,
+    required String label,
+    String? badge,
+    required bool selected,
     required VoidCallback onTap,
   }) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: selected
+                ? FlutterFlowTheme.of(context).primary
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Column(
+            children: [
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  color: selected
+                      ? Colors.white
+                      : FlutterFlowTheme.of(context).primaryText,
+                ),
+              ),
+              if (badge != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  badge,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: selected
+                        ? Colors.white.withValues(alpha: 0.9)
+                        : FlutterFlowTheme.of(context).primary,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlanCard(BuildContext context, PlanDefinition plan) {
+    final isCurrent = _model.isCurrentPlan(plan.id);
+    final isPremium = plan.isPopular;
+    final isFree = plan.id == 'free';
+
     return Padding(
-      padding: EdgeInsetsDirectional.fromSTEB(24.0, 0.0, 24.0, 0.0),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
           color: isPremium
-              ? FlutterFlowTheme.of(context).primary.withOpacity(0.1)
+              ? FlutterFlowTheme.of(context).primary.withValues(alpha: 0.08)
               : FlutterFlowTheme.of(context).secondaryBackground,
-          borderRadius: BorderRadius.circular(16.0),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isPremium
                 ? FlutterFlowTheme.of(context).primary
                 : FlutterFlowTheme.of(context).alternate,
-            width: isPremium ? 2.0 : 1.0,
+            width: isPremium ? 2 : 1,
           ),
         ),
         child: Padding(
-          padding: EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    title,
+                    plan.title,
                     style: FlutterFlowTheme.of(context).headlineSmall.override(
                           fontFamily: 'Outfit',
                           letterSpacing: 0.0,
                         ),
                   ),
+                  const Spacer(),
                   if (isPremium)
                     Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: FlutterFlowTheme.of(context).primary,
-                        borderRadius: BorderRadius.circular(12.0),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
                         'POPULAR',
                         style: FlutterFlowTheme.of(context).bodySmall.override(
                               fontFamily: 'Readex Pro',
                               color: Colors.white,
-                              fontSize: 10.0,
-                              letterSpacing: 0.0,
+                              fontSize: 10,
                               fontWeight: FontWeight.bold,
+                              letterSpacing: 0.0,
+                            ),
+                      ),
+                    ),
+                  if (isCurrent)
+                    Container(
+                      margin: EdgeInsets.only(left: isPremium ? 8 : 0),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: FlutterFlowTheme.of(context).success,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        'CURRENT',
+                        style: FlutterFlowTheme.of(context).bodySmall.override(
+                              fontFamily: 'Readex Pro',
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.0,
                             ),
                       ),
                     ),
                 ],
               ),
-              SizedBox(height: 8.0),
+              const SizedBox(height: 8),
               Text(
-                price,
+                _model.priceLabel(plan),
                 style: FlutterFlowTheme.of(context).titleLarge.override(
                       fontFamily: 'Outfit',
                       color: FlutterFlowTheme.of(context).primary,
                       letterSpacing: 0.0,
                     ),
               ),
-              SizedBox(height: 16.0),
-              ...features.map((feature) => Padding(
-                    padding: EdgeInsets.only(bottom: 8.0),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.check_circle,
-                          size: 20.0,
-                          color: FlutterFlowTheme.of(context).success,
-                        ),
-                        SizedBox(width: 12.0),
-                        Expanded(
-                          child: Text(
-                            feature,
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Readex Pro',
-                                  letterSpacing: 0.0,
-                                ),
-                          ),
-                        ),
-                      ],
+              const SizedBox(height: 4),
+              Text(
+                _model.priceSubtitle(plan),
+                style: FlutterFlowTheme.of(context).bodySmall.override(
+                      fontFamily: 'Readex Pro',
+                      color: FlutterFlowTheme.of(context).secondaryText,
+                      letterSpacing: 0.0,
                     ),
-                  )),
-              SizedBox(height: 16.0),
-              FFButtonWidget(
-                onPressed: isCurrentPlan ? null : onTap,
-                text: isCurrentPlan ? 'Current Plan' : 'Subscribe',
-                options: FFButtonOptions(
-                  width: double.infinity,
-                  height: 50.0,
-                  padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 0.0),
-                  iconPadding:
-                      EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 0.0),
-                  color: isCurrentPlan
-                      ? FlutterFlowTheme.of(context).secondaryText
-                      : FlutterFlowTheme.of(context).primary,
-                  textStyle: FlutterFlowTheme.of(context).titleSmall.override(
-                        fontFamily: 'Readex Pro',
-                        color: Colors.white,
-                        letterSpacing: 0.0,
+              ),
+              const SizedBox(height: 14),
+              ...plan.features.map(
+                (feature) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.check_circle,
+                        size: 18,
+                        color: FlutterFlowTheme.of(context).success,
                       ),
-                  elevation: 3.0,
-                  borderRadius: BorderRadius.circular(25.0),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          feature,
+                          style:
+                              FlutterFlowTheme.of(context).bodyMedium.override(
+                                    fontFamily: 'Readex Pro',
+                                    letterSpacing: 0.0,
+                                  ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
+              if (!isFree) ...[
+                const SizedBox(height: 8),
+                FFButtonWidget(
+                  onPressed: (_model.isPurchasing || isCurrent)
+                      ? null
+                      : () => _handleSubscribe(plan.id),
+                  text: isCurrent
+                      ? 'Current Plan'
+                      : (_model.isPurchasing ? 'Processing...' : 'Subscribe'),
+                  options: FFButtonOptions(
+                    width: double.infinity,
+                    height: 48,
+                    color: isCurrent
+                        ? FlutterFlowTheme.of(context).secondaryText
+                        : FlutterFlowTheme.of(context).primary,
+                    textStyle:
+                        FlutterFlowTheme.of(context).titleSmall.override(
+                              fontFamily: 'Readex Pro',
+                              color: Colors.white,
+                              letterSpacing: 0.0,
+                            ),
+                    elevation: 0,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildFooter(BuildContext context) {
+    final showManage = _model.currentTier != null &&
+        _model.currentTier != 'free' &&
+        !_model.isOnTrial;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        children: [
+          TextButton(
+            onPressed: _model.isPurchasing ? null : _handleRestore,
+            child: Text(
+              'Restore Purchases',
+              style: FlutterFlowTheme.of(context).bodyMedium.override(
+                    fontFamily: 'Readex Pro',
+                    color: FlutterFlowTheme.of(context).primary,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.0,
+                  ),
+            ),
+          ),
+          if (showManage)
+            TextButton(
+              onPressed: _openSubscriptionManagement,
+              child: Text(
+                !kIsWeb && Platform.isIOS
+                    ? 'Manage in App Store'
+                    : 'Manage in Google Play',
+                style: FlutterFlowTheme.of(context).bodyMedium.override(
+                      fontFamily: 'Readex Pro',
+                      color: FlutterFlowTheme.of(context).primary,
+                      letterSpacing: 0.0,
+                    ),
+              ),
+            ),
+          Text(
+            'Payment will be charged to your App Store or Google Play account. Subscriptions renew automatically unless cancelled at least 24 hours before the end of the current period.',
+            textAlign: TextAlign.center,
+            style: FlutterFlowTheme.of(context).bodySmall.override(
+                  fontFamily: 'Readex Pro',
+                  color: FlutterFlowTheme.of(context).secondaryText,
+                  letterSpacing: 0.0,
+                ),
+          ),
+        ],
       ),
     );
   }

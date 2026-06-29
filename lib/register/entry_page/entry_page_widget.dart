@@ -65,7 +65,6 @@ class _EntryPageWidgetState extends State<EntryPageWidget> {
             Expanded(
               child: Container(
                 width: double.infinity,
-                height: 500.0,
                 child: Stack(
                   children: [
                     Padding(
@@ -81,19 +80,29 @@ class _EntryPageWidgetState extends State<EntryPageWidget> {
                         scrollDirection: Axis.horizontal,
                         children: [
                           Column(
-                            mainAxisSize: MainAxisSize.max,
                             children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(0.0),
-                                child: Image.asset(
-                                  'assets/images/2q3e4rhty5kryjy.png',
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
+                              Expanded(
+                                flex: 3,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(0.0),
+                                  child: Image.asset(
+                                    'assets/images/2q3e4rhty5kryjy.png',
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                               ),
+                              Expanded(
+                                flex: 2,
+                                child: SingleChildScrollView(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 24.0, vertical: 12.0),
+                                  child: Column(
+                                    children: [
                               Padding(
                                 padding: EdgeInsetsDirectional.fromSTEB(
-                                    24.0, 20.0, 24.0, 0.0),
+                                    0.0, 8.0, 0.0, 0.0),
                                 child: Text(
                                   'All-in-One Calorie Tracking',
                                   textAlign: TextAlign.center,
@@ -124,7 +133,7 @@ class _EntryPageWidgetState extends State<EntryPageWidget> {
                               ),
                               Padding(
                                 padding: EdgeInsetsDirectional.fromSTEB(
-                                    24.0, 15.0, 24.0, 0.0),
+                                    0.0, 12.0, 0.0, 0.0),
                                 child: Text(
                                   'Effortlessly log every meal with barcode scanning or quick manual entry, set personalized calorie and macro goals.',
                                   textAlign: TextAlign.center,
@@ -152,22 +161,36 @@ class _EntryPageWidgetState extends State<EntryPageWidget> {
                                       ),
                                 ),
                               ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                           Column(
-                            mainAxisSize: MainAxisSize.max,
                             children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(0.0),
-                                child: Image.asset(
-                                  'assets/images/2q3e4rhty5kryjy_(2).png',
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
+                              Expanded(
+                                flex: 3,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(0.0),
+                                  child: Image.asset(
+                                    'assets/images/2q3e4rhty5kryjy_(2).png',
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                               ),
+                              Expanded(
+                                flex: 2,
+                                child: SingleChildScrollView(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 24.0, vertical: 12.0),
+                                  child: Column(
+                                    children: [
                               Padding(
                                 padding: EdgeInsetsDirectional.fromSTEB(
-                                    24.0, 20.0, 24.0, 0.0),
+                                    0.0, 8.0, 0.0, 0.0),
                                 child: Text(
                                   'Advanced Interactive Nutritional Analytics',
                                   textAlign: TextAlign.center,
@@ -198,7 +221,7 @@ class _EntryPageWidgetState extends State<EntryPageWidget> {
                               ),
                               Padding(
                                 padding: EdgeInsetsDirectional.fromSTEB(
-                                    24.0, 15.0, 24.0, 0.0),
+                                    0.0, 12.0, 0.0, 0.0),
                                 child: Text(
                                   'Dive into dynamic charts and trend reports to uncover patterns, set smarter goals, and optimize your eating habits.',
                                   textAlign: TextAlign.center,
@@ -226,24 +249,38 @@ class _EntryPageWidgetState extends State<EntryPageWidget> {
                                       ),
                                 ),
                               ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                           Column(
-                            mainAxisSize: MainAxisSize.max,
                             children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(0.0),
-                                child: Image.asset(
-                                  'assets/images/2q3e4rhty5kryjy_(3).png',
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
+                              Expanded(
+                                flex: 3,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(0.0),
+                                  child: Image.asset(
+                                    'assets/images/2q3e4rhty5kryjy_(3).png',
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                               ),
+                              Expanded(
+                                flex: 2,
+                                child: SingleChildScrollView(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 24.0, vertical: 12.0),
+                                  child: Column(
+                                    children: [
                               Padding(
                                 padding: EdgeInsetsDirectional.fromSTEB(
-                                    24.0, 20.0, 24.0, 0.0),
+                                    0.0, 8.0, 0.0, 0.0),
                                 child: Text(
-                                  'Unlock Exclusive Calorio Pro',
+                                  'Unlock Exclusive EatWise Pro',
                                   textAlign: TextAlign.center,
                                   style: FlutterFlowTheme.of(context)
                                       .headlineLarge
@@ -272,7 +309,7 @@ class _EntryPageWidgetState extends State<EntryPageWidget> {
                               ),
                               Padding(
                                 padding: EdgeInsetsDirectional.fromSTEB(
-                                    24.0, 15.0, 24.0, 0.0),
+                                    0.0, 12.0, 0.0, 0.0),
                                 child: Text(
                                   'Gain access to premium meal plans, personalized macro adjustments, and Pro-only tools designed to accelerate your progress.',
                                   textAlign: TextAlign.center,
@@ -298,6 +335,10 @@ class _EntryPageWidgetState extends State<EntryPageWidget> {
                                             .fontStyle,
                                         lineHeight: 1.5,
                                       ),
+                                ),
+                              ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ],

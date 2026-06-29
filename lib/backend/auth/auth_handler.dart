@@ -3,9 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
-import 'dart:convert';
-import 'dart:math';
-import 'package:crypto/crypto.dart';
+import '/auth/firebase_auth/apple_auth.dart';
 import '../backend_manager.dart';
 import '/app_state.dart';
 import '/backend/api_requests/api_config.dart';
@@ -62,6 +60,9 @@ class AuthHandler extends ChangeNotifier {
   Future<void> _onUserSignedIn(User user) async {
     try {
       debugPrint('User signed in: ${user.uid}');
+
+      // Every eligible new install gets a 7-day premium trial for testing.
+      await _backend.subscriptionService.ensureFreeTrialIfEligible(user.uid);
 
       // Update app state
       FFAppState().authenticated = true;
@@ -254,63 +255,50 @@ class AuthHandler extends ChangeNotifier {
   Future<User?> signInWithApple() async {
     _isLoading = true;
     _error = null;
+    _isNewUser = false;
     notifyListeners();
 
     try {
-      UserCredential credential;
-
-      if (kIsWeb) {
-        // Web flow
-        final provider = OAuthProvider("apple.com")
-          ..addScope('email')
-          ..addScope('name');
-        credential = await _auth.signInWithPopup(provider);
-      } else {
-        // Mobile flow
-        final rawNonce = _generateNonce();
-        final nonce = _sha256ofString(rawNonce);
-
-        final appleCredential = await SignInWithApple.getAppleIDCredential(
-          scopes: [
-            AppleIDAuthorizationScopes.email,
-            AppleIDAuthorizationScopes.fullName,
-          ],
-          nonce: nonce,
-        );
-
-        final oauthCredential = OAuthProvider("apple.com").credential(
-          idToken: appleCredential.identityToken,
-          rawNonce: rawNonce,
-          accessToken: appleCredential.authorizationCode,
-        );
-
-        credential = await _auth.signInWithCredential(oauthCredential);
-
-        // Update display name if available
-        final displayName = [
-          appleCredential.givenName,
-          appleCredential.familyName
-        ].where((name) => name != null).join(' ');
-
-        if (displayName.isNotEmpty && credential.user != null) {
-          await credential.user!.updateDisplayName(displayName);
-          await credential.user!.reload();
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+        final isAvailable = await SignInWithApple.isAvailable();
+        if (!isAvailable) {
+          _isLoading = false;
+          _error =
+              'Apple Sign-In is not available on this device. Sign into iCloud in Settings and try again.';
+          notifyListeners();
+          return null;
         }
       }
+
+      final credential = await appleSignIn();
+      _isNewUser = credential.additionalUserInfo?.isNewUser ?? false;
 
       _isLoading = false;
       notifyListeners();
       return credential.user;
     } on FirebaseAuthException catch (e) {
       _isLoading = false;
-      _error = _getErrorMessage(e);
+      _isNewUser = false;
+      if (e.code == 'invalid-credential' &&
+          (e.message?.contains('apple.com') ?? false)) {
+        _error =
+            'Apple Sign-In could not be verified. Rebuild and reinstall the app, then confirm Sign in with Apple is enabled in Firebase Console with your Apple Team ID, Key ID, and private key.';
+      } else {
+        _error = _getErrorMessage(e);
+      }
       notifyListeners();
       debugPrint('Apple sign in error: ${e.code} - ${e.message}');
       return null;
     } on SignInWithAppleAuthorizationException catch (e) {
       _isLoading = false;
+      _isNewUser = false;
       if (e.code == AuthorizationErrorCode.canceled) {
         _error = 'Apple sign in was cancelled';
+      } else if (e.code == AuthorizationErrorCode.unknown) {
+        _error =
+            'Apple sign in could not start. Reinstall the app from a build with Sign in with Apple enabled, ensure you are signed into iCloud, then try again.';
+      } else if (e.code == AuthorizationErrorCode.notHandled) {
+        _error = 'Apple sign in is not configured for this app build.';
       } else {
         _error = 'Apple sign in failed: ${e.message}';
       }
@@ -319,7 +307,8 @@ class AuthHandler extends ChangeNotifier {
       return null;
     } catch (e) {
       _isLoading = false;
-      _error = 'Apple sign in failed';
+      _isNewUser = false;
+      _error = 'Apple sign in failed. Please try again.';
       notifyListeners();
       debugPrint('Apple sign in error: $e');
       return null;
@@ -500,22 +489,6 @@ class AuthHandler extends ChangeNotifier {
   }
 
   // Helper methods
-
-  /// Generate a cryptographically secure random nonce
-  String _generateNonce([int length = 32]) {
-    const charset =
-        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
-    final random = Random.secure();
-    return List.generate(length, (_) => charset[random.nextInt(charset.length)])
-        .join();
-  }
-
-  /// Returns the sha256 hash of input in hex notation
-  String _sha256ofString(String input) {
-    final bytes = utf8.encode(input);
-    final digest = sha256.convert(bytes);
-    return digest.toString();
-  }
 
   /// Get user-friendly error message from FirebaseAuthException
   String _getErrorMessage(FirebaseAuthException e) {

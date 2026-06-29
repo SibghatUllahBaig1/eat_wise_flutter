@@ -21,6 +21,47 @@ class SubscriptionService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final RevenueCatService _revenueCat = RevenueCatService();
 
+  static const _freeFeatures = [
+    'basic_tracking',
+    'water_tracker',
+    'step_tracker',
+    'weight_tracker',
+  ];
+
+  static const _standardFeatures = [
+    ..._freeFeatures,
+    'meal_tracking',
+    'activity_tracking',
+    'basic_recipes',
+    'progress_charts',
+  ];
+
+  static const _premiumFeatures = [
+    ..._standardFeatures,
+    'ai_food_analysis',
+    'advanced_recipes',
+    'custom_meal_plans',
+    'advanced_analytics',
+    'export_data',
+  ];
+
+  DocumentReference<Map<String, dynamic>> _subscriptionDoc(String userId) =>
+      _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('subscription')
+          .doc('current');
+
+  bool _isActiveAppTrial(Map<String, dynamic>? subscription) {
+    if (subscription == null) return false;
+    if (subscription['status'] != 'trial') return false;
+
+    final trialEndDate = (subscription['trialEndDate'] as Timestamp?)?.toDate();
+    if (trialEndDate == null) return false;
+
+    return DateTime.now().isBefore(trialEndDate);
+  }
+
   /// Sync subscription from RevenueCat
   Future<void> syncFromRevenueCat(String userId) async {
     try {
@@ -30,22 +71,28 @@ class SubscriptionService {
     }
   }
 
-  /// Get user's subscription data (syncs with RevenueCat first)
+  /// Get user's subscription data (syncs with RevenueCat unless on app trial).
   Future<Map<String, dynamic>?> getUserSubscription(String userId) async {
     try {
-      // Sync with RevenueCat first
+      final doc = await _subscriptionDoc(userId).get();
+      final localData = doc.data();
+
+      if (_isActiveAppTrial(localData)) {
+        return localData;
+      }
+
       await syncFromRevenueCat(userId);
 
-      final doc = await _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('subscription')
-          .doc('current')
-          .get();
+      final updatedDoc = await _subscriptionDoc(userId).get();
+      if (!updatedDoc.exists) return localData;
 
-      if (!doc.exists) return null;
+      final updatedData = updatedDoc.data();
+      if (_isActiveAppTrial(localData)) {
+        await _subscriptionDoc(userId).set(localData!, SetOptions(merge: true));
+        return localData;
+      }
 
-      return doc.data();
+      return updatedData;
     } catch (e) {
       debugPrint('Error getting subscription: $e');
       return null;
@@ -57,6 +104,8 @@ class SubscriptionService {
     final subscription = await getUserSubscription(userId);
     if (subscription == null) return false;
 
+    if (_isActiveAppTrial(subscription)) return true;
+
     final status = subscription['status'] as String?;
     return status == 'active' || status == 'trial';
   }
@@ -65,6 +114,10 @@ class SubscriptionService {
   Future<SubscriptionTier> getSubscriptionTier(String userId) async {
     final subscription = await getUserSubscription(userId);
     if (subscription == null) return SubscriptionTier.free;
+
+    if (_isActiveAppTrial(subscription)) {
+      return SubscriptionTier.premium;
+    }
 
     final tier = subscription['tier'] as String?;
     switch (tier) {
@@ -80,29 +133,16 @@ class SubscriptionService {
   /// Check if user is in trial period
   Future<bool> isInTrial(String userId) async {
     final subscription = await getUserSubscription(userId);
-    if (subscription == null) return false;
-
-    final status = subscription['status'] as String?;
-    if (status != 'trial') return false;
-
-    final trialEndDate = (subscription['trialEndDate'] as Timestamp?)?.toDate();
-    if (trialEndDate == null) return false;
-
-    return DateTime.now().isBefore(trialEndDate);
+    return _isActiveAppTrial(subscription);
   }
 
-  /// Start free trial for user
+  /// Start a 7-day premium trial for testing / new installs.
   Future<void> startFreeTrial(String userId) async {
     try {
-      final trialEndDate = DateTime.now().add(Duration(days: 7));
+      final trialEndDate = DateTime.now().add(const Duration(days: 7));
 
-      await _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('subscription')
-          .doc('current')
-          .set({
-        'tier': 'standard',
+      await _subscriptionDoc(userId).set({
+        'tier': 'premium',
         'status': 'trial',
         'trialStartDate': FieldValue.serverTimestamp(),
         'trialEndDate': Timestamp.fromDate(trialEndDate),
@@ -115,6 +155,27 @@ class SubscriptionService {
     }
   }
 
+  /// Grant the one-time 7-day trial to eligible users (new downloads / first sign-in).
+  Future<void> ensureFreeTrialIfEligible(String userId) async {
+    try {
+      final doc = await _subscriptionDoc(userId).get();
+      if (doc.exists) {
+        final data = doc.data()!;
+        if (_isActiveAppTrial(data)) return;
+        if (data['trialStartDate'] != null) return;
+        if (data['status'] == 'active' &&
+            (data['tier'] == 'premium' || data['tier'] == 'standard')) {
+          return;
+        }
+      }
+
+      await startFreeTrial(userId);
+      debugPrint('Started 7-day premium trial for $userId');
+    } catch (e) {
+      debugPrint('Error ensuring free trial: $e');
+    }
+  }
+
   /// Upgrade subscription
   Future<void> upgradeSubscription({
     required String userId,
@@ -124,12 +185,7 @@ class SubscriptionService {
       final tierString =
           tier == SubscriptionTier.premium ? 'premium' : 'standard';
 
-      await _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('subscription')
-          .doc('current')
-          .set({
+      await _subscriptionDoc(userId).set({
         'tier': tierString,
         'status': 'active',
         'startDate': FieldValue.serverTimestamp(),
@@ -144,12 +200,7 @@ class SubscriptionService {
   /// Cancel subscription
   Future<void> cancelSubscription(String userId) async {
     try {
-      await _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('subscription')
-          .doc('current')
-          .update({
+      await _subscriptionDoc(userId).update({
         'status': 'cancelled',
         'cancelledAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
@@ -165,47 +216,26 @@ class SubscriptionService {
     required String userId,
     required String featureName,
   }) async {
-    final tier = await getSubscriptionTier(userId);
+    final subscription = await getUserSubscription(userId);
     final isActive = await hasActiveSubscription(userId);
 
-    // Free tier features
-    final freeFeatures = [
-      'basic_tracking',
-      'water_tracker',
-      'step_tracker',
-      'weight_tracker',
-    ];
+    if (_isActiveAppTrial(subscription)) {
+      return _premiumFeatures.contains(featureName);
+    }
 
-    // Standard tier features (includes free)
-    final standardFeatures = [
-      ...freeFeatures,
-      'meal_tracking',
-      'activity_tracking',
-      'basic_recipes',
-      'progress_charts',
-    ];
+    final tier = await getSubscriptionTier(userId);
 
-    // Premium tier features (includes standard)
-    final premiumFeatures = [
-      ...standardFeatures,
-      'ai_food_analysis',
-      'advanced_recipes',
-      'custom_meal_plans',
-      'advanced_analytics',
-      'export_data',
-    ];
-
-    if (!isActive && !freeFeatures.contains(featureName)) {
+    if (!isActive && !_freeFeatures.contains(featureName)) {
       return false;
     }
 
     switch (tier) {
       case SubscriptionTier.premium:
-        return premiumFeatures.contains(featureName);
+        return _premiumFeatures.contains(featureName);
       case SubscriptionTier.standard:
-        return standardFeatures.contains(featureName);
+        return _standardFeatures.contains(featureName);
       case SubscriptionTier.free:
-        return freeFeatures.contains(featureName);
+        return _freeFeatures.contains(featureName);
     }
   }
 }

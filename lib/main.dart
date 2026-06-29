@@ -1,10 +1,15 @@
+import 'dart:async';
+
 import 'package:provider/provider.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '/firebase_options.dart';
 import 'auth/firebase_auth/firebase_user_provider.dart';
 import 'auth/firebase_auth/auth_util.dart';
 
@@ -12,6 +17,7 @@ import 'backend/firebase/firebase_config.dart';
 import 'backend/api_requests/api_config.dart';
 import 'backend/services/pedometer_service.dart';
 import 'backend/services/legal_content_service.dart';
+import 'backend/backend_manager.dart';
 import 'backend/services/revenuecat_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -35,7 +41,9 @@ final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
 /// Background message handler — must be a top-level function.
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   // Background messages are delivered by the OS when the app is terminated.
   // No action needed here; the OS shows the notification automatically.
 }
@@ -43,9 +51,17 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   GoRouter.optionURLReflectsImperativeAPIs = true;
-  usePathUrlStrategy();
+  if (kIsWeb) {
+    usePathUrlStrategy();
+  }
 
   await initFirebase();
+
+  // Prime auth before runApp so GoRouter does not sit on a blank white
+  // loading overlay waiting for the first authStateChanges event.
+  AppStateNotifier.instance.update(
+    EatWiseFirebaseUser.fromFirebaseUser(FirebaseAuth.instance.currentUser),
+  );
 
   // ── FCM setup ──────────────────────────────────────────────────────────────
   // Register the background handler (must be done before any other FCM calls).
@@ -54,18 +70,28 @@ void main() async {
   // Create the high-importance Android notification channel.
   // Without this, notifications sent to 'eatwise_notifications' are silently
   // dropped on Android 8+ because the channel doesn't exist.
-  await _flutterLocalNotificationsPlugin
-      .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>()
-      ?.createNotificationChannel(_eatwiseChannel);
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    await _flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(_eatwiseChannel);
+  }
 
   // Initialize flutter_local_notifications so foreground FCM messages can be
-  // shown as heads-up notifications.
-  await _flutterLocalNotificationsPlugin.initialize(
-    const InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-    ),
-  );
+  // shown as heads-up notifications. iOS requires DarwinInitializationSettings.
+  if (!kIsWeb) {
+    await _flutterLocalNotificationsPlugin.initialize(
+      const InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        iOS: DarwinInitializationSettings(
+          // Permissions are requested via Firebase Messaging below.
+          requestAlertPermission: false,
+          requestBadgePermission: false,
+          requestSoundPermission: false,
+        ),
+      ),
+    );
+  }
 
   // Request permission on iOS / Android 13+ (Android < 13 is auto-granted).
   await FirebaseMessaging.instance.requestPermission(
@@ -92,28 +118,23 @@ void main() async {
           priority: Priority.high,
           icon: '@mipmap/ic_launcher',
         ),
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
       ),
     );
   });
   // ──────────────────────────────────────────────────────────────────────────
 
-  // Try to load API keys from Firestore (may fail if user not authenticated yet)
-  // Keys will be reloaded after authentication in AuthHandler
-  print('🔑 Attempting to load API keys before authentication...');
-  await ApiConfig.loadApiKeys();
-  print(
-      '🔑 Initial API key load: OpenAI=${ApiConfig.isOpenAiConfigured}, USDA=${ApiConfig.isUsdaConfigured}');
-
-  // Initialize default legal content in Firestore
-  await LegalContentService().initializeDefaultContent();
-
-  // Configure RevenueCat (in-app subscriptions). Safe on web — uses a no-op stub.
-  await RevenueCatService().initialize();
-
   await FlutterFlowTheme.initialize();
 
   final appState = FFAppState(); // Initialize FFAppState
   await appState.initializePersistedState();
+
+  // Non-blocking startup work — must not delay the first frame on release builds.
+  unawaited(_runDeferredStartup());
 
   // Clear old hardcoded tracker data to ensure fresh start
   final today = DateTime.now();
@@ -129,6 +150,28 @@ void main() async {
     create: (context) => appState,
     child: MyApp(),
   ));
+}
+
+/// Firestore / subscription setup that should not block showing the UI.
+Future<void> _runDeferredStartup() async {
+  try {
+    await ApiConfig.loadApiKeys();
+  } catch (e) {
+    // ignore: avoid_print
+    print('ApiConfig.loadApiKeys failed: $e');
+  }
+  try {
+    await LegalContentService().initializeDefaultContent();
+  } catch (e) {
+    // ignore: avoid_print
+    print('LegalContentService.initializeDefaultContent failed: $e');
+  }
+  try {
+    await RevenueCatService().initialize();
+  } catch (e) {
+    // ignore: avoid_print
+    print('RevenueCatService.initialize failed: $e');
+  }
 }
 
 class MyApp extends StatefulWidget {
@@ -178,6 +221,8 @@ class _MyAppState extends State<MyApp> {
             _syncFcmToken(uid);
             // Identify the user to RevenueCat so purchases follow them.
             RevenueCatService().setUserId(uid);
+            // Grant the one-time 7-day premium trial for eligible testers.
+            BackendManager().subscriptionService.ensureFreeTrialIfEligible(uid);
           }
         } else {
           // User logged out — stop the step counter and detach RevenueCat user.
@@ -192,9 +237,26 @@ class _MyAppState extends State<MyApp> {
       if (uid.isNotEmpty) _storeFcmToken(uid, newToken);
     });
     jwtTokenStream.listen((_) {});
+    // Dismiss splash quickly; auth is already primed in main().
     Future.delayed(
-      Duration(milliseconds: 1000),
+      const Duration(milliseconds: 300),
       () => _appStateNotifier.stopShowingSplashImage(),
+    );
+    // Safety net — never leave the user on a blank loading screen.
+    Future.delayed(
+      const Duration(seconds: 4),
+      () {
+        if (_appStateNotifier.showSplashImage) {
+          _appStateNotifier.stopShowingSplashImage();
+        }
+        if (_appStateNotifier.user == null) {
+          _appStateNotifier.update(
+            EatWiseFirebaseUser.fromFirebaseUser(
+              FirebaseAuth.instance.currentUser,
+            ),
+          );
+        }
+      },
     );
   }
 
@@ -244,6 +306,16 @@ class _MyAppState extends State<MyApp> {
       ),
       themeMode: _themeMode,
       routerConfig: _router,
+      // Keep layout stable when the user enables larger system text sizes.
+      builder: (context, child) {
+        final mediaQuery = MediaQuery.of(context);
+        return MediaQuery(
+          data: mediaQuery.copyWith(
+            textScaler: TextScaler.noScaling,
+          ),
+          child: child!,
+        );
+      },
     );
   }
 }

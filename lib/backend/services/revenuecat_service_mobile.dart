@@ -221,6 +221,23 @@ class RevenueCatService {
   /// The same document shape is read by [SubscriptionService].
   Future<void> _syncCustomerInfo(String userId, CustomerInfo info) async {
     try {
+      final existingDoc = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('subscription')
+          .doc('current')
+          .get();
+      if (existingDoc.exists) {
+        final existing = existingDoc.data();
+        if (existing != null && existing['status'] == 'trial') {
+          final trialEnd =
+              (existing['trialEndDate'] as Timestamp?)?.toDate();
+          if (trialEnd != null && DateTime.now().isBefore(trialEnd)) {
+            return;
+          }
+        }
+      }
+
       final tier = _tierFromCustomerInfo(info);
       final isActive = tier != null;
       final entitlement = isActive

@@ -265,7 +265,12 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
         FFRoute(
           name: BillingSubscriptionsWidget.routeName,
           path: BillingSubscriptionsWidget.routePath,
-          builder: (context, params) => BillingSubscriptionsWidget(),
+          builder: (context, params) => const UpgradePlanWidget(),
+        ),
+        FFRoute(
+          name: UpgradePlanWidget.routeName,
+          path: UpgradePlanWidget.routePath,
+          builder: (context, params) => const UpgradePlanWidget(),
         ),
         FFRoute(
           name: PaymentMethodsWidget.routeName,
@@ -704,13 +709,17 @@ class FFRoute {
                 )
               : builder(context, ffParams);
           final child = appStateNotifier.loading
-              ? Center(
-                  child: SizedBox(
-                    width: 35.0,
-                    height: 35.0,
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        FlutterFlowTheme.of(context).primary,
+              ? Scaffold(
+                  backgroundColor:
+                      FlutterFlowTheme.of(context).primaryBackground,
+                  body: Center(
+                    child: SizedBox(
+                      width: 35.0,
+                      height: 35.0,
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          FlutterFlowTheme.of(context).primary,
+                        ),
                       ),
                     ),
                   ),

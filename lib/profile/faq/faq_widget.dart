@@ -104,18 +104,18 @@ class _FaqWidgetState extends State<FaqWidget> {
                 model: _model.faq2Model1,
                 updateCallback: () => safeSetState(() {}),
                 child: Faq2Widget(
-                  question: 'What is Calorio and how does it work?',
+                  question: 'What is EatWise and how does it work?',
                   answer:
-                      'Calorio helps you track your daily calories, set personal health goals, and stay on top of your nutrition. Simply log your meals, and we’ll do the math!',
+                      'EatWise helps you track your daily calories, set personal health goals, and stay on top of your nutrition. Simply log your meals, and we’ll do the math!',
                 ),
               ),
               wrapWithModel(
                 model: _model.faq2Model2,
                 updateCallback: () => safeSetState(() {}),
                 child: Faq2Widget(
-                  question: 'Is Calorio free to use?',
+                  question: 'Is EatWise free to use?',
                   answer:
-                      'Yes! Calorio offers essential features for free. A premium version is available for extra tools like advanced insights and custom plans.',
+                      'Yes! EatWise offers essential features for free. A premium version is available for extra tools like advanced insights and custom plans.',
                 ),
               ),
               wrapWithModel(
@@ -124,7 +124,7 @@ class _FaqWidgetState extends State<FaqWidget> {
                 child: Faq2Widget(
                   question: 'How do I track what I eat?',
                   answer:
-                      'You can search for foods, scan barcodes, or manually enter items to log your meals. Calorio calculates the calories and nutrients for you.',
+                      'You can search for foods, scan barcodes, or manually enter items to log your meals. EatWise calculates the calories and nutrients for you.',
                 ),
               ),
               wrapWithModel(
@@ -152,16 +152,16 @@ class _FaqWidgetState extends State<FaqWidget> {
                 child: Faq2Widget(
                   question: 'How accurate is the calorie tracking?',
                   answer:
-                      'Calorio uses a reliable food database and gives estimated values based on portion size. For best results, measure portions when possible.',
+                      'EatWise uses a reliable food database and gives estimated values based on portion size. For best results, measure portions when possible.',
                 ),
               ),
               wrapWithModel(
                 model: _model.faq2Model7,
                 updateCallback: () => safeSetState(() {}),
                 child: Faq2Widget(
-                  question: 'Does Calorio sync with fitness apps or devices?',
+                  question: 'Does EatWise sync with fitness apps or devices?',
                   answer:
-                      'Yes, Calorio supports syncing with popular apps and devices like Google Fit and Apple Health to better track your activity and adjust your calorie needs.',
+                      'Yes, EatWise supports syncing with popular apps and devices like Google Fit and Apple Health to better track your activity and adjust your calorie needs.',
                 ),
               ),
               wrapWithModel(
@@ -179,7 +179,7 @@ class _FaqWidgetState extends State<FaqWidget> {
                 child: Faq2Widget(
                   question: 'How is my personal data handled?',
                   answer:
-                      'Your privacy is important to us. Calorio does not share your personal data with third parties without your consent. Learn more in our Privacy Policy.',
+                      'Your privacy is important to us. EatWise does not share your personal data with third parties without your consent. Learn more in our Privacy Policy.',
                 ),
               ),
               wrapWithModel(
@@ -189,7 +189,7 @@ class _FaqWidgetState extends State<FaqWidget> {
                   question:
                       'I need help with something else. Where can I contact support?',
                   answer:
-                      'You can reach out to our support team via the Help section in the app or email us directly at support@calorio.app.',
+                      'You can reach out to our support team via the Help section in the app or email us directly at support@eatwise.app.',
                 ),
               ),
             ]

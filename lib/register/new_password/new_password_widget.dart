@@ -124,7 +124,7 @@ class _NewPasswordWidgetState extends State<NewPasswordWidget> {
                       padding:
                           EdgeInsetsDirectional.fromSTEB(16.0, 12.0, 16.0, 0.0),
                       child: Text(
-                        'Choose a strong new password to secure your account and get back to tracking with Calorio.',
+                        'Choose a strong new password to secure your account and get back to tracking with EatWise.',
                         textAlign: TextAlign.center,
                         style:
                             FlutterFlowTheme.of(context).labelMedium.override(

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '/backend/services/permission_service.dart';
@@ -44,12 +46,11 @@ class _InitialRouteWidgetState extends State<InitialRouteWidget> {
   }
 
   Future<void> _checkRouting() async {
-    // Wait for Firebase Auth to fully initialize and load persisted user
-    // Increased delay to ensure auth state is loaded from storage
-    await Future.delayed(const Duration(milliseconds: 1500));
+    // Brief pause so Firebase Auth can restore the persisted session.
+    await Future.delayed(const Duration(milliseconds: 500));
 
-    // Request all permissions now that the Activity is ready
-    await _requestAllPermissions();
+    // Request permissions without blocking routing if dialogs fail/hang.
+    unawaited(_requestAllPermissions());
 
     if (!mounted) return;
 
@@ -70,7 +71,9 @@ class _InitialRouteWidgetState extends State<InitialRouteWidget> {
     } else {
       // User is logged in - check account status first
       final userService = UserService();
-      final userProfile = await userService.getUserProfile(user.uid);
+      final userProfile = await userService
+          .getUserProfile(user.uid)
+          .timeout(const Duration(seconds: 10), onTimeout: () => null);
 
       if (!mounted) return;
 
@@ -99,8 +102,9 @@ class _InitialRouteWidgetState extends State<InitialRouteWidget> {
       }
 
       // User is not suspended/blocked - check onboarding status
-      final hasCompleted =
-          await _onboardingService.hasCompletedOnboarding(user.uid);
+      final hasCompleted = await _onboardingService
+          .hasCompletedOnboarding(user.uid)
+          .timeout(const Duration(seconds: 10), onTimeout: () => false);
 
       if (!mounted) return;
 

@@ -28,7 +28,7 @@
             <string>Editor</string>
             <key>CFBundleURLSchemes</key>
             <array>
-                <string>com.googleusercontent.apps.1020187359282-cmo7c2bs8nlcjlr50kdipmeltb78disq</string>
+                <string>com.googleusercontent.apps.777633941122-iqci9v858n49pd8omoqm5qihke7nh0ok</string>
                 
             </array>
         </dict>
@@ -53,14 +53,15 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+
 	<key>NSCameraUsageDescription</key>
-    <string>In order to take a picture or video, this app requires permission to access the camera.</string>
+	<string>EatWise uses the camera to photograph your food and estimate calories and macros.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-    <string>In order to upload data, this app requires permission to access the photo library.</string>
+	<string>EatWise needs photo library access so you can select food images to log meals.</string>
 	<key>NSMotionUsageDescription</key>
-    <string>This app requires access to your motion and fitness data to automatically track your daily steps.</string>
-	<key>Privacy - Motion Usage Description</key>
-    <string>This app requires access to your motion and fitness data to automatically track your daily steps.</string>
+	<string>EatWise uses motion data to count your daily steps and activity.</string>
 
 
 

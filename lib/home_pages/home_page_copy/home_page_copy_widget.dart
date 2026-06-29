@@ -98,7 +98,7 @@ class _HomePageCopyWidgetState extends State<HomePageCopyWidget>
           backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
           automaticallyImplyLeading: false,
           title: Text(
-            'Calorio',
+            'EatWise',
             style: FlutterFlowTheme.of(context).headlineMedium.override(
                   font: GoogleFonts.inter(
                     fontWeight:

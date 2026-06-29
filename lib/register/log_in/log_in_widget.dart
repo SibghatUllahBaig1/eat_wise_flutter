@@ -110,6 +110,7 @@ class _LogInWidgetState extends State<LogInWidget>
       },
       child: Scaffold(
         key: scaffoldKey,
+        resizeToAvoidBottomInset: true,
         backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
         appBar: AppBar(
           backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
@@ -138,7 +139,12 @@ class _LogInWidgetState extends State<LogInWidget>
         body: Form(
           key: _model.formKey,
           autovalidateMode: AutovalidateMode.disabled,
-          child: Column(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.viewInsetsOf(context).bottom + 24.0,
+            ),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            child: Column(
             mainAxisSize: MainAxisSize.max,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -177,7 +183,7 @@ class _LogInWidgetState extends State<LogInWidget>
                   padding:
                       EdgeInsetsDirectional.fromSTEB(24.0, 12.0, 24.0, 0.0),
                   child: Text(
-                    'Log in to continue your journey with Calorio. Track your meals, monitor your progress, and stay on top of your goals.',
+                    'Log in to continue your journey with EatWise. Track your meals, monitor your progress, and stay on top of your goals.',
                     textAlign: TextAlign.center,
                     style: FlutterFlowTheme.of(context).labelMedium.override(
                           font: GoogleFonts.inter(
@@ -974,6 +980,7 @@ class _LogInWidgetState extends State<LogInWidget>
                 ),
               ),
             ],
+            ),
           ),
         ),
       ),

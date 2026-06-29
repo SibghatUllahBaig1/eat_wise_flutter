@@ -51,6 +51,8 @@ export '/profile/data_analytics/data_analytics_widget.dart'
     show DataAnalyticsWidget;
 export '/profile/billing_subscriptions/billing_subscriptions_widget.dart'
     show BillingSubscriptionsWidget;
+export '/subscription/upgrade_plan/upgrade_plan_widget.dart'
+    show UpgradePlanWidget;
 export '/profile/payment_methods/payment_methods_widget.dart'
     show PaymentMethodsWidget;
 export '/profile/credit_card_page/credit_card_page_widget.dart'

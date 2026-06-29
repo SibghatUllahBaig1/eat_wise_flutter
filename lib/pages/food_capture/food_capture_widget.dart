@@ -803,6 +803,20 @@ class _FoodCaptureWidgetState extends State<FoodCaptureWidget> {
 
                           Navigator.pop(context); // Close loading dialog
 
+                          if (nutritionData == null ||
+                              !_isRecognizedFood(nutritionData)) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(_unrecognizedFoodMessage()),
+                                backgroundColor:
+                                    FlutterFlowTheme.of(context).error,
+                                duration: const Duration(seconds: 5),
+                              ),
+                            );
+                            return;
+                          }
+
                           // Navigate to food details page with nutrition data
                           context.pushNamed(
                             'FoodDetails',
@@ -812,11 +826,13 @@ class _FoodCaptureWidgetState extends State<FoodCaptureWidget> {
                           );
                         } catch (e) {
                           Navigator.pop(context); // Close loading dialog
+                          if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Error analyzing food: $e'),
+                              content: Text(_friendlyAnalysisError(e)),
                               backgroundColor:
                                   FlutterFlowTheme.of(context).error,
+                              duration: const Duration(seconds: 5),
                             ),
                           );
                         }
@@ -852,4 +868,79 @@ class _FoodCaptureWidgetState extends State<FoodCaptureWidget> {
       ),
     );
   }
+}
+
+/// Returns false when the API could not identify a real food item.
+bool _isRecognizedFood(FoodNutritionStruct data) {
+  final name = data.foodName.trim().toLowerCase();
+  if (name.isEmpty) return false;
+
+  const invalidNames = {
+    'unknown',
+    'unidentified',
+    'not identified',
+    'not recognized',
+    'unrecognizable',
+    'n/a',
+    'na',
+    'none',
+    'food item',
+    'food',
+  };
+  if (invalidNames.contains(name)) return false;
+
+  if (data.grams <= 0) return false;
+
+  final carbs = data.macros.carbs.grams;
+  final protein = data.macros.protein.grams;
+  final fat = data.macros.fat.grams;
+  if (data.calories <= 0 && carbs <= 0 && protein <= 0 && fat <= 0) {
+    return false;
+  }
+
+  if (data.hasConfidence() && data.confidence < 0.25) return false;
+
+  return true;
+}
+
+String _unrecognizedFoodMessage() {
+  return 'We couldn\'t identify that food. '
+      'Try describing it more clearly — for example, "grilled chicken breast" '
+      'or "1 cup cooked rice".';
+}
+
+/// Formats analysis errors for display only — does not change analysis logic.
+String _friendlyAnalysisError(Object error) {
+  final raw = error.toString();
+  final lower = raw.toLowerCase();
+
+  final noMatch = RegExp(
+    r"No food found matching:\s*(.+)",
+    caseSensitive: false,
+  ).firstMatch(raw);
+  if (noMatch != null) {
+    final name =
+        noMatch.group(1)?.trim().replaceAll(RegExp(r'[)}\]]+$'), '');
+    if (name != null && name.isNotEmpty) {
+      return 'We couldn\'t find nutrition info for "$name". '
+          'Try a clearer description — for example, "grilled chicken breast" '
+          'or "1 cup cooked rice".';
+    }
+  }
+
+  if (lower.contains('no food found matching')) {
+    return 'We couldn\'t find nutrition info for that food. '
+        'Try a clearer description with the food name and portion size.';
+  }
+  if (lower.contains('timeout') || lower.contains('timed out')) {
+    return 'This is taking longer than usual. Check your connection and try again.';
+  }
+  if (lower.contains('socket') ||
+      lower.contains('network') ||
+      lower.contains('connection')) {
+    return 'Couldn\'t connect. Please check your internet and try again.';
+  }
+
+  return 'We couldn\'t analyze this food. '
+      'Try a clearer photo or a more specific description.';
 }

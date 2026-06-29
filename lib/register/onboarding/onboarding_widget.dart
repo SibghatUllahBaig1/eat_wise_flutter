@@ -643,7 +643,7 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
                             child: Text(
                               valueOrDefault<String>(
                                 _model.goal?.question2,
-                                'How did you find out about Calorio?',
+                                'How did you find out about EatWise?',
                               ),
                               textAlign: TextAlign.start,
                               style: FlutterFlowTheme.of(context)
@@ -2937,7 +2937,7 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
                                   child: Text(
                                     valueOrDefault<String>(
                                       _model.goal?.description11,
-                                      'Success depends on several factors. Of course, willpower and fortitude are important, but a strong plan and reliable support are absolutely necessary. That\'s exactly what Calorio gives you.',
+                                      'Success depends on several factors. Of course, willpower and fortitude are important, but a strong plan and reliable support are absolutely necessary. That\'s exactly what EatWise gives you.',
                                     ),
                                     style: FlutterFlowTheme.of(context)
                                         .labelLarge
@@ -3709,7 +3709,7 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
                                   padding: EdgeInsetsDirectional.fromSTEB(
                                       16.0, 0.0, 16.0, 0.0),
                                   child: Text(
-                                    'It\'s not bad, but with Calorio you\'ve definitely made the right choice. You can...',
+                                    'It\'s not bad, but with EatWise you\'ve definitely made the right choice. You can...',
                                     textAlign: TextAlign.start,
                                     style: FlutterFlowTheme.of(context)
                                         .headlineLarge
@@ -4181,7 +4181,7 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
                                 padding: EdgeInsetsDirectional.fromSTEB(
                                     16.0, 0.0, 16.0, 0.0),
                                 child: Text(
-                                  'Calorio will change everything!',
+                                  'EatWise will change everything!',
                                   textAlign: TextAlign.start,
                                   style: FlutterFlowTheme.of(context)
                                       .headlineLarge
@@ -6008,7 +6008,7 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
                                   child: Text(
                                     valueOrDefault<String>(
                                       _model.goal?.description18,
-                                      'Calorie counting and intermittent fasting together have a great effect. Calorio has a fasting tracker and a multifunctional calorie counter, so it will be much easier to form healthy habits.',
+                                      'Calorie counting and intermittent fasting together have a great effect. EatWise has a fasting tracker and a multifunctional calorie counter, so it will be much easier to form healthy habits.',
                                     ),
                                     style: FlutterFlowTheme.of(context)
                                         .labelLarge
@@ -9097,7 +9097,7 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
                                   padding: EdgeInsetsDirectional.fromSTEB(
                                       16.0, 12.0, 16.0, 0.0),
                                   child: Text(
-                                    'We have helped millions of people lose weight, so we are sure that you will succeed with Calorio. Let\'s start by choosing a goal.\n\nSome people prefer to start with small goals, while others set a long-term goal from the very beginning. We recommend choosing the goal that seems most convenient and motivating!',
+                                    'We have helped millions of people lose weight, so we are sure that you will succeed with EatWise. Let\'s start by choosing a goal.\n\nSome people prefer to start with small goals, while others set a long-term goal from the very beginning. We recommend choosing the goal that seems most convenient and motivating!',
                                     style: FlutterFlowTheme.of(context)
                                         .labelLarge
                                         .override(
@@ -10853,7 +10853,7 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
                             child: Text(
                               valueOrDefault<String>(
                                 _model.goal?.question25,
-                                'How many minutes a day do you plan to use Calorio?',
+                                'How many minutes a day do you plan to use EatWise?',
                               ),
                               textAlign: TextAlign.start,
                               style: FlutterFlowTheme.of(context)

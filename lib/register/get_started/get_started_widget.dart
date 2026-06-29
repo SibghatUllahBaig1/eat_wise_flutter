@@ -49,7 +49,12 @@ class _GetStartedWidgetState extends State<GetStartedWidget> {
       child: Scaffold(
         key: scaffoldKey,
         backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
+        resizeToAvoidBottomInset: true,
         body: SingleChildScrollView(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.viewInsetsOf(context).bottom + 24.0,
+          ),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           child: Column(
             mainAxisSize: MainAxisSize.max,
             children: [
@@ -81,7 +86,7 @@ class _GetStartedWidgetState extends State<GetStartedWidget> {
               Padding(
                 padding: EdgeInsetsDirectional.fromSTEB(24.0, 16.0, 24.0, 0.0),
                 child: Text(
-                  'Sign in or create an account to start tracking your calories, meals, and progress with Calorio. Choose your preferred way to continue.',
+                  'Sign in or create an account to start tracking your calories, meals, and progress with EatWise. Choose your preferred way to continue.',
                   textAlign: TextAlign.center,
                   style: FlutterFlowTheme.of(context).bodyLarge.override(
                         font: GoogleFonts.inter(

@@ -1,16 +1,18 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 
 /// Centralized permission service following App Store / Play Store best practices.
-/// Always shows a rationale dialog BEFORE the system prompt, and handles the
-/// permanently-denied state by directing users to App Settings.
+/// Shows rationale dialogs only where needed; Android-only permissions are skipped on iOS.
 class PermissionService {
   PermissionService._();
   static final PermissionService instance = PermissionService._();
   factory PermissionService() => instance;
+
+  bool get _isAndroid => !kIsWeb && Platform.isAndroid;
 
   // ──────────────────────────────────────────────
   // Public API — startup permissions
@@ -42,8 +44,11 @@ class PermissionService {
     if (allowed) await Permission.notification.request();
   }
 
-  /// Request physical-activity + body-sensor permissions together.
+  /// Request physical-activity + body-sensor permissions (Android only).
+  /// iOS step counting uses Core Motion and does not use these runtime permissions.
   Future<void> requestFitnessPermission(BuildContext context) async {
+    if (!_isAndroid) return;
+
     final actStatus = await Permission.activityRecognition.status;
     final sensorStatus = await Permission.sensors.status;
     if (actStatus.isGranted && sensorStatus.isGranted) return;
@@ -92,14 +97,17 @@ class PermissionService {
       return false;
     }
 
-    final allowed = await _showRationaleDialog(
-      context,
-      icon: Icons.camera_alt_rounded,
-      title: 'Snap Your Meal',
-      description:
-          'EatWise uses the camera to photograph your food and instantly estimate calories and macros using AI.',
-    );
-    if (!allowed) return false;
+    // iOS shows its own system dialog; skip the custom pre-prompt there.
+    if (_isAndroid) {
+      final allowed = await _showRationaleDialog(
+        context,
+        icon: Icons.camera_alt_rounded,
+        title: 'Snap Your Meal',
+        description:
+            'EatWise uses the camera to photograph your food and instantly estimate calories and macros using AI.',
+      );
+      if (!allowed) return false;
+    }
 
     final result = await Permission.camera.request();
     if (result.isPermanentlyDenied && context.mounted) {
@@ -116,12 +124,10 @@ class PermissionService {
 
   /// Request photo library permission. Returns `true` if granted.
   Future<bool> requestPhotoPermission(BuildContext context) async {
-    // iOS 14+ uses `photos`; Android 13+ uses `Permission.photos`.
-    // `permission_handler` maps both correctly.
     final permission =
-        Platform.isAndroid ? Permission.storage : Permission.photos;
+        _isAndroid ? Permission.storage : Permission.photos;
     final status = await permission.status;
-    if (status.isGranted) return true;
+    if (status.isGranted || status.isLimited) return true;
 
     if (status.isPermanentlyDenied) {
       await _showPermanentlyDeniedDialog(
@@ -134,14 +140,16 @@ class PermissionService {
       return false;
     }
 
-    final allowed = await _showRationaleDialog(
-      context,
-      icon: Icons.photo_library_rounded,
-      title: 'Pick from Your Gallery',
-      description:
-          'EatWise needs access to your photo library so you can select existing food photos to log meals quickly.',
-    );
-    if (!allowed) return false;
+    if (_isAndroid) {
+      final allowed = await _showRationaleDialog(
+        context,
+        icon: Icons.photo_library_rounded,
+        title: 'Pick from Your Gallery',
+        description:
+            'EatWise needs access to your photo library so you can select existing food photos to log meals quickly.',
+      );
+      if (!allowed) return false;
+    }
 
     final result = await permission.request();
     if (result.isPermanentlyDenied && context.mounted) {
@@ -153,7 +161,7 @@ class PermissionService {
             'Photo access is blocked. Enable it in Settings to pick images from your gallery.',
       );
     }
-    return result.isGranted;
+    return result.isGranted || result.isLimited;
   }
 
   // ──────────────────────────────────────────────
