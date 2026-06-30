@@ -276,35 +276,27 @@ class _ZMealReminderWidgetState extends State<ZMealReminderWidget> {
     );
   }
 
-  /// Converts 24h integers to a display string like "07:30 AM".
+  /// Converts 24h integers to a display string like "07:30".
   String _formatTime12h(int hour24, int minute) {
-    final ampm = hour24 < 12 ? 'AM' : 'PM';
-    final h = hour24 % 12; // 0 for 12 AM/PM, 1-11 otherwise
-    final hStr = h.toString().padLeft(2, '0');
+    final hStr = hour24.toString().padLeft(2, '0');
     final mStr = minute.toString().padLeft(2, '0');
-    return '$hStr:$mStr $ampm';
+    return '$hStr:$mStr';
   }
 
   /// Shows the custom carousel-based time picker dialog.
   void _showCarouselTimePicker() {
-    // Convert current 24h model values to 12h carousel strings.
-    final h = _model.hour % 12; // 0-11 (0 = 12 on the clock)
-    final String initHour = h.toString().padLeft(2, '0');
+    final String initHour = _model.hour.toString().padLeft(2, '0');
     final String initMin = _model.minute.toString().padLeft(2, '0');
-    final String initAmpm = _model.hour < 12 ? 'AM' : 'PM';
 
-    final hourList = List.generate(12, (i) => i.toString().padLeft(2, '0'));
+    final hourList = List.generate(24, (i) => i.toString().padLeft(2, '0'));
     final minList = List.generate(60, (i) => i.toString().padLeft(2, '0'));
-    const typeList = ['AM', 'PM'];
 
     // Controllers created once; not recreated on StatefulBuilder rebuilds.
     final hourCtrl = CarouselSliderController();
     final minCtrl = CarouselSliderController();
-    final typeCtrl = CarouselSliderController();
 
     String localHour = initHour;
     String localMin = initMin;
-    String localAmpm = initAmpm;
 
     showDialog(
       context: context,
@@ -349,7 +341,7 @@ class _ZMealReminderWidgetState extends State<ZMealReminderWidget> {
                               selectedItem: localHour,
                               controller: hourCtrl,
                               initialPage:
-                                  max(0, min(hourList.indexOf(initHour), 11)),
+                                  max(0, min(hourList.indexOf(initHour), 23)),
                               onChanged: (v) =>
                                   setDialogState(() => localHour = v),
                             ),
@@ -364,17 +356,6 @@ class _ZMealReminderWidgetState extends State<ZMealReminderWidget> {
                                   max(0, min(minList.indexOf(initMin), 59)),
                               onChanged: (v) =>
                                   setDialogState(() => localMin = v),
-                            ),
-                          ),
-                          const SizedBox(width: 24.0),
-                          Expanded(
-                            child: _buildCarouselColumn(
-                              items: typeList,
-                              selectedItem: localAmpm,
-                              controller: typeCtrl,
-                              initialPage: initAmpm == 'AM' ? 0 : 1,
-                              onChanged: (v) =>
-                                  setDialogState(() => localAmpm = v),
                             ),
                           ),
                         ],
@@ -401,10 +382,7 @@ class _ZMealReminderWidgetState extends State<ZMealReminderWidget> {
                           ElevatedButton(
                             onPressed: () async {
                               final nav = Navigator.of(dialogContext);
-                              // Convert 12h carousel back to 24h int.
-                              final int hParsed = int.parse(localHour);
-                              final int hour24 =
-                                  localAmpm == 'AM' ? hParsed : hParsed + 12;
+                              final int hour24 = int.parse(localHour);
                               final int minute = int.parse(localMin);
                               safeSetState(() {
                                 _model.hour = hour24;
