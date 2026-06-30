@@ -164,7 +164,7 @@ class _ZCalendarWidgetState extends State<ZCalendarWidget> {
                       ),
                       Expanded(
                         child: Text(
-                          'Thu',
+                          'Tue',
                           textAlign: TextAlign.center,
                           style:
                               FlutterFlowTheme.of(context).labelSmall.override(

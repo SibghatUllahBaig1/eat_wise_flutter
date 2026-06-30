@@ -1,4 +1,5 @@
 import '/backend/schema/structs/index.dart';
+import '/backend/utils/date_utils.dart';
 import '/backend/backend_manager.dart';
 import '/auth/firebase_auth/auth_util.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -99,18 +100,13 @@ class _ZStepTrackerEditWidgetState extends State<ZStepTrackerEditWidget> {
               child: Builder(
                 builder: (context) {
                   final days = functions
-                      .daysFunction(
-                          'Monday', FFAppState().tracker.currentDate!, 7)
-                      .toList()
-                      .take(30)
+                      .lastDaysWindow(FFAppState().tracker.currentDate!, 7)
                       .toList();
 
-                  return SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: List.generate(days.length, (daysIndex) {
+                  return Row(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: List.generate(days.length, (daysIndex) {
                         final daysItem = days[daysIndex];
                         return InkWell(
                           splashColor: Colors.transparent,
@@ -225,7 +221,6 @@ class _ZStepTrackerEditWidgetState extends State<ZStepTrackerEditWidget> {
                           .divide(SizedBox(width: 3.0))
                           .addToStart(SizedBox(width: 16.0))
                           .addToEnd(SizedBox(width: 16.0)),
-                    ),
                   );
                 },
               ),
@@ -453,22 +448,28 @@ class _ZStepTrackerEditWidgetState extends State<ZStepTrackerEditWidget> {
                           return;
                         }
 
-                        final selectedDate =
-                            FFAppState().tracker.selectedDate ?? DateTime.now();
+                        final selectedDate = normalizeToDate(
+                            FFAppState().tracker.selectedDate ?? DateTime.now());
 
                         try {
-                          // Save to Firestore - assume 10 minutes duration for manual entry
                           await backend.stepTrackerService.addStepEntry(
                             userId: currentUserUid,
                             date: selectedDate,
                             steps: stepValue,
-                            duration: 10, // Default duration
+                            duration: 10,
                           );
 
-                          // Update FFAppState with the new data
+                          final summary =
+                              await backend.stepTrackerService.getStepSummary(
+                            userId: currentUserUid,
+                            date: selectedDate,
+                          );
+                          final totalSteps = summary?['totalSteps'] as int? ??
+                              stepValue;
+
                           final goal = FFAppState().trackerSettings.step.goal;
                           final progress = goal > 0
-                              ? (stepValue / goal).clamp(0.0, 1.0)
+                              ? (totalSteps / goal).clamp(0.0, 1.0)
                               : 0.0;
 
                           FFAppState().updateTrackerStruct(
@@ -476,24 +477,17 @@ class _ZStepTrackerEditWidgetState extends State<ZStepTrackerEditWidget> {
                               ..updateStep(
                                 (steps) {
                                   final existingIndex = steps.indexWhere(
-                                    (s) =>
-                                        s.date != null &&
-                                        s.date!.year == selectedDate.year &&
-                                        s.date!.month == selectedDate.month &&
-                                        s.date!.day == selectedDate.day,
+                                    (s) => isSameCalendarDay(s.date, selectedDate),
+                                  );
+                                  final entry = TrackerValueStruct(
+                                    date: selectedDate,
+                                    value: totalSteps,
+                                    progress: progress,
                                   );
                                   if (existingIndex >= 0) {
-                                    steps[existingIndex] = TrackerValueStruct(
-                                      date: selectedDate,
-                                      value: stepValue,
-                                      progress: progress,
-                                    );
+                                    steps[existingIndex] = entry;
                                   } else {
-                                    steps.add(TrackerValueStruct(
-                                      date: selectedDate,
-                                      value: stepValue,
-                                      progress: progress,
-                                    ));
+                                    steps.add(entry);
                                   }
                                 },
                               ),

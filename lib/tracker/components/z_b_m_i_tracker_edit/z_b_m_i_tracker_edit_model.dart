@@ -10,11 +10,13 @@ import 'package:provider/provider.dart';
 class ZBMITrackerEditModel extends FlutterFlowModel<ZBMITrackerEditWidget> {
   ///  State fields for stateful widgets in this component.
 
-  // State field(s) for TextField widget.
+  // Height (cm or feet).
   FocusNode? textFieldFocusNode1;
   TextEditingController? textController1;
+  FocusNode? heightInchesFocusNode;
+  TextEditingController? heightInchesController;
   String? Function(BuildContext, String?)? textController1Validator;
-  // State field(s) for TextField widget.
+  // Weight.
   FocusNode? textFieldFocusNode2;
   TextEditingController? textController2;
   String? Function(BuildContext, String?)? textController2Validator;
@@ -26,6 +28,8 @@ class ZBMITrackerEditModel extends FlutterFlowModel<ZBMITrackerEditWidget> {
   void dispose() {
     textFieldFocusNode1?.dispose();
     textController1?.dispose();
+    heightInchesFocusNode?.dispose();
+    heightInchesController?.dispose();
 
     textFieldFocusNode2?.dispose();
     textController2?.dispose();

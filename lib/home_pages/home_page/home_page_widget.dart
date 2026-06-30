@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import '/flutter_flow/flutter_flow_animations.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -10,6 +12,9 @@ import '/tracker/components/z_step_tracker/z_step_tracker_widget.dart';
 import '/index.dart';
 import '/backend/backend_manager.dart';
 import '/backend/schema/structs/index.dart';
+import '/backend/services/app_day_service.dart';
+import '/backend/services/pedometer_service.dart';
+import '/backend/utils/date_utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -40,18 +45,26 @@ class _HomePageWidgetState extends State<HomePageWidget>
 
   final animationsMap = <String, AnimationInfo>{};
 
-  /// Load today's step data from Firestore into FFAppState so the home screen
-  /// step card shows the correct count without requiring a visit to the step
-  /// tracker screen first.
-  Future<void> _loadTodaySteps() async {
+  /// Load step data for the selected calendar day (Apple Health on iOS).
+  Future<void> _loadStepsForSelectedDate() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null || uid.isEmpty) return;
 
+    final date = normalizeToDate(
+      FFAppState().tracker.selectedDate ??
+          FFAppState().tracker.currentDate ??
+          DateTime.now(),
+    );
+
     try {
-      final today = DateTime.now();
+      if (Platform.isIOS) {
+        await PedometerService().refreshStepsForDate(uid, date);
+        return;
+      }
+
       final summary = await _backend.stepTrackerService.getStepSummary(
         userId: uid,
-        date: today,
+        date: date,
       );
 
       if (summary == null) return;
@@ -62,26 +75,13 @@ class _HomePageWidgetState extends State<HomePageWidget>
       final progress = summary['progress'] as double? ?? 0.0;
 
       FFAppState().updateTrackerStruct((tracker) {
-        final existingIndex = tracker.step.indexWhere(
-          (e) =>
-              e.date != null &&
-              e.date!.year == today.year &&
-              e.date!.month == today.month &&
-              e.date!.day == today.day,
-        );
-
-        final entry = TrackerValueStruct(
-          date: today,
+        tracker.step.removeWhere((e) => isSameCalendarDay(e.date, date));
+        tracker.step.add(TrackerValueStruct(
+          date: date,
           value: totalSteps,
           progress: progress,
           unit: 'steps',
-        );
-
-        if (existingIndex >= 0) {
-          tracker.step[existingIndex] = entry;
-        } else {
-          tracker.step.add(entry);
-        }
+        ));
       });
 
       if (goal != FFAppState().trackerSettings.step.goal) {
@@ -90,9 +90,7 @@ class _HomePageWidgetState extends State<HomePageWidget>
         });
       }
     } catch (e) {
-      // Non-fatal — the widget will just show 0 until the user opens the
-      // step tracker screen.
-      print('HomePage: failed to load today steps: $e');
+      print('HomePage: failed to load steps for $date: $e');
     }
   }
 
@@ -100,13 +98,13 @@ class _HomePageWidgetState extends State<HomePageWidget>
   void initState() {
     super.initState();
     _model = createModel(context, () => HomePageModel());
+    AppDayService.instance.resetSelectedDateToToday();
 
     // On page load action.
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       FFAppState().NavBar = 0;
       safeSetState(() {});
-      // Pre-load today's step count so the home card is correct immediately.
-      await _loadTodaySteps();
+      await _loadStepsForSelectedDate();
       if (mounted) safeSetState(() {});
     });
 
@@ -131,6 +129,12 @@ class _HomePageWidgetState extends State<HomePageWidget>
         ],
       ),
     });
+  }
+
+  @override
+  void activate() {
+    super.activate();
+    AppDayService.instance.resetSelectedDateToToday();
   }
 
   @override

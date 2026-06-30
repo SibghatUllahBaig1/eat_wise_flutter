@@ -1,6 +1,9 @@
+import '/backend/utils/unit_format_helper.dart';
 import '/auth/firebase_auth/auth_util.dart';
 import '/backend/backend_manager.dart';
 import '/backend/firestore/user_service.dart';
+import '/backend/services/profile_sync_helper.dart';
+import '/backend/services/weight_sync_helper.dart';
 import '/backend/services/calorie_calculator_service.dart';
 import '/backend/services/permission_service.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
@@ -32,6 +35,102 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
   late EditProfileModel _model;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  String? _lastHeightUnit;
+  String? _lastWeightUnit;
+
+  InputDecoration _fieldDecoration(BuildContext context, String hintText) =>
+      InputDecoration(
+        isDense: false,
+        labelStyle: FlutterFlowTheme.of(context).labelLarge.override(
+              font: GoogleFonts.inter(),
+              letterSpacing: 0.0,
+            ),
+        hintText: hintText,
+        hintStyle: FlutterFlowTheme.of(context).labelMedium.override(
+              font: GoogleFonts.inter(),
+              letterSpacing: 0.0,
+            ),
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(
+            color: FlutterFlowTheme.of(context).alternate,
+            width: 1.0,
+          ),
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(
+            color: FlutterFlowTheme.of(context).primary,
+            width: 1.0,
+          ),
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderSide: BorderSide(
+            color: FlutterFlowTheme.of(context).error,
+            width: 1.0,
+          ),
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderSide: BorderSide(
+            color: FlutterFlowTheme.of(context).error,
+            width: 1.0,
+          ),
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        filled: true,
+        fillColor: FlutterFlowTheme.of(context).secondaryBackground,
+        contentPadding:
+            EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 16.0),
+      );
+
+  void _populateHeightWeightFields() {
+    final profile = FFAppState().userProfile;
+    final weightUnit = FFAppState().trackerSettings.weight.weightUnit;
+    final heightUnit = FFAppState().trackerSettings.weight.heightUnit;
+
+    if (UnitFormatHelper.isFt(heightUnit)) {
+      final imperial = UnitFormatHelper.cmToFeetInches(profile.heightCm);
+      _model.heightFeetTextController ??= TextEditingController();
+      _model.heightInchesTextController ??= TextEditingController();
+      _model.heightFeetTextController!.text =
+          profile.heightCm > 0 ? '${imperial.feet}' : '';
+      _model.heightInchesTextController!.text =
+          profile.heightCm > 0 ? '${imperial.inches}' : '';
+      _model.heightTextController?.text = '';
+    } else {
+      _model.heightTextController ??= TextEditingController();
+      _model.heightTextController!.text =
+          UnitFormatHelper.formatHeightCmForInput(profile.heightCm);
+      _model.heightFeetTextController?.text = '';
+      _model.heightInchesTextController?.text = '';
+    }
+
+    _model.weightTextController ??= TextEditingController();
+    final currentWeightKg = WeightSyncHelper.resolveCurrentWeightKg();
+    _model.weightTextController!.text = currentWeightKg > 0
+        ? UnitFormatHelper.formatWeightForInput(currentWeightKg, weightUnit)
+        : '';
+  }
+
+  double? _parseHeightCm() {
+    final heightUnit = FFAppState().trackerSettings.weight.heightUnit;
+    if (UnitFormatHelper.isFt(heightUnit)) {
+      return UnitFormatHelper.parseFeetInchesInput(
+        _model.heightFeetTextController?.text ?? '',
+        _model.heightInchesTextController?.text ?? '',
+      );
+    }
+    return UnitFormatHelper.parseHeightInput(
+      _model.heightTextController?.text ?? '',
+      heightUnit,
+    );
+  }
+
+  double? _parseWeightKg() => UnitFormatHelper.parseWeightInput(
+        _model.weightTextController?.text ?? '',
+        FFAppState().trackerSettings.weight.weightUnit,
+      );
 
   @override
   void initState() {
@@ -55,13 +154,17 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
         text: userProfile.age > 0 ? userProfile.age.toString() : '');
     _model.ageFocusNode ??= FocusNode();
 
-    _model.heightTextController ??= TextEditingController(
-        text: userProfile.heightCm > 0 ? userProfile.heightCm.toString() : '');
+    _model.heightTextController ??= TextEditingController();
     _model.heightFocusNode ??= FocusNode();
-
-    _model.weightTextController ??= TextEditingController(
-        text: userProfile.weightKg > 0 ? userProfile.weightKg.toString() : '');
+    _model.heightFeetTextController ??= TextEditingController();
+    _model.heightFeetFocusNode ??= FocusNode();
+    _model.heightInchesTextController ??= TextEditingController();
+    _model.heightInchesFocusNode ??= FocusNode();
+    _model.weightTextController ??= TextEditingController();
     _model.weightFocusNode ??= FocusNode();
+    _populateHeightWeightFields();
+    _lastHeightUnit = FFAppState().trackerSettings.weight.heightUnit;
+    _lastWeightUnit = FFAppState().trackerSettings.weight.weightUnit;
 
     // Initialize selection fields
     _model.selectedGender =
@@ -70,8 +173,34 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
     _model.selectedActivityLevel =
         userProfile.activityLevel.isNotEmpty ? userProfile.activityLevel : null;
 
-    // Load current photo URL from Firestore
+    // Load profile from Firestore (source of truth)
+    _loadProfileData();
     _loadCurrentPhotoUrl();
+  }
+
+  Future<void> _loadProfileData() async {
+    if (currentUserUid.isEmpty) return;
+    try {
+      final profile =
+          await UserService().getUserProfileData(currentUserUid);
+      if (profile != null && mounted) {
+        ProfileSyncHelper.hydrateFromProfile(profile);
+        setState(() {
+          _model.fullNameTextController?.text = profile.fullName;
+          _model.ageTextController?.text =
+              profile.age > 0 ? profile.age.toString() : '';
+          _populateHeightWeightFields();
+          _model.selectedGender =
+              profile.gender.isNotEmpty ? profile.gender : null;
+          _model.selectedGoal = profile.goal.isNotEmpty ? profile.goal : null;
+          _model.selectedActivityLevel = profile.activityLevel.isNotEmpty
+              ? profile.activityLevel
+              : null;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading profile data: $e');
+    }
   }
 
   Future<void> _loadCurrentPhotoUrl() async {
@@ -185,6 +314,18 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
   @override
   Widget build(BuildContext context) {
     context.watch<FFAppState>();
+
+    final heightUnit = FFAppState().trackerSettings.weight.heightUnit;
+    final weightUnit = FFAppState().trackerSettings.weight.weightUnit;
+    if (_lastHeightUnit != heightUnit || _lastWeightUnit != weightUnit) {
+      _lastHeightUnit = heightUnit;
+      _lastWeightUnit = weightUnit;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _populateHeightWeightFields();
+        setState(() {});
+      });
+    }
 
     return GestureDetector(
       onTap: () {
@@ -723,7 +864,7 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
               Padding(
                 padding: EdgeInsetsDirectional.fromSTEB(16.0, 24.0, 16.0, 0.0),
                 child: Text(
-                  'Height (cm)',
+                  'Height (${UnitFormatHelper.heightUnitLabel(heightUnit)})',
                   textAlign: TextAlign.start,
                   style: FlutterFlowTheme.of(context).labelLarge.override(
                         font: GoogleFonts.inter(),
@@ -733,76 +874,73 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
               ),
               Padding(
                 padding: EdgeInsetsDirectional.fromSTEB(16.0, 10.0, 16.0, 0.0),
-                child: Container(
-                  width: double.infinity,
-                  child: TextFormField(
-                    controller: _model.heightTextController,
-                    focusNode: _model.heightFocusNode,
-                    autofocus: false,
-                    obscureText: false,
-                    decoration: InputDecoration(
-                      isDense: false,
-                      labelStyle:
-                          FlutterFlowTheme.of(context).labelLarge.override(
-                                font: GoogleFonts.inter(),
-                                letterSpacing: 0.0,
+                child: UnitFormatHelper.isFt(heightUnit)
+                    ? Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _model.heightFeetTextController,
+                              focusNode: _model.heightFeetFocusNode,
+                              decoration: _fieldDecoration(
+                                context,
+                                'Feet',
                               ),
-                      hintText: 'Enter your height in cm',
-                      hintStyle:
-                          FlutterFlowTheme.of(context).labelMedium.override(
-                                font: GoogleFonts.inter(),
-                                letterSpacing: 0.0,
+                              style: FlutterFlowTheme.of(context)
+                                  .bodyLarge
+                                  .override(
+                                    font: GoogleFonts.inter(),
+                                    letterSpacing: 0.0,
+                                  ),
+                              keyboardType: TextInputType.number,
+                              cursorColor:
+                                  FlutterFlowTheme.of(context).primaryText,
+                            ),
+                          ),
+                          SizedBox(width: 12.0),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _model.heightInchesTextController,
+                              focusNode: _model.heightInchesFocusNode,
+                              decoration: _fieldDecoration(
+                                context,
+                                'Inches',
                               ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: FlutterFlowTheme.of(context).alternate,
-                          width: 1.0,
+                              style: FlutterFlowTheme.of(context)
+                                  .bodyLarge
+                                  .override(
+                                    font: GoogleFonts.inter(),
+                                    letterSpacing: 0.0,
+                                  ),
+                              keyboardType: TextInputType.number,
+                              cursorColor:
+                                  FlutterFlowTheme.of(context).primaryText,
+                            ),
+                          ),
+                        ],
+                      )
+                    : TextFormField(
+                        controller: _model.heightTextController,
+                        focusNode: _model.heightFocusNode,
+                        decoration: _fieldDecoration(
+                          context,
+                          'Enter your height in cm',
                         ),
-                        borderRadius: BorderRadius.circular(12.0),
+                        style: FlutterFlowTheme.of(context).bodyLarge.override(
+                              font: GoogleFonts.inter(),
+                              letterSpacing: 0.0,
+                            ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        cursorColor:
+                            FlutterFlowTheme.of(context).primaryText,
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: FlutterFlowTheme.of(context).primary,
-                          width: 1.0,
-                        ),
-                        borderRadius: BorderRadius.circular(12.0),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: FlutterFlowTheme.of(context).error,
-                          width: 1.0,
-                        ),
-                        borderRadius: BorderRadius.circular(12.0),
-                      ),
-                      focusedErrorBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: FlutterFlowTheme.of(context).error,
-                          width: 1.0,
-                        ),
-                        borderRadius: BorderRadius.circular(12.0),
-                      ),
-                      filled: true,
-                      fillColor:
-                          FlutterFlowTheme.of(context).secondaryBackground,
-                      contentPadding: EdgeInsetsDirectional.fromSTEB(
-                          16.0, 16.0, 16.0, 16.0),
-                    ),
-                    style: FlutterFlowTheme.of(context).bodyLarge.override(
-                          font: GoogleFonts.inter(),
-                          letterSpacing: 0.0,
-                        ),
-                    keyboardType:
-                        TextInputType.numberWithOptions(decimal: true),
-                    cursorColor: FlutterFlowTheme.of(context).primaryText,
-                  ),
-                ),
               ),
 
               // Weight field
               Padding(
                 padding: EdgeInsetsDirectional.fromSTEB(16.0, 24.0, 16.0, 0.0),
                 child: Text(
-                  'Weight (kg)',
+                  'Weight (${UnitFormatHelper.weightUnitLabel(weightUnit)})',
                   textAlign: TextAlign.start,
                   style: FlutterFlowTheme.of(context).labelLarge.override(
                         font: GoogleFonts.inter(),
@@ -812,68 +950,20 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
               ),
               Padding(
                 padding: EdgeInsetsDirectional.fromSTEB(16.0, 10.0, 16.0, 0.0),
-                child: Container(
-                  width: double.infinity,
-                  child: TextFormField(
-                    controller: _model.weightTextController,
-                    focusNode: _model.weightFocusNode,
-                    autofocus: false,
-                    obscureText: false,
-                    decoration: InputDecoration(
-                      isDense: false,
-                      labelStyle:
-                          FlutterFlowTheme.of(context).labelLarge.override(
-                                font: GoogleFonts.inter(),
-                                letterSpacing: 0.0,
-                              ),
-                      hintText: 'Enter your weight in kg',
-                      hintStyle:
-                          FlutterFlowTheme.of(context).labelMedium.override(
-                                font: GoogleFonts.inter(),
-                                letterSpacing: 0.0,
-                              ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: FlutterFlowTheme.of(context).alternate,
-                          width: 1.0,
-                        ),
-                        borderRadius: BorderRadius.circular(12.0),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: FlutterFlowTheme.of(context).primary,
-                          width: 1.0,
-                        ),
-                        borderRadius: BorderRadius.circular(12.0),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: FlutterFlowTheme.of(context).error,
-                          width: 1.0,
-                        ),
-                        borderRadius: BorderRadius.circular(12.0),
-                      ),
-                      focusedErrorBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: FlutterFlowTheme.of(context).error,
-                          width: 1.0,
-                        ),
-                        borderRadius: BorderRadius.circular(12.0),
-                      ),
-                      filled: true,
-                      fillColor:
-                          FlutterFlowTheme.of(context).secondaryBackground,
-                      contentPadding: EdgeInsetsDirectional.fromSTEB(
-                          16.0, 16.0, 16.0, 16.0),
-                    ),
-                    style: FlutterFlowTheme.of(context).bodyLarge.override(
-                          font: GoogleFonts.inter(),
-                          letterSpacing: 0.0,
-                        ),
-                    keyboardType:
-                        TextInputType.numberWithOptions(decimal: true),
-                    cursorColor: FlutterFlowTheme.of(context).primaryText,
+                child: TextFormField(
+                  controller: _model.weightTextController,
+                  focusNode: _model.weightFocusNode,
+                  decoration: _fieldDecoration(
+                    context,
+                    'Enter your weight in ${UnitFormatHelper.weightUnitLabel(weightUnit)}',
                   ),
+                  style: FlutterFlowTheme.of(context).bodyLarge.override(
+                        font: GoogleFonts.inter(),
+                        letterSpacing: 0.0,
+                      ),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  cursorColor: FlutterFlowTheme.of(context).primaryText,
                 ),
               ),
 
@@ -997,10 +1087,12 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
 
                     // Parse and validate numeric fields
                     final age = int.tryParse(_model.ageTextController.text);
-                    final height =
-                        double.tryParse(_model.heightTextController.text);
-                    final weight =
-                        double.tryParse(_model.weightTextController.text);
+                    final heightUnit =
+                        FFAppState().trackerSettings.weight.heightUnit;
+                    final weightUnit =
+                        FFAppState().trackerSettings.weight.weightUnit;
+                    final height = _parseHeightCm();
+                    final weight = _parseWeightKg();
 
                     if (age == null || age <= 0 || age > 120) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -1022,22 +1114,24 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
                       return;
                     }
 
-                    if (height == null || height <= 0 || height > 300) {
+                    if (!UnitFormatHelper.isValidHeightCm(height)) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content:
-                              Text('Please enter a valid height (1-300 cm)'),
+                          content: Text(
+                              UnitFormatHelper.heightValidationMessage(
+                                  heightUnit)),
                           backgroundColor: FlutterFlowTheme.of(context).error,
                         ),
                       );
                       return;
                     }
 
-                    if (weight == null || weight <= 0 || weight > 500) {
+                    if (!UnitFormatHelper.isValidWeightKg(weight)) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content:
-                              Text('Please enter a valid weight (1-500 kg)'),
+                          content: Text(
+                              UnitFormatHelper.weightValidationMessage(
+                                  weightUnit)),
                           backgroundColor: FlutterFlowTheme.of(context).error,
                         ),
                       );
@@ -1082,8 +1176,8 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
                             CalorieCalculatorService.calculateCalorieGoal(
                           gender: _model.selectedGender!,
                           age: age,
-                          weightKg: weight,
-                          heightCm: height,
+                          weightKg: weight!,
+                          heightCm: height!,
                           activityLevel: _model.selectedActivityLevel!,
                           goal: _model.selectedGoal!,
                         );
@@ -1095,8 +1189,8 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
                               ..email = _model.emailTextController.text
                               ..age = age
                               ..gender = _model.selectedGender!
-                              ..heightCm = height
-                              ..weightKg = weight
+                              ..heightCm = height!
+                              ..weightKg = weight!
                               ..goal = _model.selectedGoal!
                               ..activityLevel = _model.selectedActivityLevel!
                               ..calculatedBMR = result['bmr'] as int
@@ -1106,17 +1200,23 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
 
                         // Save to Firestore
                         final backend = BackendManager();
+                        final savedProfile = FFAppState().userProfile;
                         await backend.userService.saveUserProfileData(
                           userId: user.uid,
-                          profile: FFAppState().userProfile,
+                          profile: savedProfile,
                         );
 
-                        // Sync to Firestore (for display name)
-                        await backend.syncService
-                            .syncUserProfile(userId: user.uid);
+                        ProfileSyncHelper.applyProfileToTrackerState(savedProfile);
+                        await ProfileSyncHelper.seedWeightTrackerFromProfile(
+                          userId: user.uid,
+                          profile: savedProfile,
+                        );
 
-                        // Refresh the current user to update the UI
-                        await currentUser?.refreshUser();
+                        // Update Firebase Auth display name only
+                        if (_model.fullNameTextController.text.isNotEmpty) {
+                          await user.updateDisplayName(
+                              _model.fullNameTextController.text);
+                        }
 
                         if (!mounted) return;
 

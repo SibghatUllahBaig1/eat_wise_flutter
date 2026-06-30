@@ -13,10 +13,12 @@ class TextTextRightWidget extends StatefulWidget {
     super.key,
     required this.text,
     required this.value,
+    this.icon,
   });
 
   final String? text;
   final String? value;
+  final Widget? icon;
 
   @override
   State<TextTextRightWidget> createState() => _TextTextRightWidgetState();
@@ -46,56 +48,67 @@ class _TextTextRightWidgetState extends State<TextTextRightWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final hasIcon = widget.icon != null;
+
     return Padding(
-      padding: EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 12.0, 0.0),
+      padding: EdgeInsetsDirectional.fromSTEB(
+        16.0,
+        hasIcon ? 16.0 : 0.0,
+        12.0,
+        hasIcon ? 16.0 : 0.0,
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.max,
         children: [
-          Padding(
-            padding: EdgeInsetsDirectional.fromSTEB(0.0, 20.0, 0.0, 20.0),
-            child: Text(
-              valueOrDefault<String>(
-                widget!.text,
-                'null',
-              ),
-              style: FlutterFlowTheme.of(context).titleSmall.override(
-                    font: GoogleFonts.inter(
-                      fontWeight:
-                          FlutterFlowTheme.of(context).titleSmall.fontWeight,
-                      fontStyle:
-                          FlutterFlowTheme.of(context).titleSmall.fontStyle,
-                    ),
-                    letterSpacing: 0.0,
-                    fontWeight:
-                        FlutterFlowTheme.of(context).titleSmall.fontWeight,
-                    fontStyle:
-                        FlutterFlowTheme.of(context).titleSmall.fontStyle,
-                  ),
-            ),
-          ),
+          if (hasIcon) widget.icon!,
+          if (hasIcon) SizedBox(width: 16.0),
           Expanded(
             child: Padding(
-              padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 6.0, 0.0),
+              padding: EdgeInsetsDirectional.fromSTEB(
+                0.0,
+                hasIcon ? 0.0 : 20.0,
+                0.0,
+                hasIcon ? 0.0 : 20.0,
+              ),
               child: Text(
                 valueOrDefault<String>(
-                  widget!.value,
+                  widget.text,
                   'null',
                 ),
-                textAlign: TextAlign.end,
-                style: FlutterFlowTheme.of(context).bodyMedium.override(
-                      font: GoogleFonts.inter(
-                        fontWeight:
-                            FlutterFlowTheme.of(context).bodyMedium.fontWeight,
-                        fontStyle:
-                            FlutterFlowTheme.of(context).bodyMedium.fontStyle,
-                      ),
-                      letterSpacing: 0.0,
+                style: (hasIcon
+                        ? FlutterFlowTheme.of(context).bodyLarge
+                        : FlutterFlowTheme.of(context).titleSmall)
+                    .override(
+                  font: GoogleFonts.inter(
+                    fontWeight: hasIcon ? FontWeight.w500 : null,
+                  ),
+                  letterSpacing: 0.0,
+                  fontWeight: hasIcon ? FontWeight.w500 : null,
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 6.0, 0.0),
+            child: Text(
+              valueOrDefault<String>(
+                widget.value,
+                'null',
+              ),
+              textAlign: TextAlign.end,
+              style: FlutterFlowTheme.of(context).bodyMedium.override(
+                    font: GoogleFonts.inter(
                       fontWeight:
                           FlutterFlowTheme.of(context).bodyMedium.fontWeight,
                       fontStyle:
                           FlutterFlowTheme.of(context).bodyMedium.fontStyle,
                     ),
-              ),
+                    letterSpacing: 0.0,
+                    fontWeight:
+                        FlutterFlowTheme.of(context).bodyMedium.fontWeight,
+                    fontStyle:
+                        FlutterFlowTheme.of(context).bodyMedium.fontStyle,
+                  ),
             ),
           ),
           Icon(

@@ -1,5 +1,8 @@
 import 'package:flutter/foundation.dart';
 
+import '/backend/schema/structs/index.dart';
+import '/backend/utils/unit_format_helper.dart';
+
 /// Service for calculating daily calorie goals using the Mifflin-St Jeor formula
 class CalorieCalculatorService {
   /// Activity level multipliers for TDEE calculation
@@ -144,5 +147,27 @@ class CalorieCalculatorService {
       'tdee': tdee.round(),
       'dailyCalories': dailyCalories,
     };
+  }
+
+  /// Calculates calorie goal from canonical profile fields (kg + cm only).
+  static Map<String, dynamic>? calculateFromProfile(UserProfileStruct profile) {
+    if (profile.age <= 0 ||
+        profile.gender.isEmpty ||
+        profile.activityLevel.isEmpty ||
+        profile.goal.isEmpty ||
+        !UnitFormatHelper.isValidHeightCm(profile.heightCm) ||
+        !UnitFormatHelper.isValidWeightKg(profile.weightKg)) {
+      debugPrint('CalorieCalculatorService: invalid profile for calculation');
+      return null;
+    }
+
+    return calculateCalorieGoal(
+      gender: profile.gender,
+      age: profile.age,
+      weightKg: profile.weightKg,
+      heightCm: profile.heightCm,
+      activityLevel: profile.activityLevel,
+      goal: profile.goal,
+    );
   }
 }

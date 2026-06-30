@@ -1,45 +1,37 @@
 import 'dart:async';
+import 'dart:io';
+
 import 'package:pedometer/pedometer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '/app_state.dart';
 import '/backend/firestore/step_tracker_service.dart';
+import '/backend/schema/structs/index.dart';
+import '/backend/services/health_step_service.dart';
+import '/backend/utils/date_utils.dart';
 
-/// Keys used in SharedPreferences for persisting pedometer state.
 const _kBaselineDate = 'pedometer_baseline_date';
 const _kBaselineSteps = 'pedometer_baseline_steps';
 const _kAccumulated = 'pedometer_accumulated_steps';
 const _kLastRaw = 'pedometer_last_raw_steps';
 
-/// Real mobile implementation of the pedometer service.
-///
-/// The hardware step sensor provides a cumulative count since last boot.
-/// This class converts that into "today's steps" by:
-///   1. Saving a baseline (raw count at start of each new day).
-///   2. Detecting reboots (raw < last-known → sensor reset to 0) and
-///      carrying accumulated steps forward.
-///   3. Throttling Firestore writes (at most once per [_syncThrottleSeconds]).
 class PedometerService {
   static final PedometerService _instance = PedometerService._internal();
   factory PedometerService() => _instance;
   PedometerService._internal();
 
   final StepTrackerService _stepTrackerService = StepTrackerService();
+  final HealthStepService _healthSteps = HealthStepService.instance;
 
   StreamSubscription<StepCount>? _stepSub;
+  Timer? _healthPollTimer;
   SharedPreferences? _prefs;
 
   bool _isInitialized = false;
   String? _userId;
-
-  /// Steps counted today, kept in-memory for fast access.
   int _todaySteps = 0;
 
-  /// Throttle: only write to Firestore every N seconds.
   static const int _syncThrottleSeconds = 30;
   DateTime? _lastSync;
-
-  // ─────────────────────────────────────────────────────────────────────
-  // Public API
-  // ─────────────────────────────────────────────────────────────────────
 
   Future<void> initialize() async {
     if (_isInitialized) return;
@@ -51,10 +43,17 @@ class PedometerService {
     if (!_isInitialized) await initialize();
     _userId = userId;
 
-    // Cancel any existing subscription before creating a new one.
     await _stepSub?.cancel();
+    _healthPollTimer?.cancel();
 
-    print('🦶 PedometerService: starting step stream for user $userId');
+    if (Platform.isIOS) {
+      await _healthSteps.ensureAuthorized(requestIfNeeded: false);
+      await refreshTodaySteps(userId);
+      _healthPollTimer = Timer.periodic(
+        const Duration(seconds: 60),
+        (_) => refreshTodaySteps(userId),
+      );
+    }
 
     _stepSub = Pedometer.stepCountStream.listen(
       _onStepCount,
@@ -66,24 +65,77 @@ class PedometerService {
   void stopListening() {
     _stepSub?.cancel();
     _stepSub = null;
+    _healthPollTimer?.cancel();
+    _healthPollTimer = null;
     _userId = null;
   }
 
-  /// Returns the cached in-memory today-step count.
   Future<int> getTodaySteps(String userId) async {
+    if (Platform.isIOS) {
+      final healthSteps = await _healthSteps.getTodayStepCount();
+      if (healthSteps != null) {
+        _todaySteps = healthSteps;
+        _pushStepsToAppState(healthSteps, normalizeToDate(DateTime.now()));
+        return healthSteps;
+      }
+    }
     return _todaySteps;
   }
 
-  /// No-op on mobile; permission is handled by [PermissionService].
-  Future<void> requestPermission() async {}
+  Future<void> refreshTodaySteps(String userId) =>
+      refreshStepsForDate(userId, DateTime.now());
+
+  Future<void> refreshStepsForDate(String userId, DateTime date) async {
+    _userId = userId;
+    final day = normalizeToDate(date);
+
+    if (Platform.isIOS) {
+      final healthSteps = await _healthSteps.getStepCountForDate(day);
+      if (healthSteps != null && healthSteps >= 0) {
+        if (isSameCalendarDay(day, DateTime.now())) {
+          _todaySteps = healthSteps;
+        }
+        _pushStepsToAppState(healthSteps, day);
+        if (healthSteps > 0) {
+          await _syncStepsToFirestore(
+            healthSteps,
+            date: day,
+            force: true,
+          );
+        }
+        return;
+      }
+    }
+
+    if (isSameCalendarDay(day, DateTime.now())) {
+      _pushStepsToAppState(_todaySteps, day);
+    }
+  }
+
+  void onDayChanged() {
+    final uid = _userId;
+    if (uid != null && uid.isNotEmpty) {
+      refreshTodaySteps(uid);
+    }
+  }
+
+  Future<void> requestPermission() async {
+    if (Platform.isIOS) {
+      await _healthSteps.requestPermission();
+    }
+  }
 
   void dispose() => stopListening();
 
-  // ─────────────────────────────────────────────────────────────────────
-  // Internal helpers
-  // ─────────────────────────────────────────────────────────────────────
-
   void _onStepCount(StepCount event) {
+    if (Platform.isIOS) {
+      final uid = _userId;
+      if (uid != null && uid.isNotEmpty) {
+        refreshTodaySteps(uid);
+      }
+      return;
+    }
+
     final rawSteps = event.steps;
     final prefs = _prefs;
     if (prefs == null) return;
@@ -95,62 +147,82 @@ class PedometerService {
     int accumulated;
 
     if (savedDate != todayStr) {
-      // ── New calendar day: reset baseline ──────────────────────────────
       baseline = rawSteps;
       accumulated = 0;
       prefs.setString(_kBaselineDate, todayStr);
       prefs.setInt(_kBaselineSteps, baseline);
       prefs.setInt(_kAccumulated, accumulated);
-      print('🦶 [NEW DAY] date=$todayStr | baseline set to $rawSteps');
     } else {
       baseline = prefs.getInt(_kBaselineSteps) ?? rawSteps;
       accumulated = prefs.getInt(_kAccumulated) ?? 0;
 
       if (rawSteps < baseline) {
-        // ── Phone rebooted: sensor restarted from 0 (or near 0) ─────────
         final lastRaw = prefs.getInt(_kLastRaw) ?? baseline;
         final preReboot = (lastRaw - baseline).clamp(0, 9999999);
         accumulated += preReboot;
         baseline = rawSteps;
         prefs.setInt(_kBaselineSteps, baseline);
         prefs.setInt(_kAccumulated, accumulated);
-        print(
-            '🦶 [REBOOT] rawSteps=$rawSteps < baseline → pre-reboot=$preReboot | new accumulated=$accumulated');
       }
     }
 
     prefs.setInt(_kLastRaw, rawSteps);
-
     _todaySteps = (rawSteps - baseline + accumulated).clamp(0, 9999999);
-
-    print(
-      '🦶 [STEP EVENT] raw=$rawSteps | baseline=$baseline | accumulated=$accumulated | todaySteps=$_todaySteps | time=${event.timeStamp}',
-    );
-
+    _pushStepsToAppState(_todaySteps, normalizeToDate(DateTime.now()));
     _maybeSyncToFirestore();
   }
 
   void _onStepCountError(dynamic error) {
-    // Sensor unavailable on this device or permission denied.
     print('🦶 [ERROR] PedometerService step stream error: $error');
   }
 
+  void _pushStepsToAppState(int steps, DateTime date) {
+    final day = normalizeToDate(date);
+    final goal = FFAppState().trackerSettings.step.goal;
+    final progress = goal > 0 ? (steps / goal).clamp(0.0, 1.0) : 0.0;
+
+    FFAppState().updateTrackerStruct((tracker) {
+      if (isSameCalendarDay(day, DateTime.now())) {
+        tracker.currentDate = day;
+      }
+      tracker.step.removeWhere((s) => isSameCalendarDay(s.date, day));
+      tracker.step.add(TrackerValueStruct(
+        date: day,
+        value: steps,
+        progress: progress,
+      ));
+    });
+  }
+
   Future<void> _maybeSyncToFirestore() async {
+    await _syncStepsToFirestore(
+      _todaySteps,
+      date: normalizeToDate(DateTime.now()),
+      force: false,
+    );
+  }
+
+  Future<void> _syncStepsToFirestore(
+    int steps, {
+    required DateTime date,
+    required bool force,
+  }) async {
     final uid = _userId;
     if (uid == null || uid.isEmpty) return;
 
     final now = DateTime.now();
-    if (_lastSync != null &&
+    if (!force &&
+        _lastSync != null &&
         now.difference(_lastSync!).inSeconds < _syncThrottleSeconds) {
-      return; // throttled
+      return;
     }
     _lastSync = now;
 
     try {
       await _stepTrackerService.upsertPedometerEntry(
         userId: uid,
-        date: now,
-        steps: _todaySteps,
+        date: date,
+        steps: steps,
       );
     } catch (e) {
       print('PedometerService: Firestore sync error: $e');

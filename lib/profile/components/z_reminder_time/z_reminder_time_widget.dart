@@ -41,65 +41,32 @@ class _ZReminderTimeWidgetState extends State<ZReminderTimeWidget> {
 
     // On component load action.
     SchedulerBinding.instance.addPostFrameCallback((_) async {
-      if (widget!.trackerType == 0) {
-        _model.hour = FFAppState().trackerSettings.calorie.reminderTime.hour;
-        _model.min = FFAppState().trackerSettings.calorie.reminderTime.min;
-        _model.type = FFAppState().trackerSettings.calorie.reminderTime.type;
-        _model.typeIndex =
-            FFAppState().trackerSettings.calorie.reminderTime.type == 'AM'
-                ? 0
-                : 1;
-        _model.minIndex = functions.getIndexOfItems(
-            FFAppState().trackerSettings.calorie.reminderTime.min,
-            functions.getMinutes().toList());
-        _model.hourIndex = functions.getIndexOfItems(
-            FFAppState().trackerSettings.calorie.reminderTime.hour,
-            functions.getHours().toList());
-        safeSetState(() {});
-      } else if (widget!.trackerType == 1) {
-        _model.hour = FFAppState().trackerSettings.water.reminderTime.hour;
-        _model.min = FFAppState().trackerSettings.water.reminderTime.min;
-        _model.type = FFAppState().trackerSettings.water.reminderTime.type;
-        _model.typeIndex =
-            FFAppState().trackerSettings.water.reminderTime.type == 'AM'
-                ? 0
-                : 1;
-        _model.minIndex = functions.getIndexOfItems(
-            FFAppState().trackerSettings.water.reminderTime.min,
-            functions.getMinutes().toList());
-        _model.hourIndex = functions.getIndexOfItems(
-            FFAppState().trackerSettings.water.reminderTime.hour,
-            functions.getHours().toList());
-        safeSetState(() {});
-      } else if (widget!.trackerType == 2) {
-        _model.hour = FFAppState().trackerSettings.step.reminderTime.hour;
-        _model.min = FFAppState().trackerSettings.step.reminderTime.min;
-        _model.type = FFAppState().trackerSettings.step.reminderTime.type;
-        _model.typeIndex =
-            FFAppState().trackerSettings.step.reminderTime.type == 'AM' ? 0 : 1;
-        _model.minIndex = functions.getIndexOfItems(
-            FFAppState().trackerSettings.step.reminderTime.min,
-            functions.getMinutes().toList());
-        _model.hourIndex = functions.getIndexOfItems(
-            FFAppState().trackerSettings.step.reminderTime.hour,
-            functions.getHours().toList());
-        safeSetState(() {});
-      } else {
-        _model.hour = FFAppState().trackerSettings.weight.reminderTime.hour;
-        _model.min = FFAppState().trackerSettings.weight.reminderTime.min;
-        _model.type = FFAppState().trackerSettings.weight.reminderTime.type;
-        _model.typeIndex =
-            FFAppState().trackerSettings.weight.reminderTime.type == 'AM'
-                ? 0
-                : 1;
-        _model.minIndex = functions.getIndexOfItems(
-            FFAppState().trackerSettings.weight.reminderTime.min,
-            functions.getMinutes().toList());
-        _model.hourIndex = functions.getIndexOfItems(
-            FFAppState().trackerSettings.weight.reminderTime.hour,
-            functions.getHours().toList());
-        safeSetState(() {});
-      }
+      final reminderTime = () {
+        if (widget!.trackerType == 0) {
+          return FFAppState().trackerSettings.calorie.reminderTime;
+        } else if (widget!.trackerType == 1) {
+          return FFAppState().trackerSettings.water.reminderTime;
+        } else if (widget!.trackerType == 2) {
+          return FFAppState().trackerSettings.step.reminderTime;
+        }
+        return FFAppState().trackerSettings.weight.reminderTime;
+      }();
+
+      _model.hour = functions.normalizeTo24Hour(
+        reminderTime.hour,
+        reminderTime.type,
+      );
+      _model.min = reminderTime.min;
+      _model.type = '';
+      _model.minIndex = functions.getIndexOfItems(
+        _model.min!,
+        functions.getMinutes().toList(),
+      );
+      _model.hourIndex = functions.getIndexOfItems(
+        _model.hour!,
+        functions.getHours().toList(),
+      );
+      safeSetState(() {});
     });
   }
 
@@ -410,87 +377,6 @@ class _ZReminderTimeWidgetState extends State<ZReminderTimeWidget> {
                           },
                         ),
                       ),
-                      Expanded(
-                        child: Builder(
-                          builder: (context) {
-                            final yearsList = _model.typeList.toList();
-
-                            return Container(
-                              width: 120.0,
-                              height: 180.0,
-                              child: CarouselSlider.builder(
-                                itemCount: yearsList.length,
-                                itemBuilder: (context, yearsListIndex, _) {
-                                  final yearsListItem =
-                                      yearsList[yearsListIndex];
-                                  return Align(
-                                    alignment: AlignmentDirectional(0.0, 0.0),
-                                    child: Text(
-                                      valueOrDefault<String>(
-                                        yearsListItem,
-                                        'null',
-                                      ),
-                                      style: FlutterFlowTheme.of(context)
-                                          .titleLarge
-                                          .override(
-                                            font: GoogleFonts.inter(
-                                              fontWeight: FontWeight.normal,
-                                              fontStyle:
-                                                  FlutterFlowTheme.of(context)
-                                                      .titleLarge
-                                                      .fontStyle,
-                                            ),
-                                            color: yearsListItem == _model.type
-                                                ? FlutterFlowTheme.of(context)
-                                                    .primaryText
-                                                : FlutterFlowTheme.of(context)
-                                                    .secondaryText,
-                                            fontSize: 24.0,
-                                            letterSpacing: 0.0,
-                                            fontWeight: FontWeight.normal,
-                                            fontStyle:
-                                                FlutterFlowTheme.of(context)
-                                                    .titleLarge
-                                                    .fontStyle,
-                                            lineHeight: 1.0,
-                                          ),
-                                    ),
-                                  );
-                                },
-                                carouselController:
-                                    _model.carouselTypeController ??=
-                                        CarouselSliderController(),
-                                options: CarouselOptions(
-                                  initialPage: max(
-                                      0,
-                                      min(
-                                          valueOrDefault<int>(
-                                            _model.type == 'AM' ? 0 : 1,
-                                            0,
-                                          ),
-                                          yearsList.length - 1)),
-                                  viewportFraction: 0.21,
-                                  disableCenter: true,
-                                  enlargeCenterPage: true,
-                                  enlargeFactor: 0.25,
-                                  enableInfiniteScroll: false,
-                                  scrollDirection: Axis.vertical,
-                                  autoPlay: false,
-                                  onPageChanged: (index, _) async {
-                                    _model.carouselTypeCurrentIndex = index;
-                                    _model.typeIndex =
-                                        _model.carouselTypeCurrentIndex;
-                                    safeSetState(() {});
-                                    _model.type = yearsList
-                                        .elementAtOrNull(_model.typeIndex!)!;
-                                    safeSetState(() {});
-                                  },
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
                     ].divide(SizedBox(width: 24.0)),
                   ),
                 ),
@@ -547,7 +433,7 @@ class _ZReminderTimeWidgetState extends State<ZReminderTimeWidget> {
                                     ..reminderTime = RimenderTimeStruct(
                                       hour: _model.hour,
                                       min: _model.min,
-                                      type: _model.type,
+                                      type: '',
                                     ),
                                 ),
                             );
@@ -560,7 +446,7 @@ class _ZReminderTimeWidgetState extends State<ZReminderTimeWidget> {
                                     ..reminderTime = RimenderTimeStruct(
                                       hour: _model.hour,
                                       min: _model.min,
-                                      type: _model.type,
+                                      type: '',
                                     ),
                                 ),
                             );
@@ -572,7 +458,7 @@ class _ZReminderTimeWidgetState extends State<ZReminderTimeWidget> {
                                   FFAppState().trackerSettings.water.reminder,
                               hour: _model.hour,
                               minute: _model.min,
-                              ampm: _model.type,
+                              ampm: '24h',
                               repeatDays: FFAppState()
                                   .trackerSettings
                                   .water
@@ -588,7 +474,7 @@ class _ZReminderTimeWidgetState extends State<ZReminderTimeWidget> {
                                     ..reminderTime = RimenderTimeStruct(
                                       hour: _model.hour,
                                       min: _model.min,
-                                      type: _model.type,
+                                      type: '',
                                     ),
                                 ),
                             );
@@ -600,7 +486,7 @@ class _ZReminderTimeWidgetState extends State<ZReminderTimeWidget> {
                                   FFAppState().trackerSettings.step.reminder,
                               hour: _model.hour,
                               minute: _model.min,
-                              ampm: _model.type,
+                              ampm: '24h',
                               repeatDays: FFAppState()
                                   .trackerSettings
                                   .step
@@ -616,7 +502,7 @@ class _ZReminderTimeWidgetState extends State<ZReminderTimeWidget> {
                                     ..reminderTime = RimenderTimeStruct(
                                       hour: _model.hour,
                                       min: _model.min,
-                                      type: _model.type,
+                                      type: '',
                                     ),
                                 ),
                             );
@@ -628,7 +514,7 @@ class _ZReminderTimeWidgetState extends State<ZReminderTimeWidget> {
                                   FFAppState().trackerSettings.weight.reminder,
                               hour: _model.hour,
                               minute: _model.min,
-                              ampm: _model.type,
+                              ampm: '24h',
                               repeatDays: FFAppState()
                                   .trackerSettings
                                   .weight

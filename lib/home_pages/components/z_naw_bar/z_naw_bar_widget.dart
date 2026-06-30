@@ -1,3 +1,4 @@
+import '/backend/services/app_day_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -77,6 +78,7 @@ class _ZNawBarWidgetState extends State<ZNawBarWidget> {
                 hoverColor: Colors.transparent,
                 highlightColor: Colors.transparent,
                 onTap: () async {
+                  AppDayService.instance.resetSelectedDateToToday();
                   if (FFAppState().NavBar != 0) {
                     context.goNamed(
                       HomePageWidget.routeName,

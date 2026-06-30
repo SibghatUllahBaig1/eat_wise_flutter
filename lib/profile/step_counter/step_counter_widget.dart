@@ -496,7 +496,23 @@ class _StepCounterWidgetState extends State<StepCounterWidget> {
                             child: TextTextRightWidget(
                               text: 'Reminder Time',
                               value:
-                                  '${FFAppState().trackerSettings.step.reminderTime.hour}:${FFAppState().trackerSettings.step.reminderTime.min} ${FFAppState().trackerSettings.step.reminderTime.type}',
+                                  functions.formatReminderTimeDisplay(
+                                    FFAppState()
+                                        .trackerSettings
+                                        .step
+                                        .reminderTime
+                                        .hour,
+                                    FFAppState()
+                                        .trackerSettings
+                                        .step
+                                        .reminderTime
+                                        .min,
+                                    FFAppState()
+                                        .trackerSettings
+                                        .step
+                                        .reminderTime
+                                        .type,
+                                  ),
                             ),
                           ),
                         ),

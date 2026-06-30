@@ -1,3 +1,4 @@
+import '/backend/services/water_sync_helper.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -137,40 +138,12 @@ class _ZWaterTrackerWidgetState extends State<ZWaterTrackerWidget> {
                               children: [
                                 Builder(
                                   builder: (context) {
-                                    // Get current date water data (always show today's data on main tracker screen)
                                     final currentDate =
-                                        FFAppState().tracker.currentDate;
-
-                                    debugPrint('=== Water Tracker Widget ===');
-                                    debugPrint('currentDate: $currentDate');
-                                    debugPrint(
-                                        'water list length: ${FFAppState().tracker.water.length}');
-                                    debugPrint(
-                                        'water entries: ${FFAppState().tracker.water.map((w) => 'date=${w.date}, value=${w.value}').join(', ')}');
-
-                                    final currentWater = FFAppState()
-                                        .tracker
-                                        .water
-                                        .where((e) {
-                                          if (e.date == null ||
-                                              currentDate == null) return false;
-                                          final matches = e.date!.year ==
-                                                  currentDate.year &&
-                                              e.date!.month ==
-                                                  currentDate.month &&
-                                              e.date!.day == currentDate.day;
-                                          debugPrint(
-                                              'Checking water entry: date=${e.date}, matches=$matches');
-                                          return matches;
-                                        })
-                                        .toList()
-                                        .firstOrNull;
-
+                                        FFAppState().tracker.currentDate ??
+                                            DateTime.now();
                                     final waterAmount =
-                                        currentWater?.value ?? 0;
-
-                                    debugPrint('currentWater: $currentWater');
-                                    debugPrint('waterAmount: $waterAmount');
+                                        WaterSyncHelper.waterIntakeMlForDate(
+                                            currentDate);
 
                                     return RichText(
                                       textScaler:
@@ -289,31 +262,24 @@ class _ZWaterTrackerWidgetState extends State<ZWaterTrackerWidget> {
                           ),
                           Builder(
                             builder: (context) {
-                              // Get current date water data (always show today's data on main tracker screen)
                               final currentDate =
-                                  FFAppState().tracker.currentDate;
-                              final currentWater = FFAppState()
-                                  .tracker
-                                  .water
-                                  .where((e) {
-                                    if (e.date == null || currentDate == null)
-                                      return false;
-                                    return e.date!.year == currentDate.year &&
-                                        e.date!.month == currentDate.month &&
-                                        e.date!.day == currentDate.day;
-                                  })
-                                  .toList()
-                                  .firstOrNull;
-
-                              final waterAmount = currentWater?.value ?? 0;
+                                  FFAppState().tracker.currentDate ??
+                                      DateTime.now();
+                              final waterAmount =
+                                  WaterSyncHelper.waterIntakeMlForDate(
+                                      currentDate);
                               final waterGoal =
                                   FFAppState().trackerSettings.water.goal;
 
-                              // Calculate progress
                               double progress = 0.0;
                               if (waterGoal > 0) {
-                                progress =
-                                    (waterAmount / waterGoal).clamp(0.0, 1.0);
+                                progress = WaterSyncHelper.waterProgressForDate(
+                                  currentDate,
+                                );
+                                if (progress <= 0) {
+                                  progress =
+                                      (waterAmount / waterGoal).clamp(0.0, 1.0);
+                                }
                               }
 
                               final percentage =

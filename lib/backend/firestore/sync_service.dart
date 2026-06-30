@@ -1,11 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import '/app_state.dart';
 import 'user_service.dart';
 import 'meal_service.dart';
 import 'water_tracker_service.dart';
 import 'weight_tracker_service.dart';
 import 'step_tracker_service.dart';
-import '/app_state.dart';
+import '/backend/services/profile_sync_helper.dart';
+import '/backend/services/weight_sync_helper.dart';
 import '/backend/schema/structs/index.dart';
 
 /// Service for synchronizing data between app state and Firestore
@@ -93,6 +95,20 @@ class SyncService {
     required String userId,
   }) async {
     // Goals sync functionality removed
+  }
+
+  /// Load user profile data (new structure) into app state and trackers.
+  Future<void> loadUserProfileData({
+    required String userId,
+  }) async {
+    try {
+      final profile = await _userService.getUserProfileData(userId);
+      if (profile != null) {
+        ProfileSyncHelper.hydrateFromProfile(profile);
+      }
+    } catch (e) {
+      debugPrint('Failed to load user profile data: $e');
+    }
   }
 
   /// Load user profile from Firestore to app state
@@ -354,6 +370,8 @@ class SyncService {
         }
       });
 
+      WeightSyncHelper.propagateCanonicalCurrentWeight();
+
       // Trigger UI update
       appState.update(() {});
     } catch (e) {
@@ -368,6 +386,7 @@ class SyncService {
     try {
       await Future.wait([
         loadUserProfile(userId: userId),
+        loadUserProfileData(userId: userId),
         loadUserSettings(userId: userId),
       ]);
     } catch (e) {

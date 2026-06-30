@@ -77,19 +77,15 @@ class AuthHandler extends ChangeNotifier {
       final profile = await _backend.userService.getUserProfile(user.uid);
 
       if (profile == null) {
-        // New user - initialize profile
+        // New user - initialize profile shell only; onboarding writes real data.
         await _backend.initializeUserData(
           userId: user.uid,
           displayName: user.displayName,
           email: user.email,
           photoUrl: user.photoURL,
         );
-
-        // Sync app state to Firestore
-        await _backend.syncService.syncUserProfile(userId: user.uid);
-        await _backend.syncService.syncUserSettings(userId: user.uid);
       } else {
-        // Existing user - load data from Firestore
+        // Existing user - load data from Firestore (includes profile/data subcollection).
         await _backend.syncService.fullSync(userId: user.uid);
       }
     } catch (e) {
@@ -486,6 +482,190 @@ class AuthHandler extends ChangeNotifier {
   void clearError() {
     _error = null;
     notifyListeners();
+  }
+
+  /// Link Google account to the current user.
+  Future<bool> linkWithGoogle() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      _error = 'No user signed in';
+      notifyListeners();
+      return false;
+    }
+
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        _isLoading = false;
+        _error = 'Google sign in was cancelled';
+        notifyListeners();
+        return false;
+      }
+
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      await user.linkWithCredential(credential);
+      await user.reload();
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } on FirebaseAuthException catch (e) {
+      _isLoading = false;
+      _error = _getLinkErrorMessage(e);
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _isLoading = false;
+      _error = 'Failed to link Google account';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Link Apple account to the current user.
+  Future<bool> linkWithApple() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      _error = 'No user signed in';
+      notifyListeners();
+      return false;
+    }
+
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      if (defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.macOS) {
+        await user.linkWithProvider(_appleLinkProvider());
+      } else {
+        final credential = await getAppleCredential();
+        await user.linkWithCredential(credential);
+      }
+
+      await user.reload();
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } on FirebaseAuthException catch (e) {
+      _isLoading = false;
+      _error = _getLinkErrorMessage(e);
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _isLoading = false;
+      _error = 'Failed to link Apple account';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Link email/password credentials to the current user.
+  Future<bool> linkWithEmailPassword({
+    required String email,
+    required String password,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      _error = 'No user signed in';
+      notifyListeners();
+      return false;
+    }
+
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final credential = EmailAuthProvider.credential(
+        email: email.trim(),
+        password: password,
+      );
+      await user.linkWithCredential(credential);
+      await user.reload();
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } on FirebaseAuthException catch (e) {
+      _isLoading = false;
+      _error = _getLinkErrorMessage(e);
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _isLoading = false;
+      _error = 'Failed to link email account';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Unlink a provider from the current user.
+  Future<bool> unlinkProvider(String providerId) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      _error = 'No user signed in';
+      notifyListeners();
+      return false;
+    }
+
+    if (user.providerData.length <= 1) {
+      _error = 'Cannot unlink your only sign-in method';
+      notifyListeners();
+      return false;
+    }
+
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await user.unlink(providerId);
+      await user.reload();
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } on FirebaseAuthException catch (e) {
+      _isLoading = false;
+      _error = _getLinkErrorMessage(e);
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _isLoading = false;
+      _error = 'Failed to unlink account';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  AppleAuthProvider _appleLinkProvider() {
+    final provider = AppleAuthProvider();
+    provider.addScope('email');
+    provider.addScope('name');
+    return provider;
+  }
+
+  String _getLinkErrorMessage(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'provider-already-linked':
+        return 'This account is already linked';
+      case 'credential-already-in-use':
+        return 'This credential is already used by another account';
+      case 'email-already-in-use':
+        return 'An account already exists with this email';
+      case 'requires-recent-login':
+        return 'Please sign in again to complete this action';
+      default:
+        return _getErrorMessage(e);
+    }
   }
 
   // Helper methods

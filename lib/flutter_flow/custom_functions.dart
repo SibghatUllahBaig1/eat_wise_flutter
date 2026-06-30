@@ -370,6 +370,19 @@ List<DateTime> daysFunction(
   return dateList;
 }
 
+/// Returns [dayCount] consecutive days ending on [endDate] (inclusive),
+/// oldest first and [endDate] last — e.g. last 7 days with today on the right.
+List<DateTime> lastDaysWindow(DateTime endDate, int dayCount) {
+  final end = DateTime(endDate.year, endDate.month, endDate.day);
+  return List.generate(dayCount, (index) {
+    return DateTime(
+      end.year,
+      end.month,
+      end.day - (dayCount - 1) + index,
+    );
+  });
+}
+
 List<DateTime> getLastWeekDate(DateTime selectedDate) {
   // Вычисляем дату, которая была ровно 7 дней назад
   DateTime weekAgo = selectedDate.subtract(const Duration(days: 7));
@@ -400,8 +413,24 @@ List<DateTime> getNextWeekDate(DateTime selectedDate) {
 }
 
 List<String> getHours() {
-  // Генерируем список часов от 00 до 11
-  return List.generate(12, (index) => index.toString().padLeft(2, '0'));
+  return List.generate(24, (index) => index.toString().padLeft(2, '0'));
+}
+
+String normalizeTo24Hour(String hour, String? ampm) {
+  var h = int.tryParse(hour) ?? 0;
+  if (ampm == 'PM' && h < 12) {
+    h += 12;
+  } else if (ampm == 'AM' && h == 12) {
+    h = 0;
+  }
+  return h.toString().padLeft(2, '0');
+}
+
+String formatReminderTimeDisplay(String hour, String min, [String? type]) {
+  final normalizedHour = (type == 'AM' || type == 'PM')
+      ? normalizeTo24Hour(hour, type)
+      : hour.padLeft(2, '0');
+  return '$normalizedHour:${min.padLeft(2, '0')}';
 }
 
 List<String> getMinutes() {

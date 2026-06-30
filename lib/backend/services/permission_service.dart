@@ -3,7 +3,9 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
+import '/backend/services/health_step_service.dart';
 
 /// Centralized permission service following App Store / Play Store best practices.
 /// Shows rationale dialogs only where needed; Android-only permissions are skipped on iOS.
@@ -45,8 +47,15 @@ class PermissionService {
   }
 
   /// Request physical-activity + body-sensor permissions (Android only).
-  /// iOS step counting uses Core Motion and does not use these runtime permissions.
+  /// On iOS, requests Apple Health step read access.
   Future<void> requestFitnessPermission(BuildContext context) async {
+    if (kIsWeb) return;
+
+    if (Platform.isIOS) {
+      await requestAppleHealthPermission(context);
+      return;
+    }
+
     if (!_isAndroid) return;
 
     final actStatus = await Permission.activityRecognition.status;
@@ -75,6 +84,38 @@ class PermissionService {
       await Permission.activityRecognition.request();
       await Permission.sensors.request();
     }
+  }
+
+  /// Request Apple Health step read access (iOS only).
+  /// Shows the in-app rationale dialog at most once; afterwards only the
+  /// system Health permission sheet is used when needed.
+  Future<void> requestAppleHealthPermission(BuildContext context) async {
+    if (kIsWeb || !Platform.isIOS) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    const key = 'health_rationale_shown_v1';
+    final rationaleShown = prefs.getBool(key) ?? false;
+
+    if (!rationaleShown) {
+      if (!context.mounted) return;
+      final allowed = await _showRationaleDialog(
+        context,
+        icon: Icons.directions_walk_rounded,
+        title: 'Connect Apple Health',
+        description:
+            'EatWise reads your step count from Apple Health so your daily activity matches the Health app. Your data stays on your device.',
+      );
+      await prefs.setBool(key, true);
+      if (!allowed) return;
+    }
+
+    await HealthStepService.instance.ensureAuthorized(requestIfNeeded: true);
+  }
+
+  /// Silent HealthKit auth — no UI. Used after login when rationale was shown.
+  Future<void> ensureAppleHealthAuthorizedSilently() async {
+    if (kIsWeb || !Platform.isIOS) return;
+    await HealthStepService.instance.ensureAuthorized(requestIfNeeded: true);
   }
 
   // ──────────────────────────────────────────────

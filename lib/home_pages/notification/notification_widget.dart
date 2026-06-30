@@ -1,7 +1,6 @@
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import '/index.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -172,29 +171,6 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                   fontStyle: FlutterFlowTheme.of(context).titleLarge.fontStyle,
                 ),
           ),
-          actions: [
-            // Settings gear
-            Align(
-              alignment: const AlignmentDirectional(0.0, 0.0),
-              child: Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(0, 6, 6, 6),
-                child: FlutterFlowIconButton(
-                  borderColor: Colors.transparent,
-                  borderRadius: 24.0,
-                  borderWidth: 1.0,
-                  buttonSize: 44.0,
-                  icon: Icon(
-                    FFIcons.ksettings,
-                    color: FlutterFlowTheme.of(context).primaryText,
-                    size: 24.0,
-                  ),
-                  onPressed: () async {
-                    context.pushNamed(NotificationsSettingsWidget.routeName);
-                  },
-                ),
-              ),
-            ),
-          ],
           centerTitle: true,
           elevation: 0.0,
         ),

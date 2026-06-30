@@ -1,3 +1,6 @@
+import '/auth/firebase_auth/auth_util.dart';
+import '/backend/services/pedometer_service.dart';
+import '/backend/utils/date_utils.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -5,6 +8,7 @@ import 'dart:ui';
 import '/index.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:provider/provider.dart';
@@ -40,9 +44,41 @@ class _ZStepTrackerWidgetState extends State<ZStepTrackerWidget> {
     super.dispose();
   }
 
+  DateTime _displayDate() => normalizeToDate(
+        FFAppState().tracker.selectedDate ??
+            FFAppState().tracker.currentDate ??
+            DateTime.now(),
+      );
+
+  void _ensureStepsLoadedForSelectedDate() {
+    final selectedDate = _displayDate();
+    if (_model.isLoadingSteps) return;
+    if (_model.lastLoadedDate != null &&
+        isSameCalendarDay(_model.lastLoadedDate, selectedDate)) {
+      return;
+    }
+
+    _model.lastLoadedDate = selectedDate;
+    _model.isLoadingSteps = true;
+    SchedulerBinding.instance.addPostFrameCallback((_) async {
+      try {
+        if (currentUserUid.isNotEmpty) {
+          await PedometerService()
+              .refreshStepsForDate(currentUserUid, selectedDate);
+        }
+      } finally {
+        _model.isLoadingSteps = false;
+        if (mounted) setState(() {});
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     context.watch<FFAppState>();
+    _ensureStepsLoadedForSelectedDate();
+
+    final displayDate = _displayDate();
 
     return Padding(
       padding: EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
@@ -180,21 +216,11 @@ class _ZStepTrackerWidgetState extends State<ZStepTrackerWidget> {
                               children: [
                                 Builder(
                                   builder: (context) {
-                                    // Get current date step data (always show today's data on main tracker screen)
-                                    final currentDate =
-                                        FFAppState().tracker.currentDate;
                                     final currentStep = FFAppState()
                                         .tracker
                                         .step
-                                        .where((e) {
-                                          if (e.date == null ||
-                                              currentDate == null) return false;
-                                          return e.date!.year ==
-                                                  currentDate.year &&
-                                              e.date!.month ==
-                                                  currentDate.month &&
-                                              e.date!.day == currentDate.day;
-                                        })
+                                        .where((e) =>
+                                            isSameCalendarDay(e.date, displayDate))
                                         .toList()
                                         .firstOrNull;
 
@@ -317,19 +343,11 @@ class _ZStepTrackerWidgetState extends State<ZStepTrackerWidget> {
                           ),
                           Builder(
                             builder: (context) {
-                              // Get current date step data (always show today's data on main tracker screen)
-                              final currentDate =
-                                  FFAppState().tracker.currentDate;
                               final currentStep = FFAppState()
                                   .tracker
                                   .step
-                                  .where((e) {
-                                    if (e.date == null || currentDate == null)
-                                      return false;
-                                    return e.date!.year == currentDate.year &&
-                                        e.date!.month == currentDate.month &&
-                                        e.date!.day == currentDate.day;
-                                  })
+                                  .where((e) =>
+                                      isSameCalendarDay(e.date, displayDate))
                                   .toList()
                                   .firstOrNull;
 

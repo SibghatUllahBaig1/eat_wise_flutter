@@ -1,4 +1,6 @@
 import '/backend/services/meal_reminder_service.dart';
+import '/backend/services/weight_sync_helper.dart';
+import '/backend/utils/unit_format_helper.dart';
 import '/buttons/text_switch/text_switch_widget.dart';
 import '/buttons/text_text_right/text_text_right_widget.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
@@ -6,11 +8,8 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/profile/components/z_current_weight/z_current_weight_widget.dart';
 import '/profile/components/z_goal_weight/z_goal_weight_widget.dart';
-import '/profile/components/z_height/z_height_widget.dart';
-import '/profile/components/z_height_unit/z_height_unit_widget.dart';
 import '/profile/components/z_reminder_time/z_reminder_time_widget.dart';
 import '/profile/components/z_repeat/z_repeat_widget.dart';
-import '/profile/components/z_weight_unit/z_weight_unit_widget.dart';
 import '/flutter_flow/custom_functions.dart' as functions;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -158,8 +157,13 @@ class _WeightTrackerWidgetState extends State<WeightTrackerWidget> {
                             updateCallback: () => safeSetState(() {}),
                             child: TextTextRightWidget(
                               text: 'Current Weight',
-                              value:
-                                  '${FFAppState().trackerSettings.weight.currentWeight.toString()} kg',
+                              value: UnitFormatHelper.formatWeight(
+                                WeightSyncHelper.resolveCurrentWeightKg(),
+                                FFAppState()
+                                    .trackerSettings
+                                    .weight
+                                    .weightUnit,
+                              ),
                             ),
                           ),
                         ),
@@ -199,135 +203,17 @@ class _WeightTrackerWidgetState extends State<WeightTrackerWidget> {
                             updateCallback: () => safeSetState(() {}),
                             child: TextTextRightWidget(
                               text: 'Goal Weight',
-                              value:
-                                  '${FFAppState().trackerSettings.weight.goalWeight.toString()} kg',
-                            ),
-                          ),
-                        ),
-                      ),
-                      Builder(
-                        builder: (context) => InkWell(
-                          splashColor: Colors.transparent,
-                          focusColor: Colors.transparent,
-                          hoverColor: Colors.transparent,
-                          highlightColor: Colors.transparent,
-                          onTap: () async {
-                            await showDialog(
-                              barrierColor:
-                                  FlutterFlowTheme.of(context).barrier,
-                              context: context,
-                              builder: (dialogContext) {
-                                return Dialog(
-                                  elevation: 0,
-                                  insetPadding: EdgeInsets.zero,
-                                  backgroundColor: Colors.transparent,
-                                  alignment: AlignmentDirectional(0.0, 0.0)
-                                      .resolve(Directionality.of(context)),
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      FocusScope.of(dialogContext).unfocus();
-                                      FocusManager.instance.primaryFocus
-                                          ?.unfocus();
-                                    },
-                                    child: ZHeightWidget(),
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                          child: wrapWithModel(
-                            model: _model.textTextRightModel3,
-                            updateCallback: () => safeSetState(() {}),
-                            child: TextTextRightWidget(
-                              text: 'Height',
-                              value:
-                                  '${FFAppState().trackerSettings.weight.height.toString()} см',
-                            ),
-                          ),
-                        ),
-                      ),
-                      Builder(
-                        builder: (context) => InkWell(
-                          splashColor: Colors.transparent,
-                          focusColor: Colors.transparent,
-                          hoverColor: Colors.transparent,
-                          highlightColor: Colors.transparent,
-                          onTap: () async {
-                            await showDialog(
-                              barrierColor:
-                                  FlutterFlowTheme.of(context).barrier,
-                              context: context,
-                              builder: (dialogContext) {
-                                return Dialog(
-                                  elevation: 0,
-                                  insetPadding: EdgeInsets.zero,
-                                  backgroundColor: Colors.transparent,
-                                  alignment: AlignmentDirectional(0.0, 0.0)
-                                      .resolve(Directionality.of(context)),
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      FocusScope.of(dialogContext).unfocus();
-                                      FocusManager.instance.primaryFocus
-                                          ?.unfocus();
-                                    },
-                                    child: ZWeightUnitWidget(),
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                          child: wrapWithModel(
-                            model: _model.textTextRightModel4,
-                            updateCallback: () => safeSetState(() {}),
-                            child: TextTextRightWidget(
-                              text: 'Weight Units',
-                              value: FFAppState()
-                                  .trackerSettings
-                                  .weight
-                                  .weightUnit,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Builder(
-                        builder: (context) => InkWell(
-                          splashColor: Colors.transparent,
-                          focusColor: Colors.transparent,
-                          hoverColor: Colors.transparent,
-                          highlightColor: Colors.transparent,
-                          onTap: () async {
-                            await showDialog(
-                              barrierColor:
-                                  FlutterFlowTheme.of(context).barrier,
-                              context: context,
-                              builder: (dialogContext) {
-                                return Dialog(
-                                  elevation: 0,
-                                  insetPadding: EdgeInsets.zero,
-                                  backgroundColor: Colors.transparent,
-                                  alignment: AlignmentDirectional(0.0, 0.0)
-                                      .resolve(Directionality.of(context)),
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      FocusScope.of(dialogContext).unfocus();
-                                      FocusManager.instance.primaryFocus
-                                          ?.unfocus();
-                                    },
-                                    child: ZHeightUnitWidget(),
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                          child: wrapWithModel(
-                            model: _model.textTextRightModel5,
-                            updateCallback: () => safeSetState(() {}),
-                            child: TextTextRightWidget(
-                              text: 'Height Units',
-                              value: FFAppState()
-                                  .trackerSettings
-                                  .weight
-                                  .heightUnit,
+                              value: UnitFormatHelper.formatWeight(
+                                FFAppState()
+                                    .trackerSettings
+                                    .weight
+                                    .goalWeight
+                                    .toDouble(),
+                                FFAppState()
+                                    .trackerSettings
+                                    .weight
+                                    .weightUnit,
+                              ),
                             ),
                           ),
                         ),
@@ -699,7 +585,23 @@ class _WeightTrackerWidgetState extends State<WeightTrackerWidget> {
                             child: TextTextRightWidget(
                               text: 'Reminder Time',
                               value:
-                                  '${FFAppState().trackerSettings.weight.reminderTime.hour}:${FFAppState().trackerSettings.weight.reminderTime.min} ${FFAppState().trackerSettings.weight.reminderTime.type}',
+                                  functions.formatReminderTimeDisplay(
+                                    FFAppState()
+                                        .trackerSettings
+                                        .weight
+                                        .reminderTime
+                                        .hour,
+                                    FFAppState()
+                                        .trackerSettings
+                                        .weight
+                                        .reminderTime
+                                        .min,
+                                    FFAppState()
+                                        .trackerSettings
+                                        .weight
+                                        .reminderTime
+                                        .type,
+                                  ),
                             ),
                           ),
                         ),

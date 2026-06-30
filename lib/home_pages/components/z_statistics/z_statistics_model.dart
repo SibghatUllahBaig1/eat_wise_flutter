@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:provider/provider.dart';
 import '/backend/backend_manager.dart';
+import '/backend/services/weight_sync_helper.dart';
 import '/auth/firebase_auth/auth_util.dart';
 
 class ZStatisticsModel extends FlutterFlowModel<ZStatisticsWidget> {
@@ -109,7 +110,7 @@ class ZStatisticsModel extends FlutterFlowModel<ZStatisticsWidget> {
         // ~0.04 kcal/step is the population average for a 70 kg adult walking
         // at a moderate pace; scale linearly by body mass when known so heavier
         // users see proportionally higher burn.
-        final double weightKg = FFAppState().userProfile.weightKg;
+        final double weightKg = WeightSyncHelper.resolveCurrentWeightKg();
         final double kcalPerStep =
             weightKg > 0 ? 0.04 * (weightKg / 70.0) : 0.04;
         localStepCalories = (totalSteps * kcalPerStep).round();

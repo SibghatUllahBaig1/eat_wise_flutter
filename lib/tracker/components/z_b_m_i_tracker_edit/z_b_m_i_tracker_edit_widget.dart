@@ -1,8 +1,10 @@
+import '/backend/utils/unit_format_helper.dart';
+import '/backend/services/weight_sync_helper.dart';
+import '/auth/firebase_auth/auth_util.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/backend/schema/structs/index.dart';
-import '/app_state.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -26,44 +28,162 @@ class _ZBMITrackerEditWidgetState extends State<ZBMITrackerEditWidget> {
     _model.onUpdate();
   }
 
+  void _populateFields() {
+    final heightUnit = FFAppState().trackerSettings.weight.heightUnit;
+    final weightUnit = FFAppState().trackerSettings.weight.weightUnit;
+    var heightCm = FFAppState().trackerSettings.weight.height.toDouble();
+    if (heightCm <= 0 && FFAppState().userProfile.heightCm > 0) {
+      heightCm = FFAppState().userProfile.heightCm;
+    }
+
+    if (UnitFormatHelper.isFt(heightUnit)) {
+      final imperial = UnitFormatHelper.cmToFeetInches(heightCm);
+      _model.textController1!.text =
+          heightCm > 0 ? '${imperial.feet}' : '';
+      _model.heightInchesController!.text =
+          heightCm > 0 ? '${imperial.inches}' : '';
+    } else {
+      _model.textController1!.text =
+          UnitFormatHelper.formatHeightCmForInput(heightCm);
+      _model.heightInchesController!.text = '';
+    }
+
+    final latestKg = WeightSyncHelper.resolveCurrentWeightKg();
+    _model.textController2!.text = latestKg > 0
+        ? UnitFormatHelper.formatWeightForInput(latestKg, weightUnit)
+        : '';
+  }
+
+  double? _parseHeightCm() {
+    final heightUnit = FFAppState().trackerSettings.weight.heightUnit;
+    if (UnitFormatHelper.isFt(heightUnit)) {
+      return UnitFormatHelper.parseFeetInchesInput(
+        _model.textController1?.text ?? '',
+        _model.heightInchesController?.text ?? '',
+      );
+    }
+    return UnitFormatHelper.parseHeightInput(
+      _model.textController1?.text ?? '',
+      heightUnit,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
     _model = createModel(context, () => ZBMITrackerEditModel());
 
-    // Load height from FFAppState (stored in cm)
-    final height = FFAppState().trackerSettings.weight.height;
-    _model.textController1 ??= TextEditingController(
-      text: height > 0 ? height.toString() : '',
-    );
+    _model.textController1 ??= TextEditingController();
     _model.textFieldFocusNode1 ??= FocusNode();
-
-    // Load latest weight from FFAppState
-    final weightList = FFAppState().tracker.weight;
-    final latestWeight = weightList.isNotEmpty
-        ? weightList.reduce((a, b) =>
-            (a.date?.isAfter(b.date ?? DateTime(1970)) ?? false) ? a : b)
-        : null;
-
-    _model.textController2 ??= TextEditingController(
-      text: latestWeight != null &&
-              latestWeight.value != null &&
-              latestWeight.value! > 0
-          ? latestWeight.value.toString()
-          : '',
-    );
+    _model.heightInchesController ??= TextEditingController();
+    _model.heightInchesFocusNode ??= FocusNode();
+    _model.textController2 ??= TextEditingController();
     _model.textFieldFocusNode2 ??= FocusNode();
+    _populateFields();
   }
 
   @override
   void dispose() {
     _model.maybeDispose();
-
     super.dispose();
+  }
+
+  InputDecoration _bmiFieldDecoration(BuildContext context) => InputDecoration(
+        isDense: true,
+        hintText: '0',
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Color(0x00000000), width: 1.0),
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Color(0x00000000), width: 1.0),
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        contentPadding: EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 8.0, 0.0),
+      );
+
+  TextStyle _bmiValueStyle(BuildContext context) =>
+      FlutterFlowTheme.of(context).displayMedium.override(
+            font: GoogleFonts.inter(fontWeight: FontWeight.w600),
+            color: FlutterFlowTheme.of(context).primaryText,
+            letterSpacing: 0.0,
+            fontWeight: FontWeight.w600,
+            lineHeight: 1.0,
+          );
+
+  Widget _unitSuffix(BuildContext context, String label) => Padding(
+        padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 3.0),
+        child: Text(
+          label,
+          style: FlutterFlowTheme.of(context).bodyLarge.override(
+                font: GoogleFonts.inter(),
+                letterSpacing: 0.0,
+              ),
+        ),
+      );
+
+  Widget _buildHeightRow(BuildContext context, String heightUnit) {
+    if (UnitFormatHelper.isFt(heightUnit)) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          SizedBox(
+            width: 80.0,
+            child: TextFormField(
+              controller: _model.textController1,
+              focusNode: _model.textFieldFocusNode1,
+              decoration: _bmiFieldDecoration(context),
+              style: _bmiValueStyle(context),
+              textAlign: TextAlign.end,
+              keyboardType: TextInputType.number,
+            ),
+          ),
+          _unitSuffix(context, 'ft'),
+          SizedBox(width: 8.0),
+          SizedBox(
+            width: 80.0,
+            child: TextFormField(
+              controller: _model.heightInchesController,
+              focusNode: _model.heightInchesFocusNode,
+              decoration: _bmiFieldDecoration(context),
+              style: _bmiValueStyle(context),
+              textAlign: TextAlign.end,
+              keyboardType: TextInputType.number,
+            ),
+          ),
+          _unitSuffix(context, 'in'),
+        ],
+      );
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        SizedBox(
+          width: 145.0,
+          child: TextFormField(
+            controller: _model.textController1,
+            focusNode: _model.textFieldFocusNode1,
+            decoration: _bmiFieldDecoration(context),
+            style: _bmiValueStyle(context),
+            textAlign: TextAlign.end,
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
+          ),
+        ),
+        _unitSuffix(context, 'cm'),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    context.watch<FFAppState>();
+    final heightUnit = FFAppState().trackerSettings.weight.heightUnit;
+    final weightUnit = FFAppState().trackerSettings.weight.weightUnit;
+
     return Align(
       alignment: AlignmentDirectional(0.0, 1.0),
       child: Container(
@@ -86,19 +206,8 @@ class _ZBMITrackerEditWidgetState extends State<ZBMITrackerEditWidget> {
                 'Edit BMI',
                 textAlign: TextAlign.center,
                 style: FlutterFlowTheme.of(context).headlineSmall.override(
-                      font: GoogleFonts.inter(
-                        fontWeight: FlutterFlowTheme.of(context)
-                            .headlineSmall
-                            .fontWeight,
-                        fontStyle: FlutterFlowTheme.of(context)
-                            .headlineSmall
-                            .fontStyle,
-                      ),
+                      font: GoogleFonts.inter(),
                       letterSpacing: 0.0,
-                      fontWeight:
-                          FlutterFlowTheme.of(context).headlineSmall.fontWeight,
-                      fontStyle:
-                          FlutterFlowTheme.of(context).headlineSmall.fontStyle,
                     ),
               ),
             ),
@@ -112,139 +221,7 @@ class _ZBMITrackerEditWidgetState extends State<ZBMITrackerEditWidget> {
                   borderRadius: BorderRadius.circular(12.0),
                 ),
                 alignment: AlignmentDirectional(0.0, 0.0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Container(
-                      width: 145.0,
-                      child: TextFormField(
-                        controller: _model.textController1,
-                        focusNode: _model.textFieldFocusNode1,
-                        autofocus: false,
-                        obscureText: false,
-                        decoration: InputDecoration(
-                          isDense: true,
-                          labelStyle: FlutterFlowTheme.of(context)
-                              .headlineLarge
-                              .override(
-                                font: GoogleFonts.inter(
-                                  fontWeight: FontWeight.w600,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .headlineLarge
-                                      .fontStyle,
-                                ),
-                                color:
-                                    FlutterFlowTheme.of(context).secondaryText,
-                                fontSize: 44.0,
-                                letterSpacing: 0.0,
-                                fontWeight: FontWeight.w600,
-                                fontStyle: FlutterFlowTheme.of(context)
-                                    .headlineLarge
-                                    .fontStyle,
-                                lineHeight: 1.0,
-                              ),
-                          hintText: '0',
-                          hintStyle: FlutterFlowTheme.of(context)
-                              .headlineLarge
-                              .override(
-                                font: GoogleFonts.inter(
-                                  fontWeight: FontWeight.w600,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .headlineLarge
-                                      .fontStyle,
-                                ),
-                                color:
-                                    FlutterFlowTheme.of(context).secondaryText,
-                                fontSize: 44.0,
-                                letterSpacing: 0.0,
-                                fontWeight: FontWeight.w600,
-                                fontStyle: FlutterFlowTheme.of(context)
-                                    .headlineLarge
-                                    .fontStyle,
-                                lineHeight: 1.0,
-                              ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Color(0x00000000),
-                              width: 1.0,
-                            ),
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Color(0x00000000),
-                              width: 1.0,
-                            ),
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Color(0x00000000),
-                              width: 1.0,
-                            ),
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          focusedErrorBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Color(0x00000000),
-                              width: 1.0,
-                            ),
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          contentPadding: EdgeInsetsDirectional.fromSTEB(
-                              16.0, 0.0, 8.0, 0.0),
-                        ),
-                        style: FlutterFlowTheme.of(context)
-                            .displayMedium
-                            .override(
-                              font: GoogleFonts.inter(
-                                fontWeight: FontWeight.w600,
-                                fontStyle: FlutterFlowTheme.of(context)
-                                    .displayMedium
-                                    .fontStyle,
-                              ),
-                              color: FlutterFlowTheme.of(context).primaryText,
-                              letterSpacing: 0.0,
-                              fontWeight: FontWeight.w600,
-                              fontStyle: FlutterFlowTheme.of(context)
-                                  .displayMedium
-                                  .fontStyle,
-                              lineHeight: 1.0,
-                            ),
-                        textAlign: TextAlign.end,
-                        cursorColor: FlutterFlowTheme.of(context).primaryText,
-                        validator: _model.textController1Validator
-                            .asValidator(context),
-                      ),
-                    ),
-                    Padding(
-                      padding:
-                          EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 3.0),
-                      child: Text(
-                        'Cm',
-                        style: FlutterFlowTheme.of(context).bodyLarge.override(
-                              font: GoogleFonts.inter(
-                                fontWeight: FlutterFlowTheme.of(context)
-                                    .bodyLarge
-                                    .fontWeight,
-                                fontStyle: FlutterFlowTheme.of(context)
-                                    .bodyLarge
-                                    .fontStyle,
-                              ),
-                              letterSpacing: 0.0,
-                              fontWeight: FlutterFlowTheme.of(context)
-                                  .bodyLarge
-                                  .fontWeight,
-                              fontStyle: FlutterFlowTheme.of(context)
-                                  .bodyLarge
-                                  .fontStyle,
-                            ),
-                      ),
-                    ),
-                  ],
-                ),
+                child: _buildHeightRow(context, heightUnit),
               ),
             ),
             Padding(
@@ -258,135 +235,24 @@ class _ZBMITrackerEditWidgetState extends State<ZBMITrackerEditWidget> {
                 ),
                 alignment: AlignmentDirectional(0.0, 0.0),
                 child: Row(
-                  mainAxisSize: MainAxisSize.max,
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Container(
+                    SizedBox(
                       width: 120.0,
                       child: TextFormField(
                         controller: _model.textController2,
                         focusNode: _model.textFieldFocusNode2,
-                        autofocus: false,
-                        obscureText: false,
-                        decoration: InputDecoration(
-                          isDense: true,
-                          labelStyle: FlutterFlowTheme.of(context)
-                              .headlineLarge
-                              .override(
-                                font: GoogleFonts.inter(
-                                  fontWeight: FontWeight.w600,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .headlineLarge
-                                      .fontStyle,
-                                ),
-                                color:
-                                    FlutterFlowTheme.of(context).secondaryText,
-                                fontSize: 44.0,
-                                letterSpacing: 0.0,
-                                fontWeight: FontWeight.w600,
-                                fontStyle: FlutterFlowTheme.of(context)
-                                    .headlineLarge
-                                    .fontStyle,
-                                lineHeight: 1.0,
-                              ),
-                          hintText: '0',
-                          hintStyle: FlutterFlowTheme.of(context)
-                              .headlineLarge
-                              .override(
-                                font: GoogleFonts.inter(
-                                  fontWeight: FontWeight.w600,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .headlineLarge
-                                      .fontStyle,
-                                ),
-                                color:
-                                    FlutterFlowTheme.of(context).secondaryText,
-                                fontSize: 44.0,
-                                letterSpacing: 0.0,
-                                fontWeight: FontWeight.w600,
-                                fontStyle: FlutterFlowTheme.of(context)
-                                    .headlineLarge
-                                    .fontStyle,
-                                lineHeight: 1.0,
-                              ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Color(0x00000000),
-                              width: 1.0,
-                            ),
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Color(0x00000000),
-                              width: 1.0,
-                            ),
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Color(0x00000000),
-                              width: 1.0,
-                            ),
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          focusedErrorBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Color(0x00000000),
-                              width: 1.0,
-                            ),
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          contentPadding: EdgeInsetsDirectional.fromSTEB(
-                              16.0, 0.0, 8.0, 0.0),
-                        ),
-                        style: FlutterFlowTheme.of(context)
-                            .displayMedium
-                            .override(
-                              font: GoogleFonts.inter(
-                                fontWeight: FontWeight.w600,
-                                fontStyle: FlutterFlowTheme.of(context)
-                                    .displayMedium
-                                    .fontStyle,
-                              ),
-                              color: FlutterFlowTheme.of(context).primaryText,
-                              letterSpacing: 0.0,
-                              fontWeight: FontWeight.w600,
-                              fontStyle: FlutterFlowTheme.of(context)
-                                  .displayMedium
-                                  .fontStyle,
-                              lineHeight: 1.0,
-                            ),
+                        decoration: _bmiFieldDecoration(context),
+                        style: _bmiValueStyle(context),
                         textAlign: TextAlign.end,
-                        cursorColor: FlutterFlowTheme.of(context).primaryText,
-                        validator: _model.textController2Validator
-                            .asValidator(context),
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
                       ),
                     ),
-                    Padding(
-                      padding:
-                          EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 3.0),
-                      child: Text(
-                        'Kg',
-                        style: FlutterFlowTheme.of(context).bodyLarge.override(
-                              font: GoogleFonts.inter(
-                                fontWeight: FlutterFlowTheme.of(context)
-                                    .bodyLarge
-                                    .fontWeight,
-                                fontStyle: FlutterFlowTheme.of(context)
-                                    .bodyLarge
-                                    .fontStyle,
-                              ),
-                              letterSpacing: 0.0,
-                              fontWeight: FlutterFlowTheme.of(context)
-                                  .bodyLarge
-                                  .fontWeight,
-                              fontStyle: FlutterFlowTheme.of(context)
-                                  .bodyLarge
-                                  .fontStyle,
-                            ),
-                      ),
+                    _unitSuffix(
+                      context,
+                      UnitFormatHelper.weightUnitLabel(weightUnit),
                     ),
                   ],
                 ),
@@ -399,37 +265,14 @@ class _ZBMITrackerEditWidgetState extends State<ZBMITrackerEditWidget> {
                 children: [
                   Expanded(
                     child: FFButtonWidget(
-                      onPressed: () async {
-                        Navigator.pop(context);
-                      },
+                      onPressed: () async => Navigator.pop(context),
                       text: 'Cancel',
                       options: FFButtonOptions(
                         height: 50.0,
-                        padding: EdgeInsetsDirectional.fromSTEB(
-                            24.0, 0.0, 24.0, 0.0),
-                        iconPadding:
-                            EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 0.0),
                         color: FlutterFlowTheme.of(context).divider,
                         textStyle: FlutterFlowTheme.of(context)
                             .titleSmall
-                            .override(
-                              font: GoogleFonts.inter(
-                                fontWeight: FlutterFlowTheme.of(context)
-                                    .titleSmall
-                                    .fontWeight,
-                                fontStyle: FlutterFlowTheme.of(context)
-                                    .titleSmall
-                                    .fontStyle,
-                              ),
-                              color: FlutterFlowTheme.of(context).primaryText,
-                              letterSpacing: 0.0,
-                              fontWeight: FlutterFlowTheme.of(context)
-                                  .titleSmall
-                                  .fontWeight,
-                              fontStyle: FlutterFlowTheme.of(context)
-                                  .titleSmall
-                                  .fontStyle,
-                            ),
+                            .override(font: GoogleFonts.inter()),
                         elevation: 0.0,
                         borderRadius: BorderRadius.circular(12.0),
                       ),
@@ -438,75 +281,51 @@ class _ZBMITrackerEditWidgetState extends State<ZBMITrackerEditWidget> {
                   Expanded(
                     child: FFButtonWidget(
                       onPressed: () async {
-                        // Parse height and weight
-                        final heightText = _model.textController1.text.trim();
-                        final weightText = _model.textController2.text.trim();
+                        final heightCm = _parseHeightCm();
+                        final weightKg = UnitFormatHelper.parseWeightInput(
+                          _model.textController2?.text ?? '',
+                          weightUnit,
+                        );
 
-                        if (heightText.isNotEmpty) {
-                          final height = int.tryParse(heightText);
-                          if (height != null && height > 0) {
-                            // Save height to FFAppState
-                            FFAppState().updateTrackerSettingsStruct(
-                              (e) => e..updateWeight((w) => w..height = height),
+                        if (heightCm != null &&
+                            UnitFormatHelper.isValidHeightCm(heightCm)) {
+                          FFAppState().updateTrackerSettingsStruct(
+                            (e) => e
+                              ..updateWeight(
+                                  (w) => w..height = heightCm.round()),
+                          );
+                        }
+
+                        if (weightKg != null &&
+                            UnitFormatHelper.isValidWeightKg(weightKg)) {
+                          final userId = currentUserUid;
+                          if (userId.isNotEmpty) {
+                            await WeightSyncHelper.recordWeight(
+                              userId: userId,
+                              weightKg: weightKg,
+                              date: DateTime.now(),
                             );
+                          } else {
+                            WeightSyncHelper.upsertLocalWeightEntry(
+                              date: DateTime.now(),
+                              weightKg: weightKg,
+                            );
+                            WeightSyncHelper.propagateCanonicalCurrentWeight();
                           }
                         }
 
-                        if (weightText.isNotEmpty) {
-                          final weight = int.tryParse(weightText);
-                          if (weight != null && weight > 0) {
-                            // Update or add weight entry for today
-                            final today = DateTime.now();
-                            final todayDate =
-                                DateTime(today.year, today.month, today.day);
-
-                            FFAppState().updateTrackerStruct((tracker) {
-                              // Remove existing weight entry for today
-                              tracker.weight.removeWhere((w) {
-                                if (w.date == null) return false;
-                                return w.date!.year == todayDate.year &&
-                                    w.date!.month == todayDate.month &&
-                                    w.date!.day == todayDate.day;
-                              });
-
-                              // Add new weight entry
-                              tracker.weight.add(TrackerValueStruct(
-                                date: todayDate,
-                                value: weight,
-                              ));
-                            });
-                          }
-                        }
-
-                        Navigator.pop(context);
+                        if (context.mounted) Navigator.pop(context);
                       },
                       text: 'Save',
                       options: FFButtonOptions(
                         height: 50.0,
-                        padding: EdgeInsetsDirectional.fromSTEB(
-                            24.0, 0.0, 24.0, 0.0),
-                        iconPadding:
-                            EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 0.0),
                         color: FlutterFlowTheme.of(context).primary,
-                        textStyle:
-                            FlutterFlowTheme.of(context).titleSmall.override(
-                                  font: GoogleFonts.inter(
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .fontStyle,
-                                  ),
-                                  color: FlutterFlowTheme.of(context).info,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FlutterFlowTheme.of(context)
-                                      .titleSmall
-                                      .fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .titleSmall
-                                      .fontStyle,
-                                ),
+                        textStyle: FlutterFlowTheme.of(context)
+                            .titleSmall
+                            .override(
+                              font: GoogleFonts.inter(),
+                              color: FlutterFlowTheme.of(context).info,
+                            ),
                         elevation: 0.0,
                         borderRadius: BorderRadius.circular(12.0),
                       ),

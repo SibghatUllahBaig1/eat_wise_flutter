@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import '/backend/schema/structs/index.dart';
 import '/backend/firestore/step_tracker_service.dart';
+import '/backend/services/pedometer_service.dart';
+import '/backend/utils/date_utils.dart';
 import '/auth/firebase_auth/auth_util.dart';
 import '/flutter_flow/flutter_flow_animations.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
@@ -35,22 +39,36 @@ class ZStepCalendarModel extends FlutterFlowModel<ZStepCalendarWidget> {
   Future<void> loadStepProgressForDates(List<DateTime> dates) async {
     if (!loggedIn) return;
 
+    final goal = FFAppState().trackerSettings.step.goal;
+
     for (final date in dates) {
+      final day = normalizeToDate(date);
       final dateKey =
-          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+          '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
 
       try {
-        final data = await _stepTrackerService.getStepSummary(
-          userId: currentUserUid,
-          date: date,
-        );
+        var totalSteps = 0;
 
-        if (data != null) {
-          final progress = (data['progress'] as num?)?.toDouble() ?? 0.0;
-          stepProgressByDate[dateKey] = progress.clamp(0.0, 1.0);
+        if (Platform.isIOS) {
+          await PedometerService().refreshStepsForDate(currentUserUid, day);
+          totalSteps = FFAppState()
+                  .tracker
+                  .step
+                  .where((e) => isSameCalendarDay(e.date, day))
+                  .firstOrNull
+                  ?.value ??
+              0;
         } else {
-          stepProgressByDate[dateKey] = 0.0;
+          final data = await _stepTrackerService.getStepSummary(
+            userId: currentUserUid,
+            date: day,
+          );
+          totalSteps = data?['totalSteps'] as int? ?? 0;
         }
+
+        stepProgressByDate[dateKey] = goal > 0
+            ? (totalSteps / goal).clamp(0.0, 1.0)
+            : 0.0;
       } catch (e) {
         stepProgressByDate[dateKey] = 0.0;
       }

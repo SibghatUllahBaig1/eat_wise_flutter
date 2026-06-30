@@ -1,5 +1,6 @@
+import '/backend/utils/unit_format_helper.dart';
 import '/backend/schema/structs/index.dart';
-import '/backend/firestore/weight_tracker_service.dart';
+import '/backend/services/weight_sync_helper.dart';
 import '/auth/firebase_auth/auth_util.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -8,8 +9,10 @@ import 'dart:ui';
 import '/flutter_flow/custom_functions.dart' as functions;
 import 'package:easy_debounce/easy_debounce.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:percent_indicator/percent_indicator.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import 'z_weight_tracker_edit_model.dart';
 export 'z_weight_tracker_edit_model.dart';
@@ -36,19 +39,25 @@ class _ZWeightTrackerEditWidgetState extends State<ZWeightTrackerEditWidget> {
     super.initState();
     _model = createModel(context, () => ZWeightTrackerEditModel());
 
-    _model.textController ??= TextEditingController(
-        text: valueOrDefault<String>(
-      FFAppState()
-          .tracker
-          .weight
-          .where((e) => e.date == FFAppState().tracker.selectedDate)
-          .toList()
-          .firstOrNull
-          ?.value
-          ?.toString(),
-      '80',
-    ));
+    _model.textController ??= TextEditingController();
     _model.textFieldFocusNode ??= FocusNode();
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      _populateWeightField();
+      safeSetState(() {});
+    });
+  }
+
+  void _populateWeightField() {
+    final weightUnit = FFAppState().trackerSettings.weight.weightUnit;
+    final selectedDate =
+        FFAppState().tracker.selectedDate ?? DateTime.now();
+    var kg = WeightSyncHelper.weightKgForDate(selectedDate);
+    if (kg == null || kg <= 0) {
+      kg = WeightSyncHelper.resolveCurrentWeightKg();
+    }
+    _model.textController!.text = kg > 0
+        ? UnitFormatHelper.formatWeightForInput(kg, weightUnit)
+        : '';
   }
 
   @override
@@ -61,6 +70,7 @@ class _ZWeightTrackerEditWidgetState extends State<ZWeightTrackerEditWidget> {
   @override
   Widget build(BuildContext context) {
     context.watch<FFAppState>();
+    final weightUnit = FFAppState().trackerSettings.weight.weightUnit;
 
     return Align(
       alignment: AlignmentDirectional(0.0, 1.0),
@@ -110,18 +120,13 @@ class _ZWeightTrackerEditWidgetState extends State<ZWeightTrackerEditWidget> {
               child: Builder(
                 builder: (context) {
                   final days = functions
-                      .daysFunction(
-                          'Monday', FFAppState().tracker.currentDate!, 7)
-                      .toList()
-                      .take(30)
+                      .lastDaysWindow(FFAppState().tracker.currentDate!, 7)
                       .toList();
 
-                  return SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: List.generate(days.length, (daysIndex) {
+                  return Row(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: List.generate(days.length, (daysIndex) {
                         final daysItem = days[daysIndex];
                         return InkWell(
                           splashColor: Colors.transparent,
@@ -129,22 +134,28 @@ class _ZWeightTrackerEditWidgetState extends State<ZWeightTrackerEditWidget> {
                           hoverColor: Colors.transparent,
                           highlightColor: Colors.transparent,
                           onTap: () async {
+                            final normalizedDay =
+                                WeightSyncHelper.normalizeDate(daysItem);
                             FFAppState().updateTrackerStruct(
-                              (e) => e..selectedDate = daysItem,
+                              (e) => e..selectedDate = normalizedDay,
                             );
+                            _populateWeightField();
                             FFAppState().update(() {});
+                            safeSetState(() {});
                           },
                           child: Container(
                             width: (MediaQuery.sizeOf(context).width - 50) / 7,
                             decoration: BoxDecoration(
-                              color: daysItem ==
-                                      FFAppState().tracker.selectedDate
+                              color: WeightSyncHelper.isSameDay(
+                                      daysItem,
+                                      FFAppState().tracker.selectedDate)
                                   ? FlutterFlowTheme.of(context).weightAccent
                                   : FlutterFlowTheme.of(context).transparent,
                               borderRadius: BorderRadius.circular(12.0),
                               border: Border.all(
-                                color: daysItem ==
-                                        FFAppState().tracker.selectedDate
+                                color: WeightSyncHelper.isSameDay(
+                                        daysItem,
+                                        FFAppState().tracker.selectedDate)
                                     ? FlutterFlowTheme.of(context).weightColor
                                     : FlutterFlowTheme.of(context).transparent,
                                 width: 1.5,
@@ -152,12 +163,16 @@ class _ZWeightTrackerEditWidgetState extends State<ZWeightTrackerEditWidget> {
                             ),
                             child: Builder(
                               builder: (context) {
-                                if (FFAppState()
-                                    .tracker
-                                    .weight
-                                    .where((e) => e.date == daysItem)
-                                    .toList()
-                                    .isNotEmpty) {
+                                final hasWeight =
+                                    (WeightSyncHelper.weightKgForDate(
+                                            daysItem) ??
+                                        0) >
+                                    0;
+                                final isSelected = WeightSyncHelper.isSameDay(
+                                  daysItem,
+                                  FFAppState().tracker.selectedDate,
+                                );
+                                if (hasWeight) {
                                   return Padding(
                                     padding: EdgeInsetsDirectional.fromSTEB(
                                         0.0, 8.0, 0.0, 8.0),
@@ -181,10 +196,7 @@ class _ZWeightTrackerEditWidgetState extends State<ZWeightTrackerEditWidget> {
                                                           .bodyMedium
                                                           .fontStyle,
                                                 ),
-                                                color: daysItem ==
-                                                        FFAppState()
-                                                            .tracker
-                                                            .selectedDate
+                                                color: isSelected
                                                     ? FlutterFlowTheme.of(
                                                             context)
                                                         .weightColor
@@ -239,10 +251,7 @@ class _ZWeightTrackerEditWidgetState extends State<ZWeightTrackerEditWidget> {
                                                             .bodySmall
                                                             .fontStyle,
                                                   ),
-                                                  color: daysItem ==
-                                                          FFAppState()
-                                                              .tracker
-                                                              .selectedDate
+                                                  color: isSelected
                                                       ? FlutterFlowTheme.of(
                                                               context)
                                                           .weightColor
@@ -287,10 +296,7 @@ class _ZWeightTrackerEditWidgetState extends State<ZWeightTrackerEditWidget> {
                                                           .bodyMedium
                                                           .fontStyle,
                                                 ),
-                                                color: daysItem ==
-                                                        FFAppState()
-                                                            .tracker
-                                                            .selectedDate
+                                                color: isSelected
                                                     ? FlutterFlowTheme.of(
                                                             context)
                                                         .weightColor
@@ -335,10 +341,7 @@ class _ZWeightTrackerEditWidgetState extends State<ZWeightTrackerEditWidget> {
                                                             .bodySmall
                                                             .fontStyle,
                                                   ),
-                                                  color: daysItem ==
-                                                          FFAppState()
-                                                              .tracker
-                                                              .selectedDate
+                                                  color: isSelected
                                                       ? FlutterFlowTheme.of(
                                                               context)
                                                           .weightColor
@@ -368,7 +371,6 @@ class _ZWeightTrackerEditWidgetState extends State<ZWeightTrackerEditWidget> {
                           .divide(SizedBox(width: 3.0))
                           .addToStart(SizedBox(width: 16.0))
                           .addToEnd(SizedBox(width: 16.0)),
-                    ),
                   );
                 },
               ),
@@ -400,6 +402,14 @@ class _ZWeightTrackerEditWidgetState extends State<ZWeightTrackerEditWidget> {
                         ),
                         autofocus: false,
                         obscureText: false,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d*\.?\d*'),
+                          ),
+                        ],
                         decoration: InputDecoration(
                           isDense: true,
                           labelStyle: FlutterFlowTheme.of(context)
@@ -499,7 +509,7 @@ class _ZWeightTrackerEditWidgetState extends State<ZWeightTrackerEditWidget> {
                       padding:
                           EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 3.0),
                       child: Text(
-                        'kg',
+                        UnitFormatHelper.weightUnitLabel(weightUnit),
                         style: FlutterFlowTheme.of(context).bodyLarge.override(
                               font: GoogleFonts.inter(
                                 fontWeight: FlutterFlowTheme.of(context)
@@ -582,17 +592,27 @@ class _ZWeightTrackerEditWidgetState extends State<ZWeightTrackerEditWidget> {
                           return;
                         }
 
-                        final weight = double.tryParse(weightText);
-                        if (weight == null || weight <= 0) {
+                        final weightKg = UnitFormatHelper.parseWeightInput(
+                          weightText,
+                          weightUnit,
+                        );
+                        if (weightKg == null ||
+                            !UnitFormatHelper.isValidWeightKg(weightKg)) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Please enter a valid weight'),
+                              content: Text(
+                                  UnitFormatHelper.weightValidationMessage(
+                                      weightUnit)),
                               backgroundColor:
                                   FlutterFlowTheme.of(context).error,
                             ),
                           );
                           return;
                         }
+
+                        final weight = weightKg;
+                        final selectedDate =
+                            FFAppState().tracker.selectedDate ?? DateTime.now();
 
                         // Get user ID
                         final userId = currentUserUid;
@@ -607,68 +627,13 @@ class _ZWeightTrackerEditWidgetState extends State<ZWeightTrackerEditWidget> {
                           return;
                         }
 
-                        // Get start and goal weights
-                        final weightList = FFAppState().tracker.weight;
-
-                        // Get oldest weight as starting weight
-                        final startWeight = weightList.isNotEmpty
-                            ? weightList
-                                .reduce((a, b) => (a.date?.isBefore(
-                                            b.date ?? DateTime.now()) ??
-                                        false)
-                                    ? a
-                                    : b)
-                                .value
-                                ?.toDouble()
-                            : null;
-
-                        // Get goal weight from settings
-                        final goalWeight = FFAppState()
-                            .trackerSettings
-                            .weight
-                            .goalWeight
-                            .toDouble();
-
-                        // Save to Firestore
+                        // Save and sync weight everywhere
                         try {
-                          final service = WeightTrackerService();
-                          await service.addOrUpdateWeight(
+                          await WeightSyncHelper.recordWeight(
                             userId: userId,
-                            date: FFAppState().tracker.selectedDate ??
-                                DateTime.now(),
-                            weight: weight,
-                            startWeight: startWeight,
-                            goalWeight: goalWeight,
+                            weightKg: weight,
+                            date: WeightSyncHelper.normalizeDate(selectedDate),
                           );
-
-                          // Update local state
-                          FFAppState().updateTrackerStruct((e) => e
-                            ..updateWeight((weightList) {
-                              // Find if entry exists for selected date
-                              final selectedDate =
-                                  FFAppState().tracker.selectedDate;
-                              final existingIndex = weightList.indexWhere(
-                                (w) => w.date == selectedDate,
-                              );
-
-                              final newEntry = TrackerValueStruct(
-                                date: selectedDate,
-                                value: weight.toInt(),
-                                unit: 'kg',
-                                progress:
-                                    startWeight != null && goalWeight != null
-                                        ? ((weight - startWeight) /
-                                                (goalWeight - startWeight))
-                                            .clamp(0.0, 1.0)
-                                        : 0.0,
-                              );
-
-                              if (existingIndex >= 0) {
-                                weightList[existingIndex] = newEntry;
-                              } else {
-                                weightList.add(newEntry);
-                              }
-                            }));
                           FFAppState().update(() {});
 
                           if (context.mounted) {

@@ -62,6 +62,10 @@
 	<string>EatWise needs photo library access so you can select food images to log meals.</string>
 	<key>NSMotionUsageDescription</key>
 	<string>EatWise uses motion data to count your daily steps and activity.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>EatWise reads your step count from Apple Health to show accurate daily activity.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>EatWise may write step data to Apple Health to keep your activity in sync.</string>
 
 
 

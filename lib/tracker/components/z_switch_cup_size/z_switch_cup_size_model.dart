@@ -8,12 +8,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '/backend/firestore/water_tracker_service.dart';
+import '/backend/services/water_sync_helper.dart';
 import '/auth/firebase_auth/auth_util.dart';
 
 class ZSwitchCupSizeModel extends FlutterFlowModel<ZSwitchCupSizeWidget> {
   ///  Local state fields for this component.
 
-  int? drinkAmount = 200;
+  int? drinkAmount = 100;
   String? selectedDrinkType;
   String? selectedDrinkIcon;
   bool isLoading = false;
@@ -36,9 +37,14 @@ class ZSwitchCupSizeModel extends FlutterFlowModel<ZSwitchCupSizeWidget> {
       await _waterTrackerService.addDrinkEntry(
         userId: currentUserUid,
         date: selectedDate,
-        amount: drinkAmount ?? 200,
+        amount: drinkAmount ?? 100,
         drinkType: selectedDrinkType!,
         drinkIcon: selectedDrinkIcon!,
+      );
+
+      await WaterSyncHelper.syncWaterForDate(
+        userId: currentUserUid,
+        date: selectedDate,
       );
 
       if (context.mounted) {

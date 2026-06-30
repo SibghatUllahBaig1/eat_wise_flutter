@@ -1,3 +1,4 @@
+import 'dart:io';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -7,6 +8,7 @@ import '/tracker/components/z_step_history_list/z_step_history_list_widget.dart'
 import '/tracker/components/z_step_tracker_edit/z_step_tracker_edit_widget.dart';
 import 'dart:ui';
 import '/custom_code/widgets/index.dart' as custom_widgets;
+import '/backend/utils/date_utils.dart';
 import '/index.dart';
 import '/backend/backend_manager.dart';
 import '/backend/schema/structs/index.dart';
@@ -44,11 +46,14 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
     super.initState();
     _model = createModel(context, () => TrackerStepModel());
 
-    // Request activity-recognition permission, then (re)start the pedometer.
     SchedulerBinding.instance.addPostFrameCallback((_) async {
-      await PermissionService.instance.requestFitnessPermission(context);
+      // Rationale dialog shows at most once; always refresh steps after.
+      await PermissionService.instance.requestAppleHealthPermission(context);
       if (currentUserUid.isNotEmpty) {
-        await PedometerService().startListening(currentUserUid);
+        final selectedDate =
+            FFAppState().tracker.selectedDate ?? DateTime.now();
+        await PedometerService()
+            .refreshStepsForDate(currentUserUid, selectedDate);
       }
     });
   }
@@ -60,12 +65,16 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
     print('🦶 [RESYNC] Manual resync triggered by user');
 
     try {
-      // Restart the pedometer stream
+      // Restart HealthKit sync and pull fresh data for the selected day.
       if (currentUserUid.isNotEmpty) {
-        await PedometerService().startListening(currentUserUid);
+        await PermissionService.instance.ensureAppleHealthAuthorizedSilently();
+        final selectedDate =
+            FFAppState().tracker.selectedDate ?? DateTime.now();
+        await PedometerService()
+            .refreshStepsForDate(currentUserUid, selectedDate);
       }
 
-      // Reload step data from Firestore
+      // Reload step entries from Firestore (totals come from Health on iOS).
       await _loadStepData();
 
       if (mounted) {
@@ -140,53 +149,63 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
 
     try {
       final selectedDate = FFAppState().tracker.selectedDate ?? DateTime.now();
+      final normalizedDate = normalizeToDate(selectedDate);
+
+      // iOS: Apple Health is the authoritative source — read before Firestore.
+      if (Platform.isIOS && currentUserUid.isNotEmpty) {
+        await PedometerService()
+            .refreshStepsForDate(currentUserUid, normalizedDate);
+      }
+
+      final healthSteps = FFAppState()
+              .tracker
+              .step
+              .where((e) => isSameCalendarDay(e.date, normalizedDate))
+              .firstOrNull
+              ?.value ??
+          0;
 
       // Get step summary from Firestore
       final summary = await backend.stepTrackerService.getStepSummary(
         userId: currentUserUid,
-        date: selectedDate,
+        date: normalizedDate,
       );
 
       final entries = await backend.stepTrackerService.getStepsForDate(
         userId: currentUserUid,
-        date: selectedDate,
+        date: normalizedDate,
       );
 
-      if (summary != null) {
-        // Update FFAppState with real data
-        final totalSteps = summary['totalSteps'] as int? ?? 0;
-        final goal =
-            summary['goal'] as int? ?? FFAppState().trackerSettings.step.goal;
-        final progress = summary['progress'] as double? ?? 0.0;
+      final filteredEntries = entries.where((entry) {
+        final steps = entry['steps'] as int? ?? 0;
+        final source = entry['source'] as String? ?? '';
+        if (steps <= 0 && source == 'pedometer') return false;
+        return steps > 0;
+      }).toList();
 
-        // Update the tracker state
+      final firestoreSteps = summary?['totalSteps'] as int? ?? 0;
+      final totalSteps = Platform.isIOS
+          ? (healthSteps > firestoreSteps ? healthSteps : firestoreSteps)
+          : firestoreSteps;
+
+      if (summary != null || totalSteps > 0 || healthSteps > 0) {
+        final goal = summary?['goal'] as int? ??
+            FFAppState().trackerSettings.step.goal;
+        final progress =
+            goal > 0 ? (totalSteps / goal).clamp(0.0, 1.0) : 0.0;
+
         FFAppState().updateTrackerStruct((tracker) {
-          // Find existing entry for this date or create new one
-          final existingIndex = tracker.step.indexWhere(
-            (e) =>
-                e.date != null &&
-                e.date!.year == selectedDate.year &&
-                e.date!.month == selectedDate.month &&
-                e.date!.day == selectedDate.day,
+          tracker.step.removeWhere(
+            (e) => isSameCalendarDay(e.date, normalizedDate),
           );
-
-          final trackerValue = TrackerValueStruct(
-            date: selectedDate,
+          tracker.step.add(TrackerValueStruct(
+            date: normalizedDate,
             value: totalSteps,
             progress: progress,
             unit: 'steps',
-          );
-
-          if (existingIndex >= 0) {
-            // Update existing entry
-            tracker.step[existingIndex] = trackerValue;
-          } else {
-            // Add new entry
-            tracker.step.add(trackerValue);
-          }
+          ));
         });
 
-        // Update goal if different
         if (goal != FFAppState().trackerSettings.step.goal) {
           FFAppState().updateTrackerSettingsStruct((settings) {
             settings.step.goal = goal;
@@ -196,7 +215,7 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
 
       if (mounted) {
         setState(() {
-          _stepEntries = entries;
+          _stepEntries = filteredEntries;
           _isLoading = false;
         });
       }
@@ -383,9 +402,9 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
                                       FFAppState()
                                           .tracker
                                           .step
-                                          .where((e) =>
-                                              e.date ==
-                                              FFAppState().tracker.selectedDate)
+                                          .where((e) => isSameCalendarDay(
+                                              e.date,
+                                              FFAppState().tracker.selectedDate))
                                           .toList()
                                           .firstOrNull
                                           ?.progress,
@@ -446,10 +465,11 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
                                             .tracker
                                             .step
                                             .where((e) =>
-                                                e.date ==
-                                                FFAppState()
-                                                    .tracker
-                                                    .selectedDate)
+                                                isSameCalendarDay(
+                                                    e.date,
+                                                    FFAppState()
+                                                        .tracker
+                                                        .selectedDate))
                                             .toList()
                                             .firstOrNull
                                             ?.value
@@ -569,82 +589,107 @@ class _TrackerStepWidgetState extends State<TrackerStepWidget> {
                   ),
                 ),
               ),
-              Column(
-                mainAxisSize: MainAxisSize.max,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding:
-                        EdgeInsetsDirectional.fromSTEB(16.0, 24.0, 16.0, 0.0),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.max,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'History',
-                            style: FlutterFlowTheme.of(context)
-                                .titleSmall
-                                .override(
-                                  font: GoogleFonts.inter(
-                                    fontWeight: FlutterFlowTheme.of(context)
+              Padding(
+                padding: EdgeInsetsDirectional.fromSTEB(16.0, 24.0, 16.0, 0.0),
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: FlutterFlowTheme.of(context).secondaryBackground,
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: EdgeInsetsDirectional.fromSTEB(
+                            16.0, 16.0, 16.0, 0.0),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.max,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'History',
+                                    style: FlutterFlowTheme.of(context)
                                         .titleSmall
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .fontStyle,
+                                        .override(
+                                          font: GoogleFonts.inter(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          letterSpacing: 0.0,
+                                        ),
                                   ),
-                                  letterSpacing: 0.0,
-                                  fontWeight: FlutterFlowTheme.of(context)
-                                      .titleSmall
-                                      .fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .titleSmall
-                                      .fontStyle,
-                                ),
+                                  Padding(
+                                    padding: EdgeInsetsDirectional.fromSTEB(
+                                        0.0, 4.0, 0.0, 0.0),
+                                    child: Text(
+                                      dateTimeFormat(
+                                          'yMMMd',
+                                          FFAppState().tracker.selectedDate!),
+                                      style: FlutterFlowTheme.of(context)
+                                          .labelMedium
+                                          .override(
+                                            font: GoogleFonts.inter(),
+                                            color: FlutterFlowTheme.of(context)
+                                                .secondaryText,
+                                            letterSpacing: 0.0,
+                                            lineHeight: 1.0,
+                                          ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              width: 40.0,
+                              height: 40.0,
+                              decoration: BoxDecoration(
+                                color: FlutterFlowTheme.of(context).stepAccent,
+                                borderRadius: BorderRadius.circular(10.0),
+                              ),
+                              alignment: Alignment.center,
+                              child: Icon(
+                                FFIcons.kstepIcon,
+                                color: FlutterFlowTheme.of(context).stepColor,
+                                size: 20.0,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (_stepEntries != null && _stepEntries!.isNotEmpty)
+                        Divider(
+                          height: 1.0,
+                          thickness: 1.0,
+                          indent: 16.0,
+                          endIndent: 16.0,
+                          color: FlutterFlowTheme.of(context).primaryBackground,
+                        ),
+                      Padding(
+                        padding: EdgeInsetsDirectional.fromSTEB(
+                            0.0,
+                            _stepEntries != null && _stepEntries!.isEmpty
+                                ? 0.0
+                                : 8.0,
+                            0.0,
+                            16.0),
+                        child: wrapWithModel(
+                          model: _model.zStepHistoryListModel,
+                          updateCallback: () => safeSetState(() {}),
+                          child: ZStepHistoryListWidget(
+                            stepEntries: _stepEntries,
+                            onDelete: _onDeleteStep,
+                            compact: true,
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding:
-                        EdgeInsetsDirectional.fromSTEB(16.0, 24.0, 16.0, 0.0),
-                    child: Text(
-                      dateTimeFormat(
-                          "yMMMd", FFAppState().tracker.selectedDate!),
-                      style: FlutterFlowTheme.of(context).labelMedium.override(
-                            font: GoogleFonts.inter(
-                              fontWeight: FlutterFlowTheme.of(context)
-                                  .labelMedium
-                                  .fontWeight,
-                              fontStyle: FlutterFlowTheme.of(context)
-                                  .labelMedium
-                                  .fontStyle,
-                            ),
-                            letterSpacing: 0.0,
-                            fontWeight: FlutterFlowTheme.of(context)
-                                .labelMedium
-                                .fontWeight,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .labelMedium
-                                .fontStyle,
-                            lineHeight: 1.0,
-                          ),
-                    ),
-                  ),
-                  Padding(
-                    padding:
-                        EdgeInsetsDirectional.fromSTEB(0.0, 24.0, 0.0, 0.0),
-                    child: wrapWithModel(
-                      model: _model.zStepHistoryListModel,
-                      updateCallback: () => safeSetState(() {}),
-                      child: ZStepHistoryListWidget(
-                        stepEntries: _stepEntries,
-                        onDelete: _onDeleteStep,
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ]
                 .addToStart(SizedBox(height: 16.0))

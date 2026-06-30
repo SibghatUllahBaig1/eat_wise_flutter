@@ -130,7 +130,7 @@ class _ZDailyWaterGoalWidgetState extends State<ZDailyWaterGoalWidget> {
                       ),
                       onPressed: () async {
                         if (_model.value != 1000) {
-                          _model.value = _model.value! + -500;
+                          _model.value = _model.value! + -100;
                           safeSetState(() {});
                         }
                       },
@@ -174,7 +174,7 @@ class _ZDailyWaterGoalWidgetState extends State<ZDailyWaterGoalWidget> {
                       ),
                       onPressed: () async {
                         if (_model.value != 10000) {
-                          _model.value = _model.value! + 500;
+                          _model.value = _model.value! + 100;
                           safeSetState(() {});
                         }
                       },

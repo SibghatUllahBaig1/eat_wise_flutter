@@ -30,6 +30,55 @@ AppleAuthProvider _appleProvider() {
   return provider;
 }
 
+Future<AuthCredential> getAppleCredential() async {
+  if (kIsWeb) {
+    throw UnsupportedError(
+      'getAppleCredential is not supported on web; use linkWithPopup instead.',
+    );
+  }
+
+  if (defaultTargetPlatform == TargetPlatform.iOS ||
+      defaultTargetPlatform == TargetPlatform.macOS) {
+    throw UnsupportedError(
+      'Use FirebaseAuth.instance.currentUser!.linkWithProvider on iOS/macOS.',
+    );
+  }
+
+  final rawNonce = generateNonce();
+  final nonce = sha256ofString(rawNonce);
+
+  final appleCredential = await SignInWithApple.getAppleIDCredential(
+    scopes: [
+      AppleIDAuthorizationScopes.email,
+      AppleIDAuthorizationScopes.fullName,
+    ],
+    nonce: nonce,
+  );
+
+  final idToken = appleCredential.identityToken;
+  final authCode = appleCredential.authorizationCode;
+
+  if (idToken == null || idToken.isEmpty) {
+    throw FirebaseAuthException(
+      code: 'invalid-credential',
+      message: 'Apple Sign-In did not return an identity token.',
+    );
+  }
+
+  if (authCode.isEmpty) {
+    throw FirebaseAuthException(
+      code: 'invalid-credential',
+      message: 'Apple Sign-In did not return an authorization code.',
+    );
+  }
+
+  return OAuthProvider('apple.com').credential(
+    idToken: idToken,
+    rawNonce: rawNonce,
+    accessToken: authCode,
+  );
+}
+
 Future<UserCredential> appleSignIn() async {
   if (kIsWeb) {
     return FirebaseAuth.instance.signInWithPopup(_appleProvider());

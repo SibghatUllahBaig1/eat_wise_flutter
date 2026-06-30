@@ -1,3 +1,4 @@
+import '/backend/utils/unit_format_helper.dart';
 import '/backend/schema/structs/index.dart';
 import '/backend/firestore/weight_tracker_service.dart';
 import '/auth/firebase_auth/auth_util.dart';
@@ -228,9 +229,18 @@ class _TrackerWeightWidgetState extends State<TrackerWeightWidget> {
                                                     : b)
                                             : null;
 
-                                        final currentWeightValue =
-                                            latestWeight?.value?.toString() ??
-                                                '';
+                                        final weightUnit = FFAppState()
+                                            .trackerSettings
+                                            .weight
+                                            .weightUnit;
+                                        final latestKg =
+                                            latestWeight?.value?.toDouble() ??
+                                                0.0;
+                                        final displayWeight = latestKg > 0
+                                            ? UnitFormatHelper
+                                                .formatWeightForInput(
+                                                    latestKg, weightUnit)
+                                            : '--';
 
                                         return RichText(
                                           textScaler:
@@ -238,9 +248,7 @@ class _TrackerWeightWidgetState extends State<TrackerWeightWidget> {
                                           text: TextSpan(
                                             children: [
                                               TextSpan(
-                                                text: currentWeightValue.isEmpty
-                                                    ? '--'
-                                                    : currentWeightValue,
+                                                text: displayWeight,
                                                 style:
                                                     FlutterFlowTheme.of(context)
                                                         .headlineMedium
@@ -277,7 +285,9 @@ class _TrackerWeightWidgetState extends State<TrackerWeightWidget> {
                                                 style: TextStyle(),
                                               ),
                                               TextSpan(
-                                                text: 'kg',
+                                                text: UnitFormatHelper
+                                                    .weightUnitLabel(
+                                                        weightUnit),
                                                 style: TextStyle(),
                                               )
                                             ],
@@ -346,6 +356,14 @@ class _TrackerWeightWidgetState extends State<TrackerWeightWidget> {
 
                                         final isIncrease = change > 0;
 
+                                        final weightUnit = FFAppState()
+                                            .trackerSettings
+                                            .weight
+                                            .weightUnit;
+                                        final changeDisplay =
+                                            UnitFormatHelper.formatWeightForInput(
+                                                change.abs(), weightUnit);
+
                                         return Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
@@ -371,7 +389,7 @@ class _TrackerWeightWidgetState extends State<TrackerWeightWidget> {
                                               padding: EdgeInsetsDirectional
                                                   .fromSTEB(6.0, 0.0, 0.0, 0.0),
                                               child: Text(
-                                                '${isIncrease ? '+' : ''}${change.toStringAsFixed(1)}kg',
+                                                '${isIncrease ? '+' : '-'}${changeDisplay} ${UnitFormatHelper.weightUnitLabel(weightUnit)}',
                                                 style: FlutterFlowTheme.of(
                                                         context)
                                                     .bodyMedium
@@ -544,7 +562,7 @@ class _TrackerWeightWidgetState extends State<TrackerWeightWidget> {
                                                     0.0, 12.0, 0.0, 0.0),
                                             child: Text(
                                               goalWeight > 0
-                                                  ? 'Goal: $goalWeight kg'
+                                                  ? 'Goal: ${UnitFormatHelper.formatWeight(goalWeight.toDouble(), FFAppState().trackerSettings.weight.weightUnit)}'
                                                   : 'Goal: --',
                                               style:
                                                   FlutterFlowTheme.of(context)

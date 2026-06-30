@@ -1,3 +1,6 @@
+import '/buttons/text_text_right/text_text_right_widget.dart';
+import '/profile/components/z_height_unit/z_height_unit_widget.dart';
+import '/profile/components/z_weight_unit/z_weight_unit_widget.dart';
 import '/auth/firebase_auth/auth_util.dart';
 import '/backend/backend_manager.dart';
 import '/backend/firestore/user_service.dart';
@@ -800,6 +803,88 @@ class _ProfileWidgetState extends State<ProfileWidget>
                                   textColor:
                                       FlutterFlowTheme.of(context).primaryText,
                                 ),
+                              ),
+                            ),
+                            InkWell(
+                              splashColor: Colors.transparent,
+                              focusColor: Colors.transparent,
+                              hoverColor: Colors.transparent,
+                              highlightColor: Colors.transparent,
+                              onTap: () async {
+                                await showDialog(
+                                  barrierColor:
+                                      FlutterFlowTheme.of(context).barrier,
+                                  context: context,
+                                  builder: (dialogContext) {
+                                    return Dialog(
+                                      elevation: 0,
+                                      insetPadding: EdgeInsets.zero,
+                                      backgroundColor: Colors.transparent,
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          FocusScope.of(dialogContext)
+                                              .unfocus();
+                                        },
+                                        child: ZWeightUnitWidget(),
+                                      ),
+                                    );
+                                  },
+                                );
+                                safeSetState(() {});
+                              },
+                              child: TextTextRightWidget(
+                                icon: Icon(
+                                  FFIcons.kweightIcon,
+                                  color: FlutterFlowTheme.of(context)
+                                      .primaryText,
+                                  size: 24.0,
+                                ),
+                                text: 'Weight Units',
+                                value: FFAppState()
+                                    .trackerSettings
+                                    .weight
+                                    .weightUnit,
+                              ),
+                            ),
+                            InkWell(
+                              splashColor: Colors.transparent,
+                              focusColor: Colors.transparent,
+                              hoverColor: Colors.transparent,
+                              highlightColor: Colors.transparent,
+                              onTap: () async {
+                                await showDialog(
+                                  barrierColor:
+                                      FlutterFlowTheme.of(context).barrier,
+                                  context: context,
+                                  builder: (dialogContext) {
+                                    return Dialog(
+                                      elevation: 0,
+                                      insetPadding: EdgeInsets.zero,
+                                      backgroundColor: Colors.transparent,
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          FocusScope.of(dialogContext)
+                                              .unfocus();
+                                        },
+                                        child: ZHeightUnitWidget(),
+                                      ),
+                                    );
+                                  },
+                                );
+                                safeSetState(() {});
+                              },
+                              child: TextTextRightWidget(
+                                icon: Icon(
+                                  FFIcons.kruler,
+                                  color: FlutterFlowTheme.of(context)
+                                      .primaryText,
+                                  size: 24.0,
+                                ),
+                                text: 'Height Units',
+                                value: FFAppState()
+                                    .trackerSettings
+                                    .weight
+                                    .heightUnit,
                               ),
                             ),
                             InkWell(

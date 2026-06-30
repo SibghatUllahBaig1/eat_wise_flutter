@@ -1,3 +1,6 @@
+import '/backend/utils/unit_format_helper.dart';
+import '/backend/services/weight_sync_helper.dart';
+import '/backend/schema/structs/index.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -43,39 +46,32 @@ class _ZBMITrackerWidgetState extends State<ZBMITrackerWidget> {
   Widget build(BuildContext context) {
     context.watch<FFAppState>();
 
-    // Calculate BMI from height and weight
-    final height = FFAppState().trackerSettings.weight.height;
-    final weightList = FFAppState().tracker.weight;
-    final latestWeight = weightList.isNotEmpty
-        ? weightList.reduce((a, b) =>
-            (a.date?.isAfter(b.date ?? DateTime(1970)) ?? false) ? a : b)
+    // Calculate BMI from height and weight (tracker or profile fallback)
+    final profile = FFAppState().userProfile;
+    var height = FFAppState().trackerSettings.weight.height;
+    if (height <= 0 && profile.heightCm > 0) {
+      height = profile.heightCm.round();
+    }
+
+    final latestKg = WeightSyncHelper.resolveCurrentWeightKg();
+    final latestWeight = latestKg > 0
+        ? TrackerValueStruct(
+            value: latestKg.round(),
+            unit: 'kg',
+            date: DateTime.now(),
+          )
         : null;
 
     double? bmi;
     String bmiCategory = '';
 
     if (height > 0 && latestWeight != null && latestWeight.value > 0) {
-      // BMI = weight (kg) / (height (m))^2
-      final heightInMeters = height / 100.0;
-      bmi = latestWeight.value / (heightInMeters * heightInMeters);
-
-      // Determine BMI category
-      if (bmi < 15) {
-        bmiCategory = 'Very Severely Underweight';
-      } else if (bmi < 16) {
-        bmiCategory = 'Severely Underweight';
-      } else if (bmi < 18.5) {
-        bmiCategory = 'Underweight';
-      } else if (bmi < 25) {
-        bmiCategory = 'Normal';
-      } else if (bmi < 30) {
-        bmiCategory = 'Overweight';
-      } else if (bmi < 35) {
-        bmiCategory = 'Obese Class I';
-      } else if (bmi < 40) {
-        bmiCategory = 'Obese Class II';
-      } else {
-        bmiCategory = 'Obese Class III';
+      bmi = UnitFormatHelper.calculateBmi(
+        weightKg: latestWeight.value!.toDouble(),
+        heightCm: height.toDouble(),
+      );
+      if (bmi != null) {
+        bmiCategory = UnitFormatHelper.bmiCategory(bmi);
       }
     }
 

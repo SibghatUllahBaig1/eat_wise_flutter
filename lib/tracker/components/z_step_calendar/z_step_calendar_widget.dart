@@ -48,7 +48,7 @@ class _ZStepCalendarWidgetState extends State<ZStepCalendarWidget>
       // Load step progress for visible week
       final currentDate = FFAppState().tracker.currentDate ?? DateTime.now();
       final weekDates =
-          functions.daysFunction('Monday', currentDate, 7).toList();
+          functions.lastDaysWindow(currentDate, 7).toList();
       await _model.loadStepProgressForDates(weekDates);
 
       safeSetState(() {});
@@ -655,10 +655,8 @@ class _ZStepCalendarWidgetState extends State<ZStepCalendarWidget>
                     child: Builder(
                       builder: (context) {
                         final days = functions
-                            .daysFunction(
-                                'Monday', FFAppState().tracker.currentDate!, 7)
-                            .toList()
-                            .take(7)
+                            .lastDaysWindow(
+                                FFAppState().tracker.currentDate!, 7)
                             .toList();
 
                         return Row(

@@ -1,4 +1,5 @@
-import '/backend/schema/structs/index.dart';
+import '/backend/services/weight_sync_helper.dart';
+import '/auth/firebase_auth/auth_util.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -34,7 +35,7 @@ class _ZCurrentWeightWidgetState extends State<ZCurrentWeightWidget> {
 
     // On component load action.
     SchedulerBinding.instance.addPostFrameCallback((_) async {
-      _model.value = FFAppState().trackerSettings.weight.currentWeight;
+      _model.value = WeightSyncHelper.resolveCurrentWeightKg().round();
       safeSetState(() {});
     });
   }
@@ -219,14 +220,25 @@ class _ZCurrentWeightWidgetState extends State<ZCurrentWeightWidget> {
                     ),
                     FFButtonWidget(
                       onPressed: () async {
-                        FFAppState().updateTrackerSettingsStruct(
-                          (e) => e
-                            ..updateWeight(
-                              (e) => e..currentWeight = _model.value,
-                            ),
-                        );
+                        final weightValue = (_model.value ?? 0).toDouble();
+                        if (weightValue <= 0) return;
+
+                        final userId = currentUserUid;
+                        if (userId.isNotEmpty) {
+                          await WeightSyncHelper.recordWeight(
+                            userId: userId,
+                            weightKg: weightValue,
+                            date: DateTime.now(),
+                          );
+                        } else {
+                          WeightSyncHelper.upsertLocalWeightEntry(
+                            date: DateTime.now(),
+                            weightKg: weightValue,
+                          );
+                          WeightSyncHelper.propagateCanonicalCurrentWeight();
+                        }
                         FFAppState().update(() {});
-                        Navigator.pop(context);
+                        if (context.mounted) Navigator.pop(context);
                       },
                       text: 'Save',
                       options: FFButtonOptions(

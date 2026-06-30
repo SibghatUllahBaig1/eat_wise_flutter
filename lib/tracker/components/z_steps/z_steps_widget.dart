@@ -19,6 +19,7 @@ class ZStepsWidget extends StatefulWidget {
     required this.distance,
     this.stepId,
     this.onDelete,
+    this.embedded = false,
   });
 
   final int? step;
@@ -26,6 +27,7 @@ class ZStepsWidget extends StatefulWidget {
   final double? distance;
   final String? stepId;
   final Future<void> Function(String)? onDelete;
+  final bool embedded;
 
   @override
   State<ZStepsWidget> createState() => _ZStepsWidgetState();
@@ -55,6 +57,151 @@ class _ZStepsWidgetState extends State<ZStepsWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final content = Padding(
+      padding: EdgeInsetsDirectional.fromSTEB(
+        widget.embedded ? 16.0 : 16.0,
+        widget.embedded ? 14.0 : 16.0,
+        widget.embedded ? 6.0 : 6.0,
+        widget.embedded ? 14.0 : 16.0,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          if (widget.embedded)
+            Container(
+              width: 36.0,
+              height: 36.0,
+              decoration: BoxDecoration(
+                color: FlutterFlowTheme.of(context).stepAccent,
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                FFIcons.kstepIcon,
+                color: FlutterFlowTheme.of(context).stepColor,
+                size: 18.0,
+              ),
+            ),
+          if (widget.embedded)
+            SizedBox(width: 12.0),
+          if (!widget.embedded)
+            Icon(
+              FFIcons.kstepIcon,
+              color: FlutterFlowTheme.of(context).stepColor,
+              size: 19.0,
+            ),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsetsDirectional.fromSTEB(
+                  widget.embedded ? 0.0 : 4.0, 0.0, 0.0, 0.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    valueOrDefault<String>(
+                      widget.step?.toString(),
+                      '0',
+                    ),
+                    style: FlutterFlowTheme.of(context).titleSmall.override(
+                          font: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                          letterSpacing: 0.0,
+                        ),
+                  ),
+                  if (widget.embedded)
+                    Text(
+                      'steps',
+                      style: FlutterFlowTheme.of(context).labelSmall.override(
+                            font: GoogleFonts.inter(),
+                            color: FlutterFlowTheme.of(context).secondaryText,
+                            letterSpacing: 0.0,
+                          ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          Icon(
+            FFIcons.kfireIcon2,
+            color: FlutterFlowTheme.of(context).error,
+            size: 20.0,
+          ),
+          Padding(
+            padding: EdgeInsetsDirectional.fromSTEB(4.0, 0.0, 8.0, 0.0),
+            child: Text(
+              valueOrDefault<String>(
+                widget.burning?.toString(),
+                '0',
+              ),
+              style: FlutterFlowTheme.of(context).bodyMedium.override(
+                    font: GoogleFonts.inter(),
+                    letterSpacing: 0.0,
+                  ),
+            ),
+          ),
+          Icon(
+            FFIcons.kmapPin,
+            color: FlutterFlowTheme.of(context).waterColor,
+            size: 18.0,
+          ),
+          Padding(
+            padding: EdgeInsetsDirectional.fromSTEB(4.0, 0.0, 8.0, 0.0),
+            child: Text(
+              valueOrDefault<String>(
+                widget.distance?.toStringAsFixed(1),
+                '0.0',
+              ),
+              style: FlutterFlowTheme.of(context).bodyMedium.override(
+                    font: GoogleFonts.inter(),
+                    letterSpacing: 0.0,
+                  ),
+            ),
+          ),
+          if (widget.onDelete != null && widget.stepId != null)
+            Builder(
+              builder: (context) => FlutterFlowIconButton(
+                borderRadius: 22.0,
+                buttonSize: 44.0,
+                fillColor: FlutterFlowTheme.of(context).transparent,
+                icon: Icon(
+                  FFIcons.kdotsVertical,
+                  color: FlutterFlowTheme.of(context).primaryText,
+                  size: 24.0,
+                ),
+                onPressed: () async {
+                  await showAlignedDialog(
+                    barrierColor: FlutterFlowTheme.of(context).transparent,
+                    context: context,
+                    isGlobal: false,
+                    avoidOverflow: false,
+                    targetAnchor: AlignmentDirectional(1.0, -1.0)
+                        .resolve(Directionality.of(context)),
+                    followerAnchor: AlignmentDirectional(1.0, -1.0)
+                        .resolve(Directionality.of(context)),
+                    builder: (dialogContext) {
+                      return Material(
+                        color: Colors.transparent,
+                        child: ZDrinksOptionalsWidget(
+                          trackerType: 1,
+                          drinkId: widget.stepId,
+                          onDelete: (String id) async {
+                            await widget.onDelete!(id);
+                          },
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
+
+    if (widget.embedded) {
+      return content;
+    }
+
     return Padding(
       padding: EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
       child: Container(
@@ -62,147 +209,7 @@ class _ZStepsWidgetState extends State<ZStepsWidget> {
           color: FlutterFlowTheme.of(context).secondaryBackground,
           borderRadius: BorderRadius.circular(12.0),
         ),
-        child: Padding(
-          padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 6.0, 16.0),
-          child: Row(
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              Icon(
-                FFIcons.kstepIcon,
-                color: FlutterFlowTheme.of(context).stepColor,
-                size: 19.0,
-              ),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(4.0, 0.0, 0.0, 0.0),
-                  child: Text(
-                    valueOrDefault<String>(
-                      widget.step?.toString(),
-                      'null',
-                    ),
-                    style: FlutterFlowTheme.of(context).bodyMedium.override(
-                          font: GoogleFonts.inter(
-                            fontWeight: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .fontWeight,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .fontStyle,
-                          ),
-                          letterSpacing: 0.0,
-                          fontWeight: FlutterFlowTheme.of(context)
-                              .bodyMedium
-                              .fontWeight,
-                          fontStyle:
-                              FlutterFlowTheme.of(context).bodyMedium.fontStyle,
-                        ),
-                  ),
-                ),
-              ),
-              Icon(
-                FFIcons.kfireIcon2,
-                color: FlutterFlowTheme.of(context).error,
-                size: 20.0,
-              ),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(4.0, 0.0, 0.0, 0.0),
-                  child: Text(
-                    valueOrDefault<String>(
-                      widget.burning?.toString(),
-                      'null',
-                    ),
-                    style: FlutterFlowTheme.of(context).bodyMedium.override(
-                          font: GoogleFonts.inter(
-                            fontWeight: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .fontWeight,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .fontStyle,
-                          ),
-                          letterSpacing: 0.0,
-                          fontWeight: FlutterFlowTheme.of(context)
-                              .bodyMedium
-                              .fontWeight,
-                          fontStyle:
-                              FlutterFlowTheme.of(context).bodyMedium.fontStyle,
-                        ),
-                  ),
-                ),
-              ),
-              Icon(
-                FFIcons.kmapPin,
-                color: FlutterFlowTheme.of(context).waterColor,
-                size: 18.0,
-              ),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(4.0, 0.0, 0.0, 0.0),
-                  child: Text(
-                    valueOrDefault<String>(
-                      widget.distance?.toString(),
-                      'null',
-                    ),
-                    style: FlutterFlowTheme.of(context).bodyMedium.override(
-                          font: GoogleFonts.inter(
-                            fontWeight: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .fontWeight,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .fontStyle,
-                          ),
-                          letterSpacing: 0.0,
-                          fontWeight: FlutterFlowTheme.of(context)
-                              .bodyMedium
-                              .fontWeight,
-                          fontStyle:
-                              FlutterFlowTheme.of(context).bodyMedium.fontStyle,
-                        ),
-                  ),
-                ),
-              ),
-              if (widget.onDelete != null && widget.stepId != null)
-                Builder(
-                  builder: (context) => FlutterFlowIconButton(
-                    borderRadius: 22.0,
-                    buttonSize: 44.0,
-                    fillColor: FlutterFlowTheme.of(context).transparent,
-                    icon: Icon(
-                      FFIcons.kdotsVertical,
-                      color: FlutterFlowTheme.of(context).primaryText,
-                      size: 24.0,
-                    ),
-                    onPressed: () async {
-                      await showAlignedDialog(
-                        barrierColor: FlutterFlowTheme.of(context).transparent,
-                        context: context,
-                        isGlobal: false,
-                        avoidOverflow: false,
-                        targetAnchor: AlignmentDirectional(1.0, -1.0)
-                            .resolve(Directionality.of(context)),
-                        followerAnchor: AlignmentDirectional(1.0, -1.0)
-                            .resolve(Directionality.of(context)),
-                        builder: (dialogContext) {
-                          return Material(
-                            color: Colors.transparent,
-                            child: ZDrinksOptionalsWidget(
-                              trackerType: 1,
-                              drinkId: widget.stepId,
-                              onDelete: (String id) async {
-                                await widget.onDelete!(id);
-                              },
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-            ],
-          ),
-        ),
+        child: content,
       ),
     );
   }

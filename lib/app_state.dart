@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '/backend/schema/structs/index.dart';
+import '/backend/utils/date_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'flutter_flow/flutter_flow_util.dart';
 
@@ -186,6 +187,10 @@ class FFAppState extends ChangeNotifier {
           final serializedData = prefs.getString('ff_tracker') ?? '{}';
           _tracker =
               TrackerStruct.fromSerializableMap(jsonDecode(serializedData));
+          final today = normalizeToDate(DateTime.now());
+          _tracker.currentDate ??= today;
+          // Selected calendar day is not restored from disk.
+          _tracker.selectedDate = today;
         } catch (e) {
           print("Can't decode persisted data type. Error: $e.");
         }
@@ -907,12 +912,25 @@ class FFAppState extends ChangeNotifier {
   TrackerStruct get tracker => _tracker;
   set tracker(TrackerStruct value) {
     _tracker = value;
-    prefs.setString('ff_tracker', value.serialize());
+    _persistTracker();
   }
 
   void updateTrackerStruct(Function(TrackerStruct) updateFn) {
     updateFn(_tracker);
-    prefs.setString('ff_tracker', _tracker.serialize());
+    _persistTracker();
+  }
+
+  /// Persists tracker data but never stores the user's calendar selection.
+  void _persistTracker() {
+    final today = normalizeToDate(_tracker.currentDate ?? DateTime.now());
+    final snapshot = TrackerStruct(
+      step: List<TrackerValueStruct>.from(_tracker.step),
+      water: List<TrackerValueStruct>.from(_tracker.water),
+      weight: List<TrackerValueStruct>.from(_tracker.weight),
+      currentDate: _tracker.currentDate,
+      selectedDate: today,
+    );
+    prefs.setString('ff_tracker', snapshot.serialize());
   }
 
   TrackerSettingsStruct _trackerSettings =

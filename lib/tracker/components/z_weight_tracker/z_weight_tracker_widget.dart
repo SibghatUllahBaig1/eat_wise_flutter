@@ -1,3 +1,6 @@
+import '/backend/schema/structs/index.dart';
+import '/backend/utils/unit_format_helper.dart';
+import '/backend/services/weight_sync_helper.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -136,18 +139,17 @@ class _ZWeightTrackerWidgetState extends State<ZWeightTrackerWidget> {
                         children: [
                           Builder(
                             builder: (context) {
-                              // Get weight data
                               final weightList = FFAppState().tracker.weight;
-
-                              // Get latest weight (current weight)
-                              final latestWeight = weightList.isNotEmpty
-                                  ? weightList.reduce((a, b) => (a.date
-                                              ?.isAfter(
-                                                  b.date ?? DateTime(1970)) ??
-                                          false)
-                                      ? a
-                                      : b)
-                                  : null;
+                              final weightUnit = FFAppState()
+                                  .trackerSettings
+                                  .weight
+                                  .weightUnit;
+                              final latestKg =
+                                  WeightSyncHelper.resolveCurrentWeightKg();
+                              final displayWeight = latestKg > 0
+                                  ? UnitFormatHelper.formatWeightForInput(
+                                      latestKg, weightUnit)
+                                  : '--';
 
                               return Row(
                                 mainAxisSize: MainAxisSize.max,
@@ -159,9 +161,7 @@ class _ZWeightTrackerWidgetState extends State<ZWeightTrackerWidget> {
                                     text: TextSpan(
                                       children: [
                                         TextSpan(
-                                          text: latestWeight != null
-                                              ? latestWeight.value.toString()
-                                              : '--',
+                                          text: displayWeight,
                                           style: FlutterFlowTheme.of(context)
                                               .headlineMedium
                                               .override(
@@ -194,7 +194,8 @@ class _ZWeightTrackerWidgetState extends State<ZWeightTrackerWidget> {
                                           style: TextStyle(),
                                         ),
                                         TextSpan(
-                                          text: 'kg',
+                                          text: UnitFormatHelper
+                                              .weightUnitLabel(weightUnit),
                                           style: TextStyle(),
                                         )
                                       ],
@@ -250,19 +251,26 @@ class _ZWeightTrackerWidgetState extends State<ZWeightTrackerWidget> {
                                         return SizedBox.shrink();
                                       }
 
-                                      final isIncrease = change > 0;
+                                        final isIncrease = change > 0;
+                                        final weightUnit = FFAppState()
+                                            .trackerSettings
+                                            .weight
+                                            .weightUnit;
+                                        final changeDisplay =
+                                            UnitFormatHelper.formatWeightForInput(
+                                                change.abs(), weightUnit);
 
-                                      return Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Padding(
-                                            padding:
-                                                EdgeInsetsDirectional.fromSTEB(
-                                                    12.0, 0.0, 0.0, 0.0),
-                                            child: Icon(
-                                              isIncrease
-                                                  ? Icons.expand_circle_down
-                                                  : Icons.expand_less,
+                                        return Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Padding(
+                                              padding:
+                                                  EdgeInsetsDirectional.fromSTEB(
+                                                      12.0, 0.0, 0.0, 0.0),
+                                              child: Icon(
+                                                isIncrease
+                                                    ? Icons.expand_circle_down
+                                                    : Icons.expand_less,
                                               color: isIncrease
                                                   ? FlutterFlowTheme.of(context)
                                                       .error
@@ -276,7 +284,7 @@ class _ZWeightTrackerWidgetState extends State<ZWeightTrackerWidget> {
                                                 EdgeInsetsDirectional.fromSTEB(
                                                     6.0, 0.0, 0.0, 0.0),
                                             child: Text(
-                                              '${isIncrease ? '+' : ''}${change.toStringAsFixed(1)}kg',
+                                              '${isIncrease ? '+' : '-'}${changeDisplay} ${UnitFormatHelper.weightUnitLabel(weightUnit)}',
                                               style: FlutterFlowTheme.of(
                                                       context)
                                                   .bodyMedium
@@ -441,7 +449,7 @@ class _ZWeightTrackerWidgetState extends State<ZWeightTrackerWidget> {
                                             0.0, 12.0, 0.0, 0.0),
                                         child: Text(
                                           goalWeight > 0
-                                              ? 'Goal: $goalWeight kg'
+                                              ? 'Goal: ${UnitFormatHelper.formatWeight(goalWeight.toDouble(), FFAppState().trackerSettings.weight.weightUnit)}'
                                               : 'Goal: --',
                                           style: FlutterFlowTheme.of(context)
                                               .bodyMedium

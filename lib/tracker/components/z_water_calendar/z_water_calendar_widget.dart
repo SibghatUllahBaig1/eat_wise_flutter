@@ -48,7 +48,7 @@ class _ZWaterCalendarWidgetState extends State<ZWaterCalendarWidget>
       // Load water progress for visible week
       final currentDate = FFAppState().tracker.currentDate ?? DateTime.now();
       final weekDates =
-          functions.daysFunction('Monday', currentDate, 7).toList();
+          functions.lastDaysWindow(currentDate, 7).toList();
       await _model.loadWaterProgressForDates(weekDates);
 
       safeSetState(() {});
@@ -647,10 +647,8 @@ class _ZWaterCalendarWidgetState extends State<ZWaterCalendarWidget>
                     child: Builder(
                       builder: (context) {
                         final days = functions
-                            .daysFunction(
-                                'Monday', FFAppState().tracker.currentDate!, 7)
-                            .toList()
-                            .take(7)
+                            .lastDaysWindow(
+                                FFAppState().tracker.currentDate!, 7)
                             .toList();
 
                         return Row(

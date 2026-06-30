@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '/backend/firestore/water_tracker_service.dart';
+import '/backend/services/water_sync_helper.dart';
 import '/auth/firebase_auth/auth_util.dart';
 import 'dart:async';
 
@@ -69,6 +70,18 @@ class TrackerWaterModel extends FlutterFlowModel<TrackerWaterWidget> {
         .streamWaterIntake(userId: currentUserUid, date: normalizedDate)
         .listen((data) {
       waterIntakeData = data;
+      if (data != null) {
+        final intake = data['totalIntake'] as int? ??
+            data['intake'] as int? ??
+            0;
+        final progress = (data['progress'] as num?)?.toDouble() ?? 0.0;
+        WaterSyncHelper.upsertLocalWaterEntry(
+          date: normalizedDate,
+          intakeMl: intake,
+          progress: progress,
+        );
+        FFAppState().update(() {});
+      }
       updateCallback();
     });
 
@@ -87,6 +100,10 @@ class TrackerWaterModel extends FlutterFlowModel<TrackerWaterWidget> {
         date: date,
         drinkId: drinkId,
       );
+      await WaterSyncHelper.syncWaterForDate(
+        userId: currentUserUid,
+        date: date,
+      );
     } catch (e) {
       print('Error deleting drink: $e');
     }
@@ -102,6 +119,10 @@ class TrackerWaterModel extends FlutterFlowModel<TrackerWaterWidget> {
         amount: amount,
         drinkType: drinkType,
         drinkIcon: drinkIcon,
+      );
+      await WaterSyncHelper.syncWaterForDate(
+        userId: currentUserUid,
+        date: date,
       );
     } catch (e) {
       print('Error editing drink: $e');

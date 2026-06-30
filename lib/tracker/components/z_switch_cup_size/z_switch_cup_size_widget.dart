@@ -131,14 +131,14 @@ class _ZSwitchCupSizeWidgetState extends State<ZSwitchCupSizeWidget> {
                           buttonSize: 44.0,
                           icon: Icon(
                             FFIcons.kchevronLeft,
-                            color: _model.drinkAmount == 50
+                            color: _model.drinkAmount == 100
                                 ? FlutterFlowTheme.of(context).iconColor
                                 : FlutterFlowTheme.of(context).primaryText,
                             size: 24.0,
                           ),
                           onPressed: () async {
-                            if (_model.drinkAmount! > 50) {
-                              _model.drinkAmount = _model.drinkAmount! - 50;
+                            if (_model.drinkAmount! > 100) {
+                              _model.drinkAmount = _model.drinkAmount! - 100;
                               safeSetState(() {});
                             }
                           },
@@ -167,7 +167,7 @@ class _ZSwitchCupSizeWidgetState extends State<ZSwitchCupSizeWidget> {
                           ),
                           onPressed: () async {
                             if (_model.drinkAmount! < 1000) {
-                              _model.drinkAmount = _model.drinkAmount! + 50;
+                              _model.drinkAmount = _model.drinkAmount! + 100;
                               safeSetState(() {});
                             }
                           },

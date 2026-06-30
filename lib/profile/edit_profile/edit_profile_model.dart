@@ -36,10 +36,16 @@ class EditProfileModel extends FlutterFlowModel<EditProfileWidget> {
   // State field(s) for Gender selection.
   String? selectedGender;
 
-  // State field(s) for Height widget.
+  // State field(s) for Height widget (cm mode).
   FocusNode? heightFocusNode;
   TextEditingController? heightTextController;
   String? Function(BuildContext, String?)? heightTextControllerValidator;
+
+  // State field(s) for Height widget (ft/in mode).
+  FocusNode? heightFeetFocusNode;
+  TextEditingController? heightFeetTextController;
+  FocusNode? heightInchesFocusNode;
+  TextEditingController? heightInchesTextController;
 
   // State field(s) for Weight widget.
   FocusNode? weightFocusNode;
@@ -68,6 +74,11 @@ class EditProfileModel extends FlutterFlowModel<EditProfileWidget> {
 
     heightFocusNode?.dispose();
     heightTextController?.dispose();
+
+    heightFeetFocusNode?.dispose();
+    heightFeetTextController?.dispose();
+    heightInchesFocusNode?.dispose();
+    heightInchesTextController?.dispose();
 
     weightFocusNode?.dispose();
     weightTextController?.dispose();

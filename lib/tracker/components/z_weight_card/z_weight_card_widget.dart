@@ -1,3 +1,4 @@
+import '/backend/utils/unit_format_helper.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -74,10 +75,10 @@ class _ZWeightCardWidgetState extends State<ZWeightCardWidget> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${valueOrDefault<String>(
-                          widget!.weight?.toString(),
-                          'null',
-                        )} kg',
+                        UnitFormatHelper.formatWeight(
+                          widget!.weight ?? 0,
+                          FFAppState().trackerSettings.weight.weightUnit,
+                        ),
                         style: FlutterFlowTheme.of(context).titleSmall.override(
                               font: GoogleFonts.inter(
                                 fontWeight: FlutterFlowTheme.of(context)
@@ -143,7 +144,7 @@ class _ZWeightCardWidgetState extends State<ZWeightCardWidget> {
               Padding(
                 padding: EdgeInsetsDirectional.fromSTEB(4.0, 0.0, 6.0, 0.0),
                 child: Text(
-                  '${widget!.plus ? '+' : '-'}${widget!.value?.toString()} kg',
+                  '${widget!.plus ? '+' : '-'}${UnitFormatHelper.formatWeight(widget!.value ?? 0, FFAppState().trackerSettings.weight.weightUnit)}',
                   style: FlutterFlowTheme.of(context).bodySmall.override(
                         font: GoogleFonts.inter(
                           fontWeight:

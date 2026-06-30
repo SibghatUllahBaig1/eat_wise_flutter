@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '/backend/backend_manager.dart';
 import '/backend/services/permission_service.dart';
 import '/backend/services/onboarding_service.dart';
 import '/backend/firestore/user_service.dart';
@@ -109,7 +110,11 @@ class _InitialRouteWidgetState extends State<InitialRouteWidget> {
       if (!mounted) return;
 
       if (hasCompleted) {
-        // Onboarding completed - go to home page
+        // Hydrate profile + tracker settings before home.
+        await BackendManager()
+            .syncService
+            .loadUserProfileData(userId: user.uid);
+        if (!mounted) return;
         debugPrint('InitialRoute: Onboarding complete, navigating to HomePage');
         context.go(HomePageWidget.routePath);
       } else {

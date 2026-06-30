@@ -11,6 +11,9 @@ import 'package:percent_indicator/percent_indicator.dart';
 import 'package:provider/provider.dart';
 
 class ZStepTrackerModel extends FlutterFlowModel<ZStepTrackerWidget> {
+  DateTime? lastLoadedDate;
+  bool isLoadingSteps = false;
+
   @override
   void initState(BuildContext context) {}
 

@@ -1,3 +1,4 @@
+import '/backend/utils/unit_format_helper.dart';
 import '/flutter_flow/flutter_flow_charts.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -61,7 +62,7 @@ class _ChartWeightWidgetState extends State<ChartWeightWidget> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Weight (kg)',
+                    'Weight (${UnitFormatHelper.weightUnitLabel(FFAppState().trackerSettings.weight.weightUnit)})',
                     style: FlutterFlowTheme.of(context).titleSmall.override(
                           font: GoogleFonts.inter(
                             fontWeight: FlutterFlowTheme.of(context)

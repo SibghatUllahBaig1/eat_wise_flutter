@@ -1,8 +1,10 @@
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
-import '/backend/services/calorie_calculator_service.dart';
 import '/backend/firestore/user_service.dart';
+import '/backend/services/calorie_calculator_service.dart';
+import '/backend/services/profile_sync_helper.dart';
+import '/backend/firestore/weight_tracker_service.dart';
 import '/auth/firebase_auth/auth_util.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -73,9 +75,15 @@ class _OnboardingStep7WidgetState extends State<OnboardingStep7Widget>
 
       // Save to Firestore
       if (currentUserUid.isNotEmpty) {
+        final savedProfile = FFAppState().userProfile;
         await _userService.saveUserProfileData(
           userId: currentUserUid,
-          profile: FFAppState().userProfile,
+          profile: savedProfile,
+        );
+        ProfileSyncHelper.applyProfileToTrackerState(savedProfile);
+        await ProfileSyncHelper.seedWeightTrackerFromProfile(
+          userId: currentUserUid,
+          profile: savedProfile,
         );
       }
 

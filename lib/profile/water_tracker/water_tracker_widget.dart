@@ -545,7 +545,23 @@ class _WaterTrackerWidgetState extends State<WaterTrackerWidget> {
                             child: TextTextRightWidget(
                               text: 'Reminder Time',
                               value:
-                                  '${FFAppState().trackerSettings.water.reminderTime.hour}:${FFAppState().trackerSettings.water.reminderTime.min} ${FFAppState().trackerSettings.water.reminderTime.type}',
+                                  functions.formatReminderTimeDisplay(
+                                    FFAppState()
+                                        .trackerSettings
+                                        .water
+                                        .reminderTime
+                                        .hour,
+                                    FFAppState()
+                                        .trackerSettings
+                                        .water
+                                        .reminderTime
+                                        .min,
+                                    FFAppState()
+                                        .trackerSettings
+                                        .water
+                                        .reminderTime
+                                        .type,
+                                  ),
                             ),
                           ),
                         ),
