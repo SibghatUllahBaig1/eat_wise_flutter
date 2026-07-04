@@ -40,6 +40,42 @@
           ]
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:777633941122:android:087a5f65591c88bce9969b",
+        "android_client_info": {
+          "package_name": "com.eatwise.eatwiseai"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "777633941122-joq9squ0660f9g796ia3iil0m02ur79m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCeFpIcQsqqkzu_7k4KkhuD41AKp0w2E2s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "777633941122-joq9squ0660f9g796ia3iil0m02ur79m.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "777633941122-iqci9v858n49pd8omoqm5qihke7nh0ok.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.developlogix.eatwise"
+              }
+            }
+          ]
+        }
+      }
     }
   ],
   "configuration_version": "1"
