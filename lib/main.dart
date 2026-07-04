@@ -95,11 +95,18 @@ void main() async {
   }
 
   // Request permission on iOS / Android 13+ (Android < 13 is auto-granted).
-  await FirebaseMessaging.instance.requestPermission(
-    alert: true,
-    badge: true,
-    sound: true,
-  );
+  // Must not block app startup if notifications are unavailable/denied
+  // (e.g. APNs not yet provisioned for a newly created bundle ID).
+  try {
+    await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+  } catch (e) {
+    // ignore: avoid_print
+    print('FirebaseMessaging.requestPermission failed: $e');
+  }
 
   // Show FCM messages as local notifications while the app is in the foreground.
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
