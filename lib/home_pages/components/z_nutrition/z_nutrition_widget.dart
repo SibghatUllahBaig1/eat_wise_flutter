@@ -1,6 +1,9 @@
+import '/backend/services/subscription_controller.dart';
+import '/components/paywall_widget.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/index.dart';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -171,26 +174,7 @@ class _ZNutritionWidgetState extends State<ZNutritionWidget> {
                             ),
                           ),
                         SizedBox(height: 8.0),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildMacroChip(
-                              context,
-                              'C: ${meal['totalCarbs'] ?? 0}g',
-                              FlutterFlowTheme.of(context).primary,
-                            ),
-                            _buildMacroChip(
-                              context,
-                              'P: ${meal['totalProtein'] ?? 0}g',
-                              FlutterFlowTheme.of(context).secondary,
-                            ),
-                            _buildMacroChip(
-                              context,
-                              'F: ${meal['totalFat'] ?? 0}g',
-                              FlutterFlowTheme.of(context).tertiary,
-                            ),
-                          ],
-                        ),
+                        _buildMacroRow(context, meal),
                       ],
                     ),
                   ),
@@ -281,6 +265,58 @@ class _ZNutritionWidgetState extends State<ZNutritionWidget> {
                 ),
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The C/P/F macro breakdown — a Pro feature. Non-Pro users see a blurred
+  /// preview with a lock icon that opens the paywall on tap, rather than the
+  /// row disappearing outright.
+  Widget _buildMacroRow(BuildContext context, Map<String, dynamic> meal) {
+    final isPro = context.watch<SubscriptionController>().isPro;
+    final macroRow = Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        _buildMacroChip(
+          context,
+          'C: ${meal['totalCarbs'] ?? 0}g',
+          FlutterFlowTheme.of(context).primary,
+        ),
+        _buildMacroChip(
+          context,
+          'P: ${meal['totalProtein'] ?? 0}g',
+          FlutterFlowTheme.of(context).secondary,
+        ),
+        _buildMacroChip(
+          context,
+          'F: ${meal['totalFat'] ?? 0}g',
+          FlutterFlowTheme.of(context).tertiary,
+        ),
+      ],
+    );
+
+    if (isPro) return macroRow;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(8.0),
+      onTap: () => checkFeatureAccess(
+        context: context,
+        featureName: 'macro_nutrient_breakdown',
+        displayName: 'Macro & Nutrient Breakdown',
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
+            child: IgnorePointer(child: macroRow),
+          ),
+          Icon(
+            Icons.lock_outline,
+            size: 18.0,
+            color: FlutterFlowTheme.of(context).secondaryText,
           ),
         ],
       ),

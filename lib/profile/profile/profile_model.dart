@@ -6,7 +6,6 @@ import '/flutter_flow/flutter_flow_widgets.dart';
 import '/home_pages/components/z_naw_bar/z_naw_bar_widget.dart';
 import '/profile/components/log_out/log_out_widget.dart';
 import '/profile/components/rate_us/rate_us_widget.dart';
-import '/profile/components/upgrade_plan/upgrade_plan_widget.dart';
 import 'dart:math';
 import 'dart:ui';
 import '/index.dart';

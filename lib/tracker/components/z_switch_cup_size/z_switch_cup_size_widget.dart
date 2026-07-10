@@ -1,3 +1,4 @@
+import '/components/paywall_widget.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -231,6 +232,12 @@ class _ZSwitchCupSizeWidgetState extends State<ZSwitchCupSizeWidget> {
               onPressed: _model.isLoading
                   ? null
                   : () async {
+                      final hasAccess = await checkFeatureAccess(
+                        context: context,
+                        featureName: 'water_activity_tracking',
+                        displayName: 'Water & Activity Tracking',
+                      );
+                      if (!hasAccess || !context.mounted) return;
                       await _model.addDrink(context, () => safeSetState(() {}));
                     },
               text: _model.isLoading ? 'Adding...' : 'Add Drink',

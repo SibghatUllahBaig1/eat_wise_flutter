@@ -1,3 +1,4 @@
+import '/components/paywall_widget.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -479,6 +480,13 @@ class _ZQuickLogActivityWidgetState extends State<ZQuickLogActivityWidget> {
                     );
                     return;
                   }
+
+                  final hasAccess = await checkFeatureAccess(
+                    context: context,
+                    featureName: 'water_activity_tracking',
+                    displayName: 'Water & Activity Tracking',
+                  );
+                  if (!hasAccess || !context.mounted) return;
 
                   // Calculate estimated calories (rough estimate: 8 cal per minute)
                   final calories = (duration * 8).round();

@@ -1,5 +1,8 @@
 import 'dart:io';
 
+import '/backend/services/entitlement_status.dart';
+import '/backend/services/purchase_result.dart';
+import '/backend/services/subscription_controller.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -7,10 +10,19 @@ import '/flutter_flow/flutter_flow_widgets.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'upgrade_plan_model.dart';
 export 'upgrade_plan_model.dart';
 
+/// The single EatWise Pro paywall/subscription-management screen.
+///
+/// There is one entitlement (`PSP yatoo LLC Pro`) sold as a monthly or
+/// annual package. All purchase/restore/entitlement state comes from the
+/// app-wide `SubscriptionController` (`context.watch<SubscriptionController>()`)
+/// — this widget holds no subscription state of its own beyond the local
+/// monthly/annual toggle.
 class UpgradePlanWidget extends StatefulWidget {
   const UpgradePlanWidget({super.key});
 
@@ -37,59 +49,84 @@ class _UpgradePlanWidgetState extends State<UpgradePlanWidget> {
     super.dispose();
   }
 
-  Future<void> _reload() async {
-    await _model.loadOfferings();
-    if (mounted) setState(() {});
+  Package? _selectedPackage(SubscriptionController subscription) {
+    return _model.billingPeriod == BillingPeriod.annual
+        ? subscription.annualPackage
+        : subscription.monthlyPackage;
   }
 
-  Future<void> _handleSubscribe(String planId) async {
-    final success = await _model.purchasePlan(planId);
-    if (!mounted) return;
-    if (success) {
+  Future<void> _handleSubscribe(SubscriptionController subscription) async {
+    final package = _selectedPackage(subscription);
+    if (package == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Welcome to EatWise ${_capitalize(planId)}!'),
-          backgroundColor: FlutterFlowTheme.of(context).success,
-        ),
-      );
-      setState(() {});
-    } else if (_model.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_model.errorMessage!),
+          content: Text(
+              'Purchases are not configured yet. Add your RevenueCat API keys and products, then try again.'),
           backgroundColor: FlutterFlowTheme.of(context).error,
         ),
       );
+      return;
+    }
+
+    final result = await subscription.purchase(package);
+    if (!mounted) return;
+
+    switch (result.type) {
+      case PurchaseOutcomeType.success:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Welcome to EatWise Pro!'),
+            backgroundColor: FlutterFlowTheme.of(context).success,
+          ),
+        );
+        break;
+      case PurchaseOutcomeType.cancelled:
+        // User backed out of the purchase sheet — no error, no-op.
+        break;
+      case PurchaseOutcomeType.error:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.message ?? 'Purchase failed. Please try again.'),
+            backgroundColor: FlutterFlowTheme.of(context).error,
+          ),
+        );
+        break;
     }
   }
 
-  Future<void> _handleRestore() async {
-    final success = await _model.restorePurchases();
+  Future<void> _handleRestore(SubscriptionController subscription) async {
+    final result = await subscription.restore();
     if (!mounted) return;
+
+    final message = switch (result.type) {
+      RestoreOutcomeType.restored => 'Purchases restored successfully.',
+      RestoreOutcomeType.noPreviousPurchase =>
+        'No previous purchases found for this account.',
+      RestoreOutcomeType.error =>
+        result.message ?? 'Restore failed. Please try again.',
+    };
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(success
-            ? 'Purchases restored successfully.'
-            : (_model.errorMessage ?? 'No purchases to restore.')),
-        backgroundColor: success
+        content: Text(message),
+        backgroundColor: result.isRestored
             ? FlutterFlowTheme.of(context).success
-            : FlutterFlowTheme.of(context).error,
+            : FlutterFlowTheme.of(context).secondaryText,
       ),
     );
-    if (success) setState(() {});
   }
 
-  Future<void> _openSubscriptionManagement() async {
-    final uri = !kIsWeb && Platform.isIOS
-        ? Uri.parse('https://apps.apple.com/account/subscriptions')
-        : Uri.parse('https://play.google.com/store/account/subscriptions');
+  Future<void> _openSubscriptionManagement(
+      SubscriptionController subscription) async {
+    final managementUrl = subscription.managementUrl;
+    final uri = managementUrl != null
+        ? Uri.parse(managementUrl)
+        : (!kIsWeb && Platform.isIOS
+            ? Uri.parse('https://apps.apple.com/account/subscriptions')
+            : Uri.parse('https://play.google.com/store/account/subscriptions'));
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
-
-  String _capitalize(String value) =>
-      value.isEmpty ? value : '${value[0].toUpperCase()}${value.substring(1)}';
 
   @override
   Widget build(BuildContext context) {
@@ -128,67 +165,72 @@ class _UpgradePlanWidgetState extends State<UpgradePlanWidget> {
         ),
         body: SafeArea(
           top: true,
-          child: _model.isLoading
-              ? Center(
+          child: Consumer<SubscriptionController>(
+            builder: (context, subscription, _) {
+              if (subscription.isLoading) {
+                return Center(
                   child: CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(
                       FlutterFlowTheme.of(context).primary,
                     ),
                   ),
-                )
-              : RefreshIndicator(
-                  onRefresh: _reload,
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (_model.isOnTrial) _buildTrialBanner(context),
-                        _buildHeader(context),
-                        if (_model.errorMessage != null &&
-                            !_model.revenueCatAvailable)
-                          _buildInfoBanner(context, _model.errorMessage!),
+                );
+              }
+              final revenueCatAvailable = subscription.offerings?.current !=
+                      null &&
+                  subscription.offerings!.current!.availablePackages.isNotEmpty;
+
+              return RefreshIndicator(
+                onRefresh: subscription.refreshOfferings,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (subscription.status == EntitlementStatus.inGracePeriod)
+                        _buildGracePeriodBanner(context),
+                      _buildHeader(context, subscription.isPro),
+                      if (!revenueCatAvailable)
+                        _buildInfoBanner(context,
+                            'Could not load live pricing. Please try again shortly.'),
+                      if (!subscription.isPro) ...[
                         _buildBillingToggle(context),
-                        ...UpgradePlanModel.plans.map(
-                          (plan) => _buildPlanCard(context, plan),
-                        ),
-                        const SizedBox(height: 8),
-                        _buildFooter(context),
-                        const SizedBox(height: 24),
-                      ],
-                    ),
+                        _buildPlanCard(context, subscription),
+                      ] else
+                        _buildManageCard(context, subscription),
+                      const SizedBox(height: 8),
+                      _buildFooter(context, subscription),
+                      const SizedBox(height: 24),
+                    ],
                   ),
                 ),
+              );
+            },
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildTrialBanner(BuildContext context) {
-    final days = _model.trialDaysRemaining();
+  Widget _buildGracePeriodBanner(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: FlutterFlowTheme.of(context).primary.withValues(alpha: 0.12),
+          color: FlutterFlowTheme.of(context).warning.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: FlutterFlowTheme.of(context).primary.withValues(alpha: 0.3),
+            color: FlutterFlowTheme.of(context).warning.withValues(alpha: 0.3),
           ),
         ),
         child: Row(
           children: [
-            Icon(
-              Icons.workspace_premium,
-              color: FlutterFlowTheme.of(context).primary,
-            ),
+            Icon(Icons.error_outline, color: FlutterFlowTheme.of(context).warning),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                days != null
-                    ? 'Premium trial active · $days day${days == 1 ? '' : 's'} left'
-                    : 'Premium trial active',
+                "There's a problem with your last payment. Please update your payment method — your Pro access continues during the grace period.",
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.w600,
                   color: FlutterFlowTheme.of(context).primaryText,
@@ -222,13 +264,13 @@ class _UpgradePlanWidgetState extends State<UpgradePlanWidget> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, bool isPro) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
       child: Column(
         children: [
           Text(
-            'Choose Your Plan',
+            isPro ? "You're on EatWise Pro" : 'Upgrade to EatWise Pro',
             textAlign: TextAlign.center,
             style: FlutterFlowTheme.of(context).headlineLarge.override(
                   fontFamily: 'Outfit',
@@ -237,7 +279,9 @@ class _UpgradePlanWidgetState extends State<UpgradePlanWidget> {
           ),
           const SizedBox(height: 8),
           Text(
-            '7-day free trial on Premium · Cancel anytime',
+            isPro
+                ? 'Unlimited meal tracking, macro breakdowns, and more.'
+                : 'Unlimited meal tracking, personalized macro breakdowns, and full water & activity tracking.',
             textAlign: TextAlign.center,
             style: FlutterFlowTheme.of(context).bodyMedium.override(
                   fontFamily: 'Readex Pro',
@@ -263,17 +307,17 @@ class _UpgradePlanWidgetState extends State<UpgradePlanWidget> {
             _billingChip(
               context,
               label: 'Annual',
-              badge: 'Save 33%',
+              badge: 'Best value',
               selected: _model.billingPeriod == BillingPeriod.annual,
-              onTap: () => setState(
-                  () => _model.billingPeriod = BillingPeriod.annual),
+              onTap: () =>
+                  setState(() => _model.billingPeriod = BillingPeriod.annual),
             ),
             _billingChip(
               context,
               label: 'Monthly',
               selected: _model.billingPeriod == BillingPeriod.monthly,
-              onTap: () => setState(
-                  () => _model.billingPeriod = BillingPeriod.monthly),
+              onTap: () =>
+                  setState(() => _model.billingPeriod = BillingPeriod.monthly),
             ),
           ],
         ),
@@ -331,25 +375,26 @@ class _UpgradePlanWidgetState extends State<UpgradePlanWidget> {
     );
   }
 
-  Widget _buildPlanCard(BuildContext context, PlanDefinition plan) {
-    final isCurrent = _model.isCurrentPlan(plan.id);
-    final isPremium = plan.isPopular;
-    final isFree = plan.id == 'free';
+  static const _proFeatures = [
+    'Unlimited meal tracking',
+    'Personalized meal plans',
+    'Macro & nutrient breakdown',
+    'Water & activity tracking',
+  ];
 
+  Widget _buildPlanCard(
+      BuildContext context, SubscriptionController subscription) {
+    final package = _selectedPackage(subscription);
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: isPremium
-              ? FlutterFlowTheme.of(context).primary.withValues(alpha: 0.08)
-              : FlutterFlowTheme.of(context).secondaryBackground,
+          color: FlutterFlowTheme.of(context).primary.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isPremium
-                ? FlutterFlowTheme.of(context).primary
-                : FlutterFlowTheme.of(context).alternate,
-            width: isPremium ? 2 : 1,
+            color: FlutterFlowTheme.of(context).primary,
+            width: 2,
           ),
         ),
         child: Padding(
@@ -357,60 +402,19 @@ class _UpgradePlanWidgetState extends State<UpgradePlanWidget> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Text(
-                    plan.title,
-                    style: FlutterFlowTheme.of(context).headlineSmall.override(
-                          fontFamily: 'Outfit',
-                          letterSpacing: 0.0,
-                        ),
-                  ),
-                  const Spacer(),
-                  if (isPremium)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: FlutterFlowTheme.of(context).primary,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        'POPULAR',
-                        style: FlutterFlowTheme.of(context).bodySmall.override(
-                              fontFamily: 'Readex Pro',
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.0,
-                            ),
-                      ),
+              Text(
+                'EatWise Pro',
+                style: FlutterFlowTheme.of(context).headlineSmall.override(
+                      fontFamily: 'Outfit',
+                      letterSpacing: 0.0,
                     ),
-                  if (isCurrent)
-                    Container(
-                      margin: EdgeInsets.only(left: isPremium ? 8 : 0),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: FlutterFlowTheme.of(context).success,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        'CURRENT',
-                        style: FlutterFlowTheme.of(context).bodySmall.override(
-                              fontFamily: 'Readex Pro',
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.0,
-                            ),
-                      ),
-                    ),
-                ],
               ),
               const SizedBox(height: 8),
               Text(
-                _model.priceLabel(plan),
+                package?.storeProduct.priceString ??
+                    (_model.billingPeriod == BillingPeriod.annual
+                        ? '\$29.99/yr'
+                        : '\$4.99/mo'),
                 style: FlutterFlowTheme.of(context).titleLarge.override(
                       fontFamily: 'Outfit',
                       color: FlutterFlowTheme.of(context).primary,
@@ -419,7 +423,9 @@ class _UpgradePlanWidgetState extends State<UpgradePlanWidget> {
               ),
               const SizedBox(height: 4),
               Text(
-                _model.priceSubtitle(plan),
+                _model.billingPeriod == BillingPeriod.annual
+                    ? 'Billed annually · Cancel anytime'
+                    : 'Billed monthly · Cancel anytime',
                 style: FlutterFlowTheme.of(context).bodySmall.override(
                       fontFamily: 'Readex Pro',
                       color: FlutterFlowTheme.of(context).secondaryText,
@@ -427,7 +433,7 @@ class _UpgradePlanWidgetState extends State<UpgradePlanWidget> {
                     ),
               ),
               const SizedBox(height: 14),
-              ...plan.features.map(
+              ..._proFeatures.map(
                 (feature) => Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
@@ -453,32 +459,25 @@ class _UpgradePlanWidgetState extends State<UpgradePlanWidget> {
                   ),
                 ),
               ),
-              if (!isFree) ...[
-                const SizedBox(height: 8),
-                FFButtonWidget(
-                  onPressed: (_model.isPurchasing || isCurrent)
-                      ? null
-                      : () => _handleSubscribe(plan.id),
-                  text: isCurrent
-                      ? 'Current Plan'
-                      : (_model.isPurchasing ? 'Processing...' : 'Subscribe'),
-                  options: FFButtonOptions(
-                    width: double.infinity,
-                    height: 48,
-                    color: isCurrent
-                        ? FlutterFlowTheme.of(context).secondaryText
-                        : FlutterFlowTheme.of(context).primary,
-                    textStyle:
-                        FlutterFlowTheme.of(context).titleSmall.override(
-                              fontFamily: 'Readex Pro',
-                              color: Colors.white,
-                              letterSpacing: 0.0,
-                            ),
-                    elevation: 0,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
+              const SizedBox(height: 8),
+              FFButtonWidget(
+                onPressed: subscription.isPurchasing
+                    ? null
+                    : () => _handleSubscribe(subscription),
+                text: subscription.isPurchasing ? 'Processing...' : 'Subscribe',
+                options: FFButtonOptions(
+                  width: double.infinity,
+                  height: 48,
+                  color: FlutterFlowTheme.of(context).primary,
+                  textStyle: FlutterFlowTheme.of(context).titleSmall.override(
+                        fontFamily: 'Readex Pro',
+                        color: Colors.white,
+                        letterSpacing: 0.0,
+                      ),
+                  elevation: 0,
+                  borderRadius: BorderRadius.circular(24),
                 ),
-              ],
+              ),
             ],
           ),
         ),
@@ -486,17 +485,81 @@ class _UpgradePlanWidgetState extends State<UpgradePlanWidget> {
     );
   }
 
-  Widget _buildFooter(BuildContext context) {
-    final showManage = _model.currentTier != null &&
-        _model.currentTier != 'free' &&
-        !_model.isOnTrial;
+  Widget _buildManageCard(
+      BuildContext context, SubscriptionController subscription) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: FlutterFlowTheme.of(context).secondaryBackground,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: FlutterFlowTheme.of(context).alternate),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.workspace_premium,
+                      color: FlutterFlowTheme.of(context).primary),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Active plan',
+                    style: FlutterFlowTheme.of(context).titleSmall.override(
+                          fontFamily: 'Outfit',
+                          letterSpacing: 0.0,
+                        ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                subscription.activeProductIdentifier ?? 'EatWise Pro',
+                style: FlutterFlowTheme.of(context).bodyMedium.override(
+                      fontFamily: 'Readex Pro',
+                      color: FlutterFlowTheme.of(context).secondaryText,
+                      letterSpacing: 0.0,
+                    ),
+              ),
+              const SizedBox(height: 16),
+              FFButtonWidget(
+                onPressed: () => _openSubscriptionManagement(subscription),
+                text: !kIsWeb && Platform.isIOS
+                    ? 'Manage in App Store'
+                    : 'Manage in Google Play',
+                options: FFButtonOptions(
+                  width: double.infinity,
+                  height: 48,
+                  color: FlutterFlowTheme.of(context).primary,
+                  textStyle: FlutterFlowTheme.of(context).titleSmall.override(
+                        fontFamily: 'Readex Pro',
+                        color: Colors.white,
+                        letterSpacing: 0.0,
+                      ),
+                  elevation: 0,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
+  Widget _buildFooter(
+      BuildContext context, SubscriptionController subscription) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
           TextButton(
-            onPressed: _model.isPurchasing ? null : _handleRestore,
+            onPressed: subscription.isPurchasing
+                ? null
+                : () => _handleRestore(subscription),
             child: Text(
               'Restore Purchases',
               style: FlutterFlowTheme.of(context).bodyMedium.override(
@@ -507,20 +570,6 @@ class _UpgradePlanWidgetState extends State<UpgradePlanWidget> {
                   ),
             ),
           ),
-          if (showManage)
-            TextButton(
-              onPressed: _openSubscriptionManagement,
-              child: Text(
-                !kIsWeb && Platform.isIOS
-                    ? 'Manage in App Store'
-                    : 'Manage in Google Play',
-                style: FlutterFlowTheme.of(context).bodyMedium.override(
-                      fontFamily: 'Readex Pro',
-                      color: FlutterFlowTheme.of(context).primary,
-                      letterSpacing: 0.0,
-                    ),
-              ),
-            ),
           Text(
             'Payment will be charged to your App Store or Google Play account. Subscriptions renew automatically unless cancelled at least 24 hours before the end of the current period.',
             textAlign: TextAlign.center,

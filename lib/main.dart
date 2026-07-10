@@ -18,8 +18,8 @@ import 'backend/api_requests/api_config.dart';
 import 'backend/services/app_day_service.dart';
 import 'backend/services/pedometer_service.dart';
 import 'backend/services/legal_content_service.dart';
-import 'backend/backend_manager.dart';
 import 'backend/services/revenuecat_service.dart';
+import 'backend/services/subscription_controller.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -154,8 +154,13 @@ void main() async {
     ..currentDate = normalizedToday
     ..selectedDate = normalizedToday);
 
-  runApp(ChangeNotifierProvider(
-    create: (context) => appState,
+  runApp(MultiProvider(
+    providers: [
+      ChangeNotifierProvider(create: (context) => appState),
+      ChangeNotifierProvider(
+        create: (context) => SubscriptionController()..init(),
+      ),
+    ],
     child: MyApp(),
   ));
 }
@@ -230,8 +235,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             _syncFcmToken(uid);
             // Identify the user to RevenueCat so purchases follow them.
             RevenueCatService().setUserId(uid);
-            // Grant the one-time 7-day premium trial for eligible testers.
-            BackendManager().subscriptionService.ensureFreeTrialIfEligible(uid);
           }
         } else {
           // User logged out — stop the step counter and detach RevenueCat user.

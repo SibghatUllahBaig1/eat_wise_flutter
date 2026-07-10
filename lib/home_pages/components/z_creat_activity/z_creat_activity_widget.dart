@@ -1,3 +1,4 @@
+import '/components/paywall_widget.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -525,6 +526,13 @@ class _ZCreatActivityWidgetState extends State<ZCreatActivityWidget> {
                   // Manual entry for "Other" activities
                   calories = int.tryParse(_model.textController2.text);
                 }
+
+                final hasAccess = await checkFeatureAccess(
+                  context: context,
+                  featureName: 'water_activity_tracking',
+                  displayName: 'Water & Activity Tracking',
+                );
+                if (!hasAccess || !context.mounted) return;
 
                 try {
                   // Save activity to Firestore

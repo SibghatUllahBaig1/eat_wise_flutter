@@ -1,9 +1,9 @@
-import '/backend/backend_manager.dart';
-import '/auth/firebase_auth/auth_util.dart';
+import '/backend/services/subscription_controller.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class PaywallWidget extends StatefulWidget {
   const PaywallWidget({
@@ -13,7 +13,7 @@ class PaywallWidget extends StatefulWidget {
     this.onUpgrade,
   });
 
-  /// Internal feature key used by [SubscriptionService.hasFeatureAccess].
+  /// Internal feature key, used only for display (humanized in the paywall copy).
   final String featureName;
 
   /// Optional user-facing label. Falls back to a humanized [featureName] when omitted.
@@ -25,8 +25,6 @@ class PaywallWidget extends StatefulWidget {
 }
 
 class _PaywallWidgetState extends State<PaywallWidget> {
-  final _backend = BackendManager();
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -127,24 +125,18 @@ String _humanize(String featureName) {
       .join(' ');
 }
 
-/// Helper function to check feature access and show paywall if needed.
+/// Checks the single reactive [SubscriptionController.isPro] source of
+/// truth and shows the paywall dialog if the user isn't Pro. Returns `true`
+/// only when the feature is actually unlocked.
 Future<bool> checkFeatureAccess({
   required BuildContext context,
   required String featureName,
   String? displayName,
   VoidCallback? onUpgrade,
 }) async {
-  final backend = BackendManager();
-  final userId = currentUserUid;
+  final isPro = context.read<SubscriptionController>().isPro;
 
-  if (userId.isEmpty) return false;
-
-  final hasAccess = await backend.subscriptionService.hasFeatureAccess(
-    userId: userId,
-    featureName: featureName,
-  );
-
-  if (!hasAccess) {
+  if (!isPro) {
     if (!context.mounted) return false;
     await showDialog(
       context: context,

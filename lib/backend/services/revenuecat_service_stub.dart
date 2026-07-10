@@ -1,13 +1,27 @@
-import 'package:flutter/foundation.dart';
+import 'dart:async';
 
-/// Web stub for RevenueCatService
-/// RevenueCat is not available on web
+import 'package:flutter/foundation.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
+
+import 'purchase_result.dart';
+
+/// Web stub for RevenueCatService — the RevenueCat web plugin has no API
+/// key configured for this project, so purchases are disabled on web.
 class RevenueCatService {
   static final RevenueCatService _instance = RevenueCatService._internal();
   factory RevenueCatService() => _instance;
   RevenueCatService._internal();
 
+  static String get entitlementId => 'PSP yatoo LLC Pro';
+
+  final StreamController<CustomerInfo> _customerInfoController =
+      StreamController<CustomerInfo>.broadcast();
+
   bool _isConfigured = false;
+  bool get isConfigured => _isConfigured;
+
+  Stream<CustomerInfo> get customerInfoStream => _customerInfoController.stream;
+  CustomerInfo? get lastCustomerInfo => null;
 
   Future<void> initialize() async {
     if (_isConfigured) return;
@@ -23,35 +37,17 @@ class RevenueCatService {
     debugPrint('RevenueCatService (Web Stub): logOut no-op on web');
   }
 
-  Future<dynamic> getOfferings() async {
-    return null;
+  Future<Offerings?> getOfferings() async => null;
+
+  Future<PurchaseAttemptResult> purchasePackage(Package package) async {
+    return const PurchaseAttemptResult.error(
+        'Purchases are not available on web.');
   }
 
-  Future<dynamic> purchasePackage(dynamic package) async {
-    return null;
+  Future<RestoreAttemptResult> restorePurchases() async {
+    return const RestoreAttemptResult.error(
+        'Purchases are not available on web.');
   }
 
-  Future<dynamic> restorePurchases() async {
-    return null;
-  }
-
-  Future<dynamic> getCustomerInfo() async {
-    return null;
-  }
-
-  Future<bool> hasActiveSubscription() async {
-    return false;
-  }
-
-  Future<String> getSubscriptionTier() async {
-    return 'free';
-  }
-
-  Future<String?> getActiveSubscriptionTier() async {
-    return null;
-  }
-
-  Future<void> syncSubscriptionToFirestore(String userId) async {
-    debugPrint('RevenueCatService (Web Stub): Cannot sync subscription on web');
-  }
+  Future<CustomerInfo?> getCustomerInfo() async => null;
 }

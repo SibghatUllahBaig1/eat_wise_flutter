@@ -1,3 +1,4 @@
+import '/components/paywall_widget.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -442,6 +443,12 @@ class _ZQuickLogFoodWidgetState extends State<ZQuickLogFoodWidget> {
               padding: EdgeInsets.all(16.0),
               child: FFButtonWidget(
                 onPressed: () async {
+                  final hasAccess = await checkFeatureAccess(
+                    context: context,
+                    featureName: 'unlimited_meal_tracking',
+                    displayName: 'Unlimited Meal Tracking',
+                  );
+                  if (!hasAccess || !context.mounted) return;
                   Navigator.pop(context);
                 },
                 text: 'Add',

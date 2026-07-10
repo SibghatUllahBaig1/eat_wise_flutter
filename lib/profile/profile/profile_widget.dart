@@ -2,9 +2,9 @@ import '/buttons/text_text_right/text_text_right_widget.dart';
 import '/profile/components/z_height_unit/z_height_unit_widget.dart';
 import '/profile/components/z_weight_unit/z_weight_unit_widget.dart';
 import '/auth/firebase_auth/auth_util.dart';
-import '/backend/backend_manager.dart';
 import '/backend/firestore/user_service.dart';
-import '/backend/services/subscription_service.dart';
+import '/backend/services/entitlement_status.dart';
+import '/backend/services/subscription_controller.dart';
 import '/backend/schema/structs/index.dart';
 import '/buttons/icon_text_right/icon_text_right_widget.dart';
 import '/flutter_flow/flutter_flow_animations.dart';
@@ -15,7 +15,6 @@ import '/home_pages/components/z_naw_bar/z_naw_bar_widget.dart';
 import '/profile/components/delete_account/delete_account_widget.dart';
 import '/profile/components/log_out/log_out_widget.dart';
 import '/profile/components/rate_us/rate_us_widget.dart';
-// import '/profile/components/upgrade_plan/upgrade_plan_widget.dart'; // NOTE: Upgrade Plan has been hidden
 import 'dart:math';
 import 'dart:ui';
 import '/index.dart';
@@ -1413,36 +1412,20 @@ class _ProfileWidgetState extends State<ProfileWidget>
     );
   }
 
-  Future<Map<String, dynamic>> _loadSubscriptionSummary(String uid) async {
-    final service = BackendManager().subscriptionService;
-    final tier = await service.getSubscriptionTier(uid);
-    final isTrial = await service.isInTrial(uid);
-    return {'tier': tier, 'isTrial': isTrial};
-  }
-
   /// Subscription status card shown above the settings list.
-  /// Pulls the active tier from [SubscriptionService] and offers an Upgrade
-  /// (free tier) or Manage Subscription (paid tier) action.
+  /// Reads the single reactive [SubscriptionController.isPro] source of
+  /// truth and offers an Upgrade (free) or Manage Subscription (Pro) action.
   Widget _buildSubscriptionCard(BuildContext context) {
-    final uid = currentUserUid;
     return Padding(
       padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 0.0),
-      child: FutureBuilder<Map<String, dynamic>>(
-        future: uid.isEmpty
-            ? Future.value({'tier': SubscriptionTier.free, 'isTrial': false})
-            : _loadSubscriptionSummary(uid),
-        builder: (context, snapshot) {
-          final tier =
-              snapshot.data?['tier'] as SubscriptionTier? ?? SubscriptionTier.free;
-          final isTrial = snapshot.data?['isTrial'] == true;
-          final isPaid = tier != SubscriptionTier.free || isTrial;
-          final tierLabel = isTrial
-              ? 'Premium trial'
-              : tier == SubscriptionTier.premium
-                  ? 'Premium'
-                  : tier == SubscriptionTier.standard
-                      ? 'Standard'
-                      : 'Free';
+      child: Consumer<SubscriptionController>(
+        builder: (context, subscription, _) {
+          final isPaid = subscription.isPro;
+          final tierLabel = subscription.status == EntitlementStatus.inGracePeriod
+              ? 'Pro (billing issue)'
+              : isPaid
+                  ? 'Pro'
+                  : 'Free';
           return Container(
             width: double.infinity,
             decoration: BoxDecoration(

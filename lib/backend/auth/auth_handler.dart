@@ -61,9 +61,6 @@ class AuthHandler extends ChangeNotifier {
     try {
       debugPrint('User signed in: ${user.uid}');
 
-      // Every eligible new install gets a 7-day premium trial for testing.
-      await _backend.subscriptionService.ensureFreeTrialIfEligible(user.uid);
-
       // Update app state
       FFAppState().authenticated = true;
 
