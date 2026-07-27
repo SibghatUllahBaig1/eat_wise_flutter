@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:from_css_color/from_css_color.dart';
 
-import '/backend/schema/structs/index.dart';
+import '/backend/schema/util/schema_util.dart' show BaseStruct, StructBuilder;
 
 import '../../flutter_flow/lat_lng.dart';
 import '../../flutter_flow/place.dart';

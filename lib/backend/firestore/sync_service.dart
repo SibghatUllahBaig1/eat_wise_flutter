@@ -105,6 +105,10 @@ class SyncService {
       final profile = await _userService.getUserProfileData(userId);
       if (profile != null) {
         ProfileSyncHelper.hydrateFromProfile(profile);
+        await _userService.syncRootIdentityFromProfile(
+          userId: userId,
+          profile: profile,
+        );
       }
     } catch (e) {
       debugPrint('Failed to load user profile data: $e');

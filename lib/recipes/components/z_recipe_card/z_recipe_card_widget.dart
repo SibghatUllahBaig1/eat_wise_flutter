@@ -7,6 +7,7 @@ import '/index.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../recipe_image_widget.dart';
 import 'z_recipe_card_model.dart';
 export 'z_recipe_card_model.dart';
 
@@ -85,11 +86,8 @@ class _ZRecipeCardWidgetState extends State<ZRecipeCardWidget> {
                       topLeft: Radius.circular(12.0),
                       topRight: Radius.circular(12.0),
                     ),
-                    child: Image.network(
-                      valueOrDefault<String>(
-                        widget!.recipeData?.imageUrl,
-                        'https://picsum.photos/seed/57/600',
-                      ),
+                    child: RecipeImageWidget(
+                      imageUrl: widget!.recipeData?.imageUrl,
                       width: double.infinity,
                       height: 200.0,
                       fit: BoxFit.cover,

@@ -1,34 +1,42 @@
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart';
+
 import '/backend/firestore/api_keys_service.dart';
 
 /// API Configuration for external services
 ///
-/// API keys are now stored securely in Firestore.
-/// Call `loadApiKeys()` before using any API services.
+/// API keys are stored in Firestore (managed via admin panel).
+/// Call `loadApiKeys()` after the user is authenticated.
 
 class ApiConfig {
-  // Runtime API keys (loaded from Firestore)
   static String _openAiApiKey = '';
   static String _usdaApiKey = '';
+  static String _revenueCatIosApiKey = '';
+  static String _revenueCatAndroidApiKey = '';
 
-  // API Base URLs and Models
   static const String openAiBaseUrl = 'https://api.openai.com/v1';
-  static const String openAiVisionModel = 'gpt-4o'; // gpt-4o supports vision
-  static const String openAiTextModel = 'gpt-4o-mini'; // Faster for text-only
+  static const String openAiVisionModel = 'gpt-4o';
+  static const String openAiTextModel = 'gpt-4o-mini';
   static const String usdaBaseUrl = 'https://api.nal.usda.gov/fdc/v1';
 
-  // API Request Timeouts
   static const Duration apiTimeout = Duration(seconds: 30);
 
-  // Getters for API keys
   static String get openAiApiKey => _openAiApiKey;
   static String get usdaApiKey => _usdaApiKey;
+  static String get revenueCatIosApiKey => _revenueCatIosApiKey;
+  static String get revenueCatAndroidApiKey => _revenueCatAndroidApiKey;
 
-  // Validation
+  static String get revenueCatApiKey {
+    if (kIsWeb) return '';
+    return Platform.isIOS ? _revenueCatIosApiKey : _revenueCatAndroidApiKey;
+  }
+
   static bool get isOpenAiConfigured => _openAiApiKey.isNotEmpty;
   static bool get isUsdaConfigured => _usdaApiKey.isNotEmpty;
+  static bool get isRevenueCatConfigured => revenueCatApiKey.isNotEmpty;
 
-  /// Load API keys from Firestore
-  /// This should be called during app initialization
+  /// Load API keys from Firestore (admin panel).
   static Future<void> loadApiKeys() async {
     try {
       final apiKeysService = ApiKeysService();
@@ -36,28 +44,40 @@ class ApiConfig {
 
       _openAiApiKey = keys['openai'] ?? '';
       _usdaApiKey = keys['usda'] ?? '';
+      _revenueCatIosApiKey = keys['revenuecat_ios'] ?? '';
+      _revenueCatAndroidApiKey = keys['revenuecat_android'] ?? '';
 
-      // ignore: avoid_print
       if (!isOpenAiConfigured) {
-        print('Warning: OpenAI API key not configured in Firestore');
+        debugPrint('Warning: OpenAI API key not configured in Firestore');
       }
-      // ignore: avoid_print
       if (!isUsdaConfigured) {
-        print('Warning: USDA API key not configured in Firestore');
+        debugPrint('Warning: USDA API key not configured in Firestore');
+      }
+      if (!isRevenueCatConfigured && !kIsWeb) {
+        debugPrint('Warning: RevenueCat API key not configured in Firestore');
       }
     } catch (e) {
-      // ignore: avoid_print
-      print('Error loading API keys from Firestore: $e');
-      // Keys remain empty, services will throw appropriate errors
+      debugPrint('Error loading API keys from Firestore: $e');
     }
   }
 
-  /// Manually set API keys (for testing or fallback)
+  @visibleForTesting
   static void setOpenAiApiKey(String key) {
     _openAiApiKey = key;
   }
 
+  @visibleForTesting
   static void setUsdaApiKey(String key) {
     _usdaApiKey = key;
+  }
+
+  @visibleForTesting
+  static void setRevenueCatIosApiKey(String key) {
+    _revenueCatIosApiKey = key;
+  }
+
+  @visibleForTesting
+  static void setRevenueCatAndroidApiKey(String key) {
+    _revenueCatAndroidApiKey = key;
   }
 }

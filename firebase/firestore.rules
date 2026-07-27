@@ -11,25 +11,49 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
     
-    function isValidTimestamp(timestamp) {
-      return timestamp is timestamp;
+    function isValidTimestamp(value) {
+      return value is timestamp;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    function adminCanUpdateUser() {
+      return isAdmin() &&
+             request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+               'displayName',
+               'email',
+               'isSuspended',
+               'isBlocked',
+               'proGranted',
+               'updatedAt'
+             ]);
     }
     
     // Users collection
     match /users/{userId} {
-      allow read: if isOwner(userId);
+      allow read: if isOwner(userId) || isAdmin();
       allow create: if isAuthenticated() && request.auth.uid == userId;
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow update: if isOwner(userId) || adminCanUpdateUser();
+      allow delete: if isAdmin();
       
       // User profile subcollection
       match /profile/{document=**} {
-        allow read, write: if isOwner(userId);
+        allow read: if isOwner(userId) || isAdmin();
+        allow write: if isOwner(userId) || isAdmin();
       }
       
       // User settings subcollection
       match /settings/{document=**} {
         allow read, write: if isOwner(userId);
+      }
+
+      // Subscription mirror (RevenueCat sync + admin visibility)
+      match /subscription/{document=**} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow write: if isOwner(userId);
       }
       
       // Meals subcollection
@@ -105,21 +129,31 @@ service cloud.firestore {
     // Recipes collection (public read, admin write)
     match /recipes/{recipeId} {
       allow read: if true;
-      allow write: if false; // Only through admin SDK or Cloud Functions
+      allow create, update, delete: if isAdmin();
     }
     
     // Food database collection (public read, admin write)
     match /foods/{foodId} {
       allow read: if true;
-      allow write: if false; // Only through admin SDK or Cloud Functions
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Diet categories (public read, admin write)
+    match /diet_categories/{categoryId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Legal / CMS content (public read, admin write)
+    match /legal/{documentId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
     }
 
     // API keys collection (authenticated read, admin write)
-    // Users can read API keys to use external services
-    // Only admins can write/update keys through Cloud Functions or admin SDK
     match /api_keys/{keyId} {
       allow read: if isAuthenticated();
-      allow write: if false; // Only through admin SDK or Cloud Functions
+      allow write: if isAdmin();
     }
   }
 }

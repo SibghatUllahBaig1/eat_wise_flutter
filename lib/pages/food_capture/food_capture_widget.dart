@@ -5,6 +5,7 @@ import '/flutter_flow/flutter_flow_widgets.dart';
 import '/flutter_flow/upload_data.dart';
 import '/backend/api_requests/food_analysis_service.dart';
 import '/backend/schema/structs/index.dart';
+import '/recipes/components/recipe_image_widget.dart';
 import '/components/paywall_widget.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
@@ -29,6 +30,94 @@ class _FoodCaptureWidgetState extends State<FoodCaptureWidget> {
   late FoodCaptureModel _model;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _isAnalyzing = false;
+
+  Future<void> _analyzeFood() async {
+    FocusScope.of(context).unfocus();
+    await Future<void>.delayed(Duration.zero);
+    if (!mounted) return;
+
+    final hasAccess = await checkFeatureAccess(
+      context: context,
+      featureName: 'ai_food_analysis',
+      displayName: 'AI Food Analysis',
+    );
+    if (!hasAccess || !mounted) return;
+
+    setState(() => _isAnalyzing = true);
+    try {
+      FoodNutritionStruct nutritionData;
+
+      if (_model.captureMode == CaptureMode.CAMERA) {
+        if (_model.uploadedLocalFile.bytes == null ||
+            _model.uploadedLocalFile.bytes!.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Please capture or select an image first'),
+              backgroundColor: FlutterFlowTheme.of(context).error,
+            ),
+          );
+          return;
+        }
+
+        final tempDir = await getTemporaryDirectory();
+        final tempFile = File('${tempDir.path}/temp_food_image.jpg');
+        await tempFile.writeAsBytes(_model.uploadedLocalFile.bytes!);
+
+        nutritionData = await FoodAnalysisService.analyzeFromImage(
+          tempFile.path,
+        );
+      } else {
+        final foodDescription = _model.textController?.text.trim() ?? '';
+        if (foodDescription.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Please enter a food description'),
+              backgroundColor: FlutterFlowTheme.of(context).error,
+            ),
+          );
+          return;
+        }
+
+        nutritionData = await FoodAnalysisService.analyzeFromText(
+          foodDescription,
+        );
+      }
+
+      if (!mounted) return;
+
+      if (!_isRecognizedFood(nutritionData)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_unrecognizedFoodMessage()),
+            backgroundColor: FlutterFlowTheme.of(context).error,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+        return;
+      }
+
+      context.pushNamed(
+        'FoodDetails',
+        extra: <String, dynamic>{
+          'nutritionData': nutritionData,
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_friendlyAnalysisError(e)),
+          backgroundColor: FlutterFlowTheme.of(context).error,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isAnalyzing = false);
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -633,28 +722,25 @@ class _FoodCaptureWidgetState extends State<FoodCaptureWidget> {
                                               topLeft: Radius.circular(12.0),
                                               topRight: Radius.circular(12.0),
                                             ),
-                                            child: Image.network(
-                                              imageUrl ?? '',
+                                            child: RemoteImageWidget(
+                                              imageUrl: imageUrl,
                                               width: double.infinity,
                                               height: 120.0,
                                               fit: BoxFit.cover,
-                                              errorBuilder:
-                                                  (context, error, stackTrace) {
-                                                return Container(
-                                                  width: double.infinity,
-                                                  height: 120.0,
+                                              errorWidget: Container(
+                                                width: double.infinity,
+                                                height: 120.0,
+                                                color: FlutterFlowTheme.of(
+                                                        context)
+                                                    .alternate,
+                                                child: Icon(
+                                                  Icons.image_not_supported,
                                                   color: FlutterFlowTheme.of(
                                                           context)
-                                                      .alternate,
-                                                  child: Icon(
-                                                    Icons.image_not_supported,
-                                                    color: FlutterFlowTheme.of(
-                                                            context)
-                                                        .secondaryText,
-                                                    size: 40.0,
-                                                  ),
-                                                );
-                                              },
+                                                      .secondaryText,
+                                                  size: 40.0,
+                                                ),
+                                              ),
                                             ),
                                           ),
                                           // Details
@@ -728,136 +814,41 @@ class _FoodCaptureWidgetState extends State<FoodCaptureWidget> {
                   Padding(
                     padding:
                         EdgeInsetsDirectional.fromSTEB(0.0, 16.0, 0.0, 0.0),
-                    child: FFButtonWidget(
-                      onPressed: () async {
-                        // Gate AI food analysis behind premium subscription.
-                        final hasAccess = await checkFeatureAccess(
-                          context: context,
-                          featureName: 'ai_food_analysis',
-                          displayName: 'AI Food Analysis',
-                        );
-                        if (!hasAccess || !context.mounted) return;
-
-                        // Show loading indicator
-                        showDialog(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (context) => Center(
-                            child: CircularProgressIndicator(),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 50.0,
+                      child: ElevatedButton(
+                        onPressed: _isAnalyzing ? null : _analyzeFood,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              FlutterFlowTheme.of(context).primary,
+                          foregroundColor: Colors.white,
+                          elevation: 3.0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.0),
                           ),
-                        );
-
-                        try {
-                          FoodNutritionStruct? nutritionData;
-
-                          if (_model.captureMode == CaptureMode.CAMERA) {
-                            // Analyze from image
-                            if (_model.uploadedLocalFile.bytes == null ||
-                                _model.uploadedLocalFile.bytes!.isEmpty) {
-                              Navigator.pop(context); // Close loading dialog
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                      'Please capture or select an image first'),
-                                  backgroundColor:
-                                      FlutterFlowTheme.of(context).error,
-                                ),
-                              );
-                              return;
-                            }
-
-                            // Save bytes to temporary file
-                            final tempDir = await getTemporaryDirectory();
-                            final tempFile =
-                                File('${tempDir.path}/temp_food_image.jpg');
-                            await tempFile
-                                .writeAsBytes(_model.uploadedLocalFile.bytes!);
-
-                            // Analyze the image
-                            nutritionData =
-                                await FoodAnalysisService.analyzeFromImage(
-                              tempFile.path,
-                            );
-                          } else {
-                            // Analyze from text
-                            final foodDescription =
-                                _model.textController?.text ?? '';
-                            if (foodDescription.isEmpty) {
-                              Navigator.pop(context); // Close loading dialog
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content:
-                                      Text('Please enter a food description'),
-                                  backgroundColor:
-                                      FlutterFlowTheme.of(context).error,
-                                ),
-                              );
-                              return;
-                            }
-
-                            nutritionData =
-                                await FoodAnalysisService.analyzeFromText(
-                              foodDescription,
-                            );
-                          }
-
-                          Navigator.pop(context); // Close loading dialog
-
-                          if (nutritionData == null ||
-                              !_isRecognizedFood(nutritionData)) {
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(_unrecognizedFoodMessage()),
-                                backgroundColor:
-                                    FlutterFlowTheme.of(context).error,
-                                duration: const Duration(seconds: 5),
-                              ),
-                            );
-                            return;
-                          }
-
-                          // Navigate to food details page with nutrition data
-                          context.pushNamed(
-                            'FoodDetails',
-                            extra: <String, dynamic>{
-                              'nutritionData': nutritionData,
-                            },
-                          );
-                        } catch (e) {
-                          Navigator.pop(context); // Close loading dialog
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(_friendlyAnalysisError(e)),
-                              backgroundColor:
-                                  FlutterFlowTheme.of(context).error,
-                              duration: const Duration(seconds: 5),
-                            ),
-                          );
-                        }
-                      },
-                      text: 'Analyze Food',
-                      options: FFButtonOptions(
-                        width: double.infinity,
-                        height: 50.0,
-                        padding: EdgeInsetsDirectional.fromSTEB(
-                            24.0, 0.0, 24.0, 0.0),
-                        iconPadding:
-                            EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 0.0),
-                        color: FlutterFlowTheme.of(context).primary,
-                        textStyle:
-                            FlutterFlowTheme.of(context).titleSmall.override(
-                                  fontFamily: 'Readex Pro',
-                                  color: Colors.white,
-                                  letterSpacing: 0.0,
-                                ),
-                        elevation: 3.0,
-                        borderSide: BorderSide(
-                          color: Colors.transparent,
-                          width: 1.0,
                         ),
-                        borderRadius: BorderRadius.circular(8.0),
+                        child: _isAnalyzing
+                            ? const SizedBox(
+                                width: 23.0,
+                                height: 23.0,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : Text(
+                                'Analyze Food',
+                                style: FlutterFlowTheme.of(context)
+                                    .titleSmall
+                                    .override(
+                                      fontFamily: 'Readex Pro',
+                                      color: Colors.white,
+                                      letterSpacing: 0.0,
+                                    ),
+                              ),
                       ),
                     ),
                   ),

@@ -144,6 +144,56 @@ class UserService extends FirestoreService {
         .map((doc) => doc.exists ? doc.data() : null);
   }
 
+  /// Resolve a display name from root user doc and/or profile subdoc.
+  static String resolveDisplayName(
+    Map<String, dynamic>? root,
+    Map<String, dynamic>? profile,
+  ) {
+    final fromRoot = root?['displayName']?.toString().trim();
+    if (fromRoot != null && fromRoot.isNotEmpty) return fromRoot;
+
+    final fromProfile = profile?['fullName']?.toString().trim();
+    if (fromProfile != null && fromProfile.isNotEmpty) return fromProfile;
+
+    return '';
+  }
+
+  /// Resolve an email from root user doc and/or profile subdoc.
+  static String resolveEmail(
+    Map<String, dynamic>? root,
+    Map<String, dynamic>? profile,
+  ) {
+    final fromRoot = root?['email']?.toString().trim();
+    if (fromRoot != null && fromRoot.isNotEmpty) return fromRoot;
+
+    final fromProfile = profile?['email']?.toString().trim();
+    if (fromProfile != null && fromProfile.isNotEmpty) return fromProfile;
+
+    return '';
+  }
+
+  /// Copy identity fields from profile/data onto the root user document so
+  /// admin queries and list views can read name/email without a subcollection join.
+  Future<void> syncRootIdentityFromProfile({
+    required String userId,
+    required UserProfileStruct profile,
+  }) async {
+    try {
+      final updates = <String, dynamic>{};
+      if (profile.hasFullName() && profile.fullName.trim().isNotEmpty) {
+        updates['displayName'] = profile.fullName.trim();
+      }
+      if (profile.hasEmail() && profile.email.trim().isNotEmpty) {
+        updates['email'] = profile.email.trim();
+      }
+      if (updates.isEmpty) return;
+
+      await usersCollection.doc(userId).set(updates, SetOptions(merge: true));
+    } catch (e) {
+      throw Exception(handleFirestoreError(e));
+    }
+  }
+
   /// Save user profile data (new structure with calorie calculations)
   Future<void> saveUserProfileData({
     required String userId,
@@ -154,6 +204,7 @@ class UserService extends FirestoreService {
           usersCollection.doc(userId).collection('profile').doc('data');
 
       await profileDoc.set(profile.toMap(), SetOptions(merge: true));
+      await syncRootIdentityFromProfile(userId: userId, profile: profile);
     } catch (e) {
       throw Exception(handleFirestoreError(e));
     }

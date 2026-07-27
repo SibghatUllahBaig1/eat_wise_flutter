@@ -130,6 +130,12 @@ class _FFButtonWidgetState extends State<FFButtonWidget> {
                 if (loading) {
                   return;
                 }
+                // Defer loading UI until after focus/semantics settle — avoids
+                // parentDataDirty assertions when swapping button children.
+                await Future<void>.delayed(Duration.zero);
+                if (!mounted) {
+                  return;
+                }
                 setState(() => loading = true);
                 try {
                   await widget.onPressed!();

@@ -7,6 +7,8 @@ import '/auth/firebase_auth/apple_auth.dart';
 import '../backend_manager.dart';
 import '/app_state.dart';
 import '/backend/api_requests/api_config.dart';
+import '/backend/services/revenuecat_service.dart';
+import '/backend/services/subscription_controller.dart';
 
 /// Handler for authentication events and user data synchronization
 class AuthHandler extends ChangeNotifier {
@@ -68,7 +70,11 @@ class AuthHandler extends ChangeNotifier {
       debugPrint('Loading API keys after authentication...');
       await ApiConfig.loadApiKeys();
       debugPrint(
-          'API keys loaded: OpenAI=${ApiConfig.isOpenAiConfigured}, USDA=${ApiConfig.isUsdaConfigured}');
+          'API keys loaded: OpenAI=${ApiConfig.isOpenAiConfigured}, USDA=${ApiConfig.isUsdaConfigured}, RevenueCat=${ApiConfig.isRevenueCatConfigured}');
+
+      await RevenueCatService().initialize();
+      await RevenueCatService().setUserId(user.uid);
+      await SubscriptionController.refreshIfReady();
 
       // Check if user profile exists
       final profile = await _backend.userService.getUserProfile(user.uid);
@@ -321,6 +327,7 @@ class AuthHandler extends ChangeNotifier {
       }
 
       await _auth.signOut();
+      SubscriptionController.onUserSignedOut();
 
       _isLoading = false;
       notifyListeners();

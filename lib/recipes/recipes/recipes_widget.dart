@@ -45,7 +45,6 @@ class _RecipesWidgetState extends State<RecipesWidget>
     super.initState();
     _model = createModel(context, () => RecipesModel());
 
-    // Load recipes and update UI when complete
     _loadRecipes();
 
     // On page load action.

@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import '/backend/schema/structs/index.dart';
+import '/backend/services/recipe_cache_service.dart';
 import '/backend/backend_manager.dart';
 import '/flutter_flow/flutter_flow_animations.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
@@ -74,18 +77,16 @@ class RecipesModel extends FlutterFlowModel<RecipesWidget> {
     zRecipeCard1Models2 = FlutterFlowDynamicModels(() => ZRecipeCard1Model());
     zRecipeCardModels = FlutterFlowDynamicModels(() => ZRecipeCardModel());
     zNawBarModel = createModel(context, () => ZNawBarModel());
-
-    // Load recipes from Firestore
-    loadRecipes();
   }
 
-  /// Load all recipes from Firestore
+  /// Load all recipes from shared cache (Firestore + local persistence).
   Future<void> loadRecipes() async {
     isLoadingRecipes = true;
     try {
-      final backend = BackendManager();
-      allRecipes = await backend.recipeService.getAllRecipes();
-      debugPrint('Loaded ${allRecipes.length} recipes from Firestore');
+      allRecipes = await RecipeCacheService.instance.getRecipes();
+      unawaited(
+        RecipeCacheService.instance.prefetchVisibleImages(allRecipes),
+      );
     } catch (e) {
       debugPrint('Error loading recipes: $e');
     } finally {

@@ -167,23 +167,28 @@ void main() async {
 
 /// Firestore / subscription setup that should not block showing the UI.
 Future<void> _runDeferredStartup() async {
-  try {
-    await ApiConfig.loadApiKeys();
-  } catch (e) {
-    // ignore: avoid_print
-    print('ApiConfig.loadApiKeys failed: $e');
+  final user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    try {
+      await ApiConfig.loadApiKeys();
+    } catch (e) {
+      // ignore: avoid_print
+      print('ApiConfig.loadApiKeys failed: $e');
+    }
+    try {
+      await RevenueCatService().initialize();
+      await RevenueCatService().setUserId(user.uid);
+      await SubscriptionController.refreshIfReady();
+    } catch (e) {
+      // ignore: avoid_print
+      print('RevenueCatService.initialize failed: $e');
+    }
   }
   try {
     await LegalContentService().initializeDefaultContent();
   } catch (e) {
     // ignore: avoid_print
     print('LegalContentService.initializeDefaultContent failed: $e');
-  }
-  try {
-    await RevenueCatService().initialize();
-  } catch (e) {
-    // ignore: avoid_print
-    print('RevenueCatService.initialize failed: $e');
   }
 }
 
@@ -233,13 +238,13 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             PedometerService().startListening(uid);
             // Sync FCM token to Firestore so Cloud Functions can send notifications
             _syncFcmToken(uid);
-            // Identify the user to RevenueCat so purchases follow them.
-            RevenueCatService().setUserId(uid);
+            // RevenueCat user identification runs in AuthHandler after API keys load.
           }
         } else {
           // User logged out — stop the step counter and detach RevenueCat user.
           PedometerService().stopListening();
           RevenueCatService().logOut();
+          SubscriptionController.onUserSignedOut();
         }
       });
 

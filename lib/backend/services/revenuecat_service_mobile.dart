@@ -6,23 +6,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show PlatformException;
 import 'package:purchases_flutter/purchases_flutter.dart';
 
+import '/backend/api_requests/api_config.dart';
 import 'purchase_result.dart';
 
-/// RevenueCat configuration.
-///
-/// Replace these placeholder keys with the public SDK keys from your
-/// RevenueCat dashboard (Project → API Keys). They are safe to ship in the
-/// client; they are not secrets. See:
-/// https://www.revenuecat.com/docs/projects/api-keys
+/// RevenueCat entitlement identifier (not an API key).
 class _RcConfig {
-  // TODO: replace with real RevenueCat API key before release
-  static const String _androidApiKey = 'goog_kvTeomxOzcbEOGIUMUsYflfSqHo';
-
-  // TODO: replace with real RevenueCat API key before release
-  static const String _iosApiKey = 'appl_ooVaXUXZaFXVxKYQPmOeMVDfKZi';
-
-  /// The single entitlement configured in the RevenueCat dashboard. Every
-  /// subscription product (monthly + annual) is attached to this entitlement.
   static const String entitlementId = 'PSP yatoo LLC Pro';
 }
 
@@ -64,14 +52,16 @@ class RevenueCatService {
   Future<void> initialize() async {
     if (_isConfigured) return;
     try {
+      final apiKey = ApiConfig.revenueCatApiKey;
+      if (apiKey.isEmpty) {
+        debugPrint(
+            '💳 RevenueCat: API key not configured in Firestore (api_keys/revenuecat).');
+        return;
+      }
+
       await Purchases.setLogLevel(
         kReleaseMode ? LogLevel.warn : LogLevel.debug,
       );
-
-      final apiKey = Platform.isIOS ? _RcConfig._iosApiKey : _RcConfig._androidApiKey;
-      if (apiKey.startsWith('PLACEHOLDER_')) {
-        debugPrint('💳 RevenueCat: placeholder API key in use — purchases will fail until real keys are provided.');
-      }
 
       final config = PurchasesConfiguration(apiKey);
       await Purchases.configure(config);
@@ -88,6 +78,7 @@ class RevenueCatService {
   /// Associate purchases with the signed-in Firebase user.
   Future<void> setUserId(String userId) async {
     await initialize();
+    if (!_isConfigured) return;
     if (userId.isEmpty || _currentUserId == userId) return;
     try {
       final result = await Purchases.logIn(userId);
@@ -118,6 +109,7 @@ class RevenueCatService {
   /// Exposes the `default` offering with its `$rc_monthly`/`$rc_annual` packages.
   Future<Offerings?> getOfferings() async {
     await initialize();
+    if (!_isConfigured) return null;
     try {
       return await Purchases.getOfferings();
     } catch (e) {
@@ -136,6 +128,10 @@ class RevenueCatService {
   /// replacing the first.
   Future<PurchaseAttemptResult> purchasePackage(Package package) async {
     await initialize();
+    if (!_isConfigured) {
+      return const PurchaseAttemptResult.error(
+          'Subscriptions are not available right now. Please try again later.');
+    }
     try {
       final current = _lastCustomerInfo ?? await getCustomerInfo();
       final activeEntitlement = current?.entitlements.active[_RcConfig.entitlementId];
@@ -190,6 +186,10 @@ class RevenueCatService {
   /// Restore previously purchased subscriptions (e.g., after re-install).
   Future<RestoreAttemptResult> restorePurchases() async {
     await initialize();
+    if (!_isConfigured) {
+      return const RestoreAttemptResult.error(
+          'Subscriptions are not available right now. Please try again later.');
+    }
     try {
       final info = await Purchases.restorePurchases();
       _lastCustomerInfo = info;
@@ -208,6 +208,7 @@ class RevenueCatService {
   /// Fetch the latest [CustomerInfo] from RevenueCat.
   Future<CustomerInfo?> getCustomerInfo() async {
     await initialize();
+    if (!_isConfigured) return null;
     try {
       final info = await Purchases.getCustomerInfo();
       _lastCustomerInfo = info;

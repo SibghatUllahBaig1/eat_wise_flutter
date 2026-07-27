@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import '/backend/services/recipe_cache_service.dart';
 import '/backend/schema/structs/index.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -10,7 +13,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'energy_value_model.dart';
 export 'energy_value_model.dart';
 
@@ -62,10 +64,7 @@ class _EnergyValueWidgetState extends State<EnergyValueWidget> {
   Future<void> _loadAllRecipes() async {
     try {
       _model.isLoadingRecipes = true;
-      final recipesSnapshot =
-          await FirebaseFirestore.instance.collection('recipes').get();
-      _model.allRecipes =
-          recipesSnapshot.docs.map((doc) => doc.data()).toList();
+      _model.allRecipes = await RecipeCacheService.instance.getRecipes();
       debugPrint(
           'Loaded ${_model.allRecipes.length} recipes for energy filtering');
 

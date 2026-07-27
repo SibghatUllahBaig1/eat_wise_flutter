@@ -4,7 +4,7 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/recipes/components/z_recipe_card/z_recipe_card_widget.dart';
-import '/backend/backend_manager.dart';
+import '/backend/services/recipe_cache_service.dart';
 import 'recipes_by_category_widget.dart' show RecipesByCategoryWidget;
 import 'package:flutter/material.dart';
 
@@ -29,14 +29,12 @@ class RecipesByCategoryModel extends FlutterFlowModel<RecipesByCategoryWidget> {
     zRecipeCardModels.dispose();
   }
 
-  /// Load recipes from Firestore
+  /// Load recipes from shared cache.
   Future<void> loadRecipes() async {
     isLoadingRecipes = true;
 
     try {
-      final backend = BackendManager();
-      allRecipes = await backend.recipeService.getAllRecipes();
-      debugPrint('Loaded ${allRecipes.length} recipes from Firestore');
+      allRecipes = await RecipeCacheService.instance.getRecipes();
     } catch (e) {
       debugPrint('Error loading recipes: $e');
       allRecipes = [];

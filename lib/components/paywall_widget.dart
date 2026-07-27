@@ -134,23 +134,32 @@ Future<bool> checkFeatureAccess({
   String? displayName,
   VoidCallback? onUpgrade,
 }) async {
-  final isPro = context.read<SubscriptionController>().isPro;
+  final subscription = context.read<SubscriptionController>();
+  await subscription.refreshProGrant();
+  if (!context.mounted) return false;
+
+  final isPro = subscription.isPro;
 
   if (!isPro) {
     if (!context.mounted) return false;
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        content: PaywallWidget(
-          featureName: featureName,
-          displayName: displayName,
-          onUpgrade: onUpgrade,
-        ),
-        contentPadding: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16.0),
-        ),
-      ),
+      builder: (dialogContext) {
+        final maxWidth = MediaQuery.sizeOf(dialogContext).width - 48.0;
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          insetPadding: EdgeInsets.symmetric(horizontal: 24.0),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: PaywallWidget(
+              featureName: featureName,
+              displayName: displayName,
+              onUpgrade: onUpgrade,
+            ),
+          ),
+        );
+      },
     );
     return false;
   }

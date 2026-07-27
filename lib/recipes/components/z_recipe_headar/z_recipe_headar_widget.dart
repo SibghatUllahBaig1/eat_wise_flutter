@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import '../recipe_image_widget.dart';
 import 'z_recipe_headar_model.dart';
 export 'z_recipe_headar_model.dart';
 
@@ -66,11 +67,8 @@ class _ZRecipeHeadarWidgetState extends State<ZRecipeHeadarWidget> {
                 topLeft: Radius.circular(0.0),
                 topRight: Radius.circular(0.0),
               ),
-              child: Image.network(
-                valueOrDefault<String>(
-                  widget!.recipeData?.imageUrl,
-                  'https://picsum.photos/seed/573/600',
-                ),
+              child: RecipeImageWidget(
+                imageUrl: widget!.recipeData?.imageUrl,
                 width: double.infinity,
                 height: double.infinity,
                 fit: BoxFit.cover,

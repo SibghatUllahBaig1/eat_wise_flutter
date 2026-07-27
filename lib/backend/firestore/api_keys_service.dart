@@ -36,15 +36,37 @@ class ApiKeysService extends FirestoreService {
     }
   }
 
+  /// Get RevenueCat SDK keys from Firestore (admin panel: api_keys/revenuecat).
+  Future<Map<String, String>> getRevenueCatApiKeys() async {
+    try {
+      final doc = await apiKeysCollection.doc('revenuecat').get();
+      if (!doc.exists) {
+        return {'iosApiKey': '', 'androidApiKey': ''};
+      }
+
+      final data = doc.data() as Map<String, dynamic>?;
+      return {
+        'iosApiKey': data?['iosApiKey'] as String? ?? '',
+        'androidApiKey': data?['androidApiKey'] as String? ?? '',
+      };
+    } catch (e) {
+      throw Exception(
+          'Failed to get RevenueCat API keys: ${handleFirestoreError(e)}');
+    }
+  }
+
   /// Get all API keys at once
   Future<Map<String, String>> getAllApiKeys() async {
     try {
       final openAiKey = await getOpenAiApiKey();
       final usdaKey = await getUsdaApiKey();
-      
+      final revenueCatKeys = await getRevenueCatApiKeys();
+
       return {
         'openai': openAiKey ?? '',
         'usda': usdaKey ?? '',
+        'revenuecat_ios': revenueCatKeys['iosApiKey'] ?? '',
+        'revenuecat_android': revenueCatKeys['androidApiKey'] ?? '',
       };
     } catch (e) {
       throw Exception('Failed to get API keys: ${handleFirestoreError(e)}');

@@ -25,6 +25,14 @@ class PedometerService {
     return 0;
   }
 
+  Future<void> refreshTodaySteps(String userId) async {
+    debugPrint('PedometerService (Web Stub): refreshTodaySteps not available');
+  }
+
+  Future<void> refreshStepsForDate(String userId, DateTime date) async {
+    debugPrint('PedometerService (Web Stub): refreshStepsForDate not available');
+  }
+
   Future<void> requestPermission() async {
     debugPrint('PedometerService (Web Stub): No permissions needed on web');
   }

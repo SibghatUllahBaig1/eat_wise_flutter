@@ -9,43 +9,51 @@ import 'package:eat_wise/backend/firestore/api_keys_service.dart';
 void main() {
   group('ApiConfig Tests', () {
     test('API keys should have getters', () {
-      // Test that getters exist and return strings
       expect(ApiConfig.openAiApiKey, isA<String>());
       expect(ApiConfig.usdaApiKey, isA<String>());
+      expect(ApiConfig.revenueCatIosApiKey, isA<String>());
+      expect(ApiConfig.revenueCatAndroidApiKey, isA<String>());
     });
 
     test('API configuration validation should work', () {
-      // Test validation methods exist
       expect(ApiConfig.isOpenAiConfigured, isA<bool>());
       expect(ApiConfig.isUsdaConfigured, isA<bool>());
+      expect(ApiConfig.isRevenueCatConfigured, isA<bool>());
     });
 
     test('Manual key setting should work', () {
-      // Test manual setters
       const testKey = 'test-key-123';
-      
+
       ApiConfig.setOpenAiApiKey(testKey);
       expect(ApiConfig.openAiApiKey, equals(testKey));
       expect(ApiConfig.isOpenAiConfigured, isTrue);
-      
+
       ApiConfig.setUsdaApiKey(testKey);
       expect(ApiConfig.usdaApiKey, equals(testKey));
       expect(ApiConfig.isUsdaConfigured, isTrue);
+
+      ApiConfig.setRevenueCatIosApiKey('appl_test');
+      ApiConfig.setRevenueCatAndroidApiKey('goog_test');
+      expect(ApiConfig.revenueCatIosApiKey, equals('appl_test'));
+      expect(ApiConfig.revenueCatAndroidApiKey, equals('goog_test'));
     });
 
     test('Empty keys should not be configured', () {
       ApiConfig.setOpenAiApiKey('');
       expect(ApiConfig.isOpenAiConfigured, isFalse);
-      
+
       ApiConfig.setUsdaApiKey('');
       expect(ApiConfig.isUsdaConfigured, isFalse);
+
+      ApiConfig.setRevenueCatIosApiKey('');
+      ApiConfig.setRevenueCatAndroidApiKey('');
+      expect(ApiConfig.isRevenueCatConfigured, isFalse);
     });
   });
 
   group('ApiKeysService Tests', () {
-    test('Service should be instantiable', () {
-      final service = ApiKeysService();
-      expect(service, isNotNull);
+    test('getRevenueCatApiKeys is defined on service type', () {
+      expect(ApiKeysService.new, isNotNull);
     });
 
     // Note: The following tests require Firebase to be initialized

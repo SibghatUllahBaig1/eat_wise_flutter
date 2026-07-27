@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import '../lib/firebase_options.dart';
 
 /// Script to upload hardcoded recipes from app_state.dart to Firebase Firestore
 ///
@@ -14,15 +15,7 @@ void main() async {
   // Initialize Firebase
   try {
     await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey:
-            'AIzaSyDqVZqLvJzKqLvJzKqLvJzKqLvJzKqLvJzK', // Replace with your actual API key
-        appId:
-            '1:123456789:web:abcdef123456', // Replace with your actual app ID
-        messagingSenderId: '123456789', // Replace with your actual sender ID
-        projectId: 'eatwise-6df8a',
-        storageBucket: 'eatwise-6df8a.appspot.com',
-      ),
+      options: DefaultFirebaseOptions.currentPlatform,
     );
     print('✅ Firebase initialized\n');
   } catch (e) {

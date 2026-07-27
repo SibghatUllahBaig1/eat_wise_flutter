@@ -1,3 +1,4 @@
+import '/backend/services/recipe_cache_service.dart';
 import '/backend/schema/structs/index.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -44,11 +45,8 @@ class _DietsWidgetState extends State<DietsWidget> {
 
   Future<void> _loadAllData() async {
     try {
-      // Load recipes
-      final recipesSnapshot =
-          await FirebaseFirestore.instance.collection('recipes').get();
       _model.categoryRecipes =
-          recipesSnapshot.docs.map((doc) => doc.data()).toList();
+          await RecipeCacheService.instance.getRecipes();
       debugPrint('Loaded ${_model.categoryRecipes.length} recipes');
 
       // Debug: Log first recipe data

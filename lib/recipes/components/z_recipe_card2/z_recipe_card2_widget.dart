@@ -7,6 +7,7 @@ import '/index.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../recipe_image_widget.dart';
 import 'z_recipe_card2_model.dart';
 export 'z_recipe_card2_model.dart';
 
@@ -167,8 +168,8 @@ class _ZRecipeCard2WidgetState extends State<ZRecipeCard2Widget> {
               ),
               ClipRRect(
                 borderRadius: BorderRadius.circular(12.0),
-                child: Image.network(
-                  widget!.articlesData!.imageUrl,
+                child: RecipeImageWidget(
+                  imageUrl: widget!.articlesData?.imageUrl,
                   width: 120.0,
                   height: 120.0,
                   fit: BoxFit.cover,

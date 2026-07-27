@@ -3,6 +3,7 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/home_pages/components/z_delete_food/z_delete_food_widget.dart';
+import '/recipes/components/recipe_image_widget.dart';
 import '/backend/schema/structs/index.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -64,33 +65,26 @@ class _ZFoodDetailsHeadarWidgetState extends State<ZFoodDetailsHeadarWidget> {
             Positioned.fill(
               child: Builder(
                 builder: (context) {
-                  // Show actual image if available, otherwise show placeholder
-                  if (widget.nutritionData?.imageUrl != null &&
-                      widget.nutritionData!.imageUrl.isNotEmpty) {
-                    return Image.network(
-                      widget.nutritionData!.imageUrl,
+                  final defaultFood = Image.asset(
+                    'assets/images/custom-images/default-food.jpeg',
+                    width: double.infinity,
+                    height: double.infinity,
+                    fit: BoxFit.cover,
+                  );
+
+                  final imageUrl = widget.nutritionData?.imageUrl;
+                  if (imageUrl != null && imageUrl.isNotEmpty) {
+                    return RemoteImageWidget(
+                      imageUrl: imageUrl,
                       width: double.infinity,
                       height: double.infinity,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        // Fallback to placeholder if network image fails
-                        return Image.asset(
-                          'assets/images/custom-images/default-food.jpeg',
-                          width: double.infinity,
-                          height: double.infinity,
-                          fit: BoxFit.cover,
-                        );
-                      },
-                    );
-                  } else {
-                    // Show placeholder for text search
-                    return Image.asset(
-                      'assets/images/custom-images/default-food.jpeg',
-                      width: double.infinity,
-                      height: double.infinity,
-                      fit: BoxFit.cover,
+                      placeholder: defaultFood,
+                      errorWidget: defaultFood,
                     );
                   }
+
+                  return defaultFood;
                 },
               ),
             ),

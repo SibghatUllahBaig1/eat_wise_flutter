@@ -3,11 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as img;
 import 'dart:io';
 import 'dart:typed_data';
 import '../../backend/firestore/recipe_service.dart';
 import '../theme/admin_theme.dart';
-import '../utils/prepopulate_recipes_usda.dart';
 
 class RecipeManagementPage extends StatefulWidget {
   const RecipeManagementPage({super.key});
@@ -55,22 +55,6 @@ class _RecipeManagementPageState extends State<RecipeManagementPage> {
                         ],
                       ),
                     ),
-                    ElevatedButton(
-                      onPressed: _prepopulateFromUSDA,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.auto_awesome_rounded, size: 20),
-                          SizedBox(width: 8),
-                          Text('Prepopulate from USDA'),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
                     ElevatedButton(
                       onPressed: () => _showAddRecipeDialog(),
                       child: const Row(
@@ -208,6 +192,15 @@ class _RecipeManagementPageState extends State<RecipeManagementPage> {
                   }).toList();
                 }
 
+                recipes = List.from(recipes)
+                  ..sort((a, b) {
+                    final aCreated = _recipeCreatedAt(
+                        a.data() as Map<String, dynamic>);
+                    final bCreated = _recipeCreatedAt(
+                        b.data() as Map<String, dynamic>);
+                    return bCreated.compareTo(aCreated);
+                  });
+
                 return GridView.builder(
                   padding: const EdgeInsets.fromLTRB(32, 8, 32, 32),
                   gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
@@ -237,88 +230,11 @@ class _RecipeManagementPageState extends State<RecipeManagementPage> {
     );
   }
 
-  Future<void> _prepopulateFromUSDA() async {
-    // Show confirmation dialog
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Prepopulate Recipes from USDA'),
-        content: const Text(
-          'This will fetch nutrition data (including minerals) from the USDA database for all recipes. This may take a few minutes. Continue?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Prepopulate'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      // Show loading dialog
-      if (mounted) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => const Center(
-            child: Card(
-              child: Padding(
-                padding: EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text('Prepopulating recipes from USDA...'),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      }
-
-      try {
-        final result = await PrepopulateRecipesUSDA.prepopulateAllRecipes();
-
-        if (mounted) {
-          Navigator.pop(context); // Close loading dialog
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Prepopulation complete! Success: ${result['success']}, Errors: ${result['errors']}',
-              ),
-              backgroundColor:
-                  result['errors'] == 0 ? AdminTheme.success : Colors.orange,
-              behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 5),
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          Navigator.pop(context); // Close loading dialog
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error prepopulating recipes: $e'),
-              backgroundColor: AdminTheme.error,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      }
-    }
+  DateTime _recipeCreatedAt(Map<String, dynamic> data) {
+    final createdAt = data['createdAt'];
+    if (createdAt is Timestamp) return createdAt.toDate();
+    if (createdAt is DateTime) return createdAt;
+    return DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   void _showAddRecipeDialog() {
@@ -770,14 +686,28 @@ class _RecipeEditDialogState extends State<_RecipeEditDialog> {
     }
   }
 
+  Future<Uint8List> _compressRecipeImage(Uint8List bytes) async {
+    final decoded = img.decodeImage(bytes);
+    if (decoded == null) return bytes;
+
+    final resized = decoded.width > 1200
+        ? img.copyResize(decoded, width: 1200)
+        : decoded;
+    return Uint8List.fromList(img.encodeJpg(resized, quality: 80));
+  }
+
   Future<String?> _uploadImage(XFile imageFile) async {
     try {
       setState(() => _isUploadingImage = true);
       final fileName =
           'recipes/${DateTime.now().millisecondsSinceEpoch}_${imageFile.name}';
       final ref = FirebaseStorage.instance.ref().child(fileName);
-      final bytes = await imageFile.readAsBytes();
-      await ref.putData(bytes);
+      final rawBytes = await imageFile.readAsBytes();
+      final bytes = await _compressRecipeImage(rawBytes);
+      await ref.putData(
+        bytes,
+        SettableMetadata(contentType: 'image/jpeg'),
+      );
       final url = await ref.getDownloadURL();
       return url;
     } catch (e) {
