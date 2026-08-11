@@ -226,7 +226,7 @@ class _ZWaterTrackerWidgetState extends State<ZWaterTrackerWidget> {
 
                                     return Text(
                                       waterGoal > 0
-                                          ? 'Goal: ${(waterGoal / 1000).toStringAsFixed(3)} mL'
+                                          ? 'Goal: $waterGoal mL'
                                           : 'Goal: --',
                                       style: FlutterFlowTheme.of(context)
                                           .bodyMedium
@@ -265,28 +265,17 @@ class _ZWaterTrackerWidgetState extends State<ZWaterTrackerWidget> {
                               final currentDate =
                                   FFAppState().tracker.currentDate ??
                                       DateTime.now();
-                              final waterAmount =
-                                  WaterSyncHelper.waterIntakeMlForDate(
-                                      currentDate);
-                              final waterGoal =
-                                  FFAppState().trackerSettings.water.goal;
+                              final progress =
+                                  WaterSyncHelper.waterProgressForDate(
+                                currentDate,
+                              );
 
-                              double progress = 0.0;
-                              if (waterGoal > 0) {
-                                progress = WaterSyncHelper.waterProgressForDate(
-                                  currentDate,
-                                );
-                                if (progress <= 0) {
-                                  progress =
-                                      (waterAmount / waterGoal).clamp(0.0, 1.0);
-                                }
-                              }
-
+                              final ringPercent = progress.clamp(0.0, 1.0);
                               final percentage =
                                   (progress * 100).toStringAsFixed(0);
 
                               return CircularPercentIndicator(
-                                percent: progress,
+                                percent: ringPercent,
                                 radius: 32.0,
                                 lineWidth: 7.0,
                                 animation: true,

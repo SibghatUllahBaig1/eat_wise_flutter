@@ -29,12 +29,13 @@ class RecipesByCategoryModel extends FlutterFlowModel<RecipesByCategoryWidget> {
     zRecipeCardModels.dispose();
   }
 
-  /// Load recipes from shared cache.
+  /// Load recipes from shared cache (always refreshes from Firestore).
   Future<void> loadRecipes() async {
     isLoadingRecipes = true;
 
     try {
-      allRecipes = await RecipeCacheService.instance.getRecipes();
+      allRecipes =
+          await RecipeCacheService.instance.getRecipes(forceRefresh: true);
     } catch (e) {
       debugPrint('Error loading recipes: $e');
       allRecipes = [];

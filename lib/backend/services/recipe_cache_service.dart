@@ -30,15 +30,19 @@ class RecipeCacheService {
     return DateTime.now().difference(_lastFetchedAt!) > _cacheTtl;
   }
 
-  /// Returns cached recipes immediately when available; refreshes in background if stale.
+  /// Returns cached recipes when fresh; use [forceRefresh] to await Firestore.
   Future<List<Map<String, dynamic>>> getRecipes({
     bool forceRefresh = false,
   }) async {
+    if (forceRefresh) {
+      return _fetchFromFirestore();
+    }
+
     if (_recipes.isEmpty) {
       await _loadFromPrefs();
     }
 
-    if (!forceRefresh && _recipes.isNotEmpty) {
+    if (_recipes.isNotEmpty) {
       if (_isStale) {
         unawaited(_refreshInBackground());
       }

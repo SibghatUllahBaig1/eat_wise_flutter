@@ -40,6 +40,7 @@ class ZSwitchCupSizeModel extends FlutterFlowModel<ZSwitchCupSizeWidget> {
         amount: drinkAmount ?? 100,
         drinkType: selectedDrinkType!,
         drinkIcon: selectedDrinkIcon!,
+        goalMl: FFAppState().trackerSettings.water.goal,
       );
 
       await WaterSyncHelper.syncWaterForDate(

@@ -1,4 +1,5 @@
 import '/backend/schema/structs/index.dart';
+import '/backend/utils/recipe_struct_utils.dart';
 import '/flutter_flow/flutter_flow_animations.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -83,6 +84,8 @@ class _RecipesWidgetState extends State<RecipesWidget>
       setState(() {});
     }
   }
+
+  Future<void> _refreshRecipes() => _loadRecipes();
 
   @override
   void dispose() {
@@ -356,8 +359,11 @@ class _RecipesWidgetState extends State<RecipesWidget>
                   },
                   scrollDirection: Axis.horizontal,
                   children: [
-                    SingleChildScrollView(
-                      child: Column(
+                    RefreshIndicator(
+                      onRefresh: _refreshRecipes,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Column(
                         mainAxisSize: MainAxisSize.max,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -494,58 +500,9 @@ class _RecipesWidgetState extends State<RecipesWidget>
                                   );
                                 }
 
-                                // Convert Firestore data to RecipesStruct
                                 final articlesList = _model.allRecipes
                                     .take(5)
-                                    .map((recipeData) => RecipesStruct(
-                                          name: recipeData['name'] as String? ??
-                                              '',
-                                          description: recipeData['description']
-                                                  as String? ??
-                                              '',
-                                          imageUrl: recipeData['imageUrl']
-                                                  as String? ??
-                                              '',
-                                          calories:
-                                              recipeData['calories'] as int? ??
-                                                  0,
-                                          protein:
-                                              (recipeData['protein'] as num?)
-                                                      ?.toDouble() ??
-                                                  0.0,
-                                          carbs: (recipeData['carbs'] as num?)
-                                                  ?.toDouble() ??
-                                              0.0,
-                                          fat: (recipeData['fat'] as num?)
-                                                  ?.toDouble() ??
-                                              0.0,
-                                          time: recipeData['time'] as int? ?? 0,
-                                          difficulty: recipeData['difficulty']
-                                                  as String? ??
-                                              '',
-                                          dietCategories: List<String>.from(
-                                              recipeData['dietCategories']
-                                                      as List? ??
-                                                  []),
-                                          ingredients: List<String>.from(
-                                              recipeData['ingredients']
-                                                      as List? ??
-                                                  []),
-                                          instructions: List<String>.from(
-                                              recipeData['instructions']
-                                                      as List? ??
-                                                  []),
-                                          grams: (recipeData['grams'] as num?)
-                                                  ?.toDouble() ??
-                                              0.0,
-                                          cholesterol:
-                                              NutrientStruct.maybeFromMap(
-                                                  recipeData['cholesterol']),
-                                          sodium: NutrientStruct.maybeFromMap(
-                                              recipeData['sodium']),
-                                          minerals: MineralsStruct.maybeFromMap(
-                                              recipeData['minerals']),
-                                        ))
+                                    .map(recipeStructFromMap)
                                     .toList();
 
                                 return SingleChildScrollView(
@@ -711,6 +668,7 @@ class _RecipesWidgetState extends State<RecipesWidget>
                             .addToStart(SizedBox(height: 12.0))
                             .addToEnd(SizedBox(height: 24.0)),
                       ),
+                    ),
                     ),
                     Builder(
                       builder: (context) {

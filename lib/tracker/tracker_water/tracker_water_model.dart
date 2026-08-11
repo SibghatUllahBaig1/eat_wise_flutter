@@ -74,11 +74,9 @@ class TrackerWaterModel extends FlutterFlowModel<TrackerWaterWidget> {
         final intake = data['totalIntake'] as int? ??
             data['intake'] as int? ??
             0;
-        final progress = (data['progress'] as num?)?.toDouble() ?? 0.0;
-        WaterSyncHelper.upsertLocalWaterEntry(
+        WaterSyncHelper.upsertLocalWaterEntryFromIntake(
           date: normalizedDate,
           intakeMl: intake,
-          progress: progress,
         );
         FFAppState().update(() {});
       }
@@ -99,6 +97,7 @@ class TrackerWaterModel extends FlutterFlowModel<TrackerWaterWidget> {
         userId: currentUserUid,
         date: date,
         drinkId: drinkId,
+        goalMl: FFAppState().trackerSettings.water.goal,
       );
       await WaterSyncHelper.syncWaterForDate(
         userId: currentUserUid,
@@ -119,6 +118,7 @@ class TrackerWaterModel extends FlutterFlowModel<TrackerWaterWidget> {
         amount: amount,
         drinkType: drinkType,
         drinkIcon: drinkIcon,
+        goalMl: FFAppState().trackerSettings.water.goal,
       );
       await WaterSyncHelper.syncWaterForDate(
         userId: currentUserUid,

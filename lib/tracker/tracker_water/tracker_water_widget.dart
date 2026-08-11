@@ -1,3 +1,4 @@
+import '/backend/services/water_sync_helper.dart';
 import '/backend/schema/structs/index.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -191,10 +192,17 @@ class _TrackerWaterWidgetState extends State<TrackerWaterWidget> {
                                           custom_widgets.WaterCircleProgressBar(
                                         width: 200.0,
                                         height: 200.0,
-                                        progress: valueOrDefault<double>(
-                                          _model.waterIntakeData?['progress']
-                                              as double?,
-                                          0.0,
+                                        progress: WaterSyncHelper
+                                            .calculateWaterProgress(
+                                          (_model.waterIntakeData?[
+                                                      'totalIntake'] as int? ??
+                                                  _model.waterIntakeData?[
+                                                      'intake'] as int? ??
+                                                  0),
+                                          FFAppState()
+                                              .trackerSettings
+                                              .water
+                                              .goal,
                                         ),
                                         waveAmplitude: 12.0,
                                         waveFrequency: 1.0,

@@ -79,16 +79,19 @@ class RecipesModel extends FlutterFlowModel<RecipesWidget> {
     zNawBarModel = createModel(context, () => ZNawBarModel());
   }
 
-  /// Load all recipes from shared cache (Firestore + local persistence).
+  /// Load all recipes from shared cache (always refreshes from Firestore).
   Future<void> loadRecipes() async {
     isLoadingRecipes = true;
+
     try {
-      allRecipes = await RecipeCacheService.instance.getRecipes();
+      allRecipes =
+          await RecipeCacheService.instance.getRecipes(forceRefresh: true);
       unawaited(
         RecipeCacheService.instance.prefetchVisibleImages(allRecipes),
       );
     } catch (e) {
       debugPrint('Error loading recipes: $e');
+      allRecipes = [];
     } finally {
       isLoadingRecipes = false;
     }

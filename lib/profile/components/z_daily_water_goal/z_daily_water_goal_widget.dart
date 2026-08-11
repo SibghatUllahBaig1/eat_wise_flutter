@@ -1,5 +1,6 @@
 import '/backend/schema/structs/index.dart';
 import '/backend/firestore/water_tracker_service.dart';
+import '/backend/services/water_sync_helper.dart';
 import '/auth/firebase_auth/auth_util.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -243,6 +244,10 @@ class _ZDailyWaterGoalWidgetState extends State<ZDailyWaterGoalWidget> {
                           await WaterTrackerService().updateWaterGoal(
                             userId: currentUserUid,
                             goal: _model.value!,
+                            date: selectedDate,
+                          );
+                          await WaterSyncHelper.syncWaterForDate(
+                            userId: currentUserUid,
                             date: selectedDate,
                           );
                         }

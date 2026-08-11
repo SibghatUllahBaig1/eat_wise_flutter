@@ -1,4 +1,6 @@
 import '/backend/schema/structs/index.dart';
+import '/backend/services/recipe_cache_service.dart';
+import '/backend/utils/recipe_struct_utils.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -57,11 +59,20 @@ class _ZRecipeCardWidgetState extends State<ZRecipeCardWidget> {
         hoverColor: Colors.transparent,
         highlightColor: Colors.transparent,
         onTap: () async {
+          final cachedRecipes =
+              await RecipeCacheService.instance.getRecipes();
+          final recipeData = resolveRecipeStruct(
+            widget!.recipeData,
+            cachedRecipes: cachedRecipes,
+          );
+
+          if (!context.mounted) return;
+
           context.pushNamed(
             RecipesPageWidget.routeName,
             queryParameters: {
               'recipeData': serializeParam(
-                widget!.recipeData,
+                recipeData,
                 ParamType.DataStruct,
               ),
             }.withoutNulls,

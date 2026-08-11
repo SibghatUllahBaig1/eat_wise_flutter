@@ -1,4 +1,6 @@
+import '/app_state.dart';
 import '/backend/firestore/water_tracker_service.dart';
+import '/backend/services/water_sync_helper.dart';
 import '/auth/firebase_auth/auth_util.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import 'z_water_calendar_widget.dart' show ZWaterCalendarWidget;
@@ -33,7 +35,13 @@ class ZWaterCalendarModel extends FlutterFlowModel<ZWaterCalendarWidget> {
         );
 
         if (data != null) {
-          final progress = (data['progress'] as num?)?.toDouble() ?? 0.0;
+          final intake = data['totalIntake'] as int? ??
+              data['intake'] as int? ??
+              0;
+          final progress = WaterSyncHelper.calculateWaterProgress(
+            intake,
+            FFAppState().trackerSettings.water.goal,
+          );
           waterProgressByDate[dateKey] = progress.clamp(0.0, 1.0);
         } else {
           waterProgressByDate[dateKey] = 0.0;

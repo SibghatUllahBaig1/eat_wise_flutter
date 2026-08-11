@@ -1,4 +1,6 @@
 import '/backend/schema/structs/index.dart';
+import '/backend/utils/recipe_struct_utils.dart';
+import '/backend/services/recipe_cache_service.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -43,6 +45,13 @@ class _RecipesByCategoryWidgetState extends State<RecipesByCategoryWidget> {
 
   /// Load recipes from Firestore and trigger UI rebuild
   Future<void> _loadRecipes() async {
+    await _model.loadRecipes();
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _refreshRecipes() async {
     await _model.loadRecipes();
     if (mounted) {
       setState(() {});
@@ -133,55 +142,36 @@ class _RecipesByCategoryWidgetState extends State<RecipesByCategoryWidget> {
 
             // Convert Firestore data to RecipesStruct
             final articlesList = _model.allRecipes
-                .map((recipeData) => RecipesStruct(
-                      name: recipeData['name'] as String? ?? '',
-                      description: recipeData['description'] as String? ?? '',
-                      imageUrl: recipeData['imageUrl'] as String? ?? '',
-                      calories: recipeData['calories'] as int? ?? 0,
-                      protein:
-                          (recipeData['protein'] as num?)?.toDouble() ?? 0.0,
-                      carbs: (recipeData['carbs'] as num?)?.toDouble() ?? 0.0,
-                      fat: (recipeData['fat'] as num?)?.toDouble() ?? 0.0,
-                      time: recipeData['time'] as int? ?? 0,
-                      difficulty: recipeData['difficulty'] as String? ?? '',
-                      dietCategories: List<String>.from(
-                          recipeData['dietCategories'] as List? ?? []),
-                      ingredients: List<String>.from(
-                          recipeData['ingredients'] as List? ?? []),
-                      instructions: List<String>.from(
-                          recipeData['instructions'] as List? ?? []),
-                      grams: (recipeData['grams'] as num?)?.toDouble() ?? 0.0,
-                      cholesterol: NutrientStruct.maybeFromMap(
-                          recipeData['cholesterol']),
-                      sodium: NutrientStruct.maybeFromMap(recipeData['sodium']),
-                      minerals:
-                          MineralsStruct.maybeFromMap(recipeData['minerals']),
-                    ))
+                .map(recipeStructFromMap)
                 .toList();
 
-            return SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.max,
-                children:
-                    List.generate(articlesList.length, (articlesListIndex) {
-                  final articlesListItem = articlesList[articlesListIndex];
-                  return wrapWithModel(
-                    model: _model.zRecipeCardModels.getModel(
-                      articlesListIndex.toString(),
-                      articlesListIndex,
-                    ),
-                    updateCallback: () => safeSetState(() {}),
-                    child: ZRecipeCardWidget(
-                      key: Key(
-                        'Key1nc_${articlesListIndex.toString()}',
+            return RefreshIndicator(
+              onRefresh: _refreshRecipes,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.max,
+                  children:
+                      List.generate(articlesList.length, (articlesListIndex) {
+                    final articlesListItem = articlesList[articlesListIndex];
+                    return wrapWithModel(
+                      model: _model.zRecipeCardModels.getModel(
+                        articlesListIndex.toString(),
+                        articlesListIndex,
                       ),
-                      recipeData: articlesListItem,
-                    ),
-                  );
-                })
-                        .divide(SizedBox(height: 12.0))
-                        .addToStart(SizedBox(height: 16.0))
-                        .addToEnd(SizedBox(height: 24.0)),
+                      updateCallback: () => safeSetState(() {}),
+                      child: ZRecipeCardWidget(
+                        key: Key(
+                          'Key1nc_${articlesListIndex.toString()}',
+                        ),
+                        recipeData: articlesListItem,
+                      ),
+                    );
+                  })
+                          .divide(SizedBox(height: 12.0))
+                          .addToStart(SizedBox(height: 16.0))
+                          .addToEnd(SizedBox(height: 24.0)),
+                ),
               ),
             );
           },

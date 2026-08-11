@@ -10,6 +10,7 @@ class WaterTrackerService extends FirestoreService {
     required int amount, // in ml
     required String drinkType, // Coffee, Tea, Juice, Water, etc.
     required String drinkIcon, // Image asset path
+    int? goalMl,
   }) async {
     try {
       final dateKey =
@@ -32,7 +33,7 @@ class WaterTrackerService extends FirestoreService {
       final docRef = await drinksCollection.add(data);
 
       // Update daily total
-      await _updateDailyTotal(userId, date);
+      await _updateDailyTotal(userId, date, goalMl: goalMl);
 
       return docRef.id;
     } catch (e) {
@@ -41,7 +42,11 @@ class WaterTrackerService extends FirestoreService {
   }
 
   /// Update daily total water intake
-  Future<void> _updateDailyTotal(String userId, DateTime date) async {
+  Future<void> _updateDailyTotal(
+    String userId,
+    DateTime date, {
+    int? goalMl,
+  }) async {
     try {
       final dateKey =
           '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -54,10 +59,12 @@ class WaterTrackerService extends FirestoreService {
         totalIntake += (doc.data()['amount'] as int?) ?? 0;
       }
 
-      // Get user's water goal from settings
-      final userDoc = await usersCollection.doc(userId).get();
-      final userData = userDoc.data() as Map<String, dynamic>?;
-      final goal = (userData?['waterGoal'] as int?) ?? 2000;
+      int goal = goalMl ?? 0;
+      if (goal <= 0) {
+        final userDoc = await usersCollection.doc(userId).get();
+        final userData = userDoc.data() as Map<String, dynamic>?;
+        goal = (userData?['waterGoal'] as int?) ?? 2000;
+      }
 
       final data = {
         'userId': userId,
@@ -136,6 +143,7 @@ class WaterTrackerService extends FirestoreService {
     required String userId,
     required DateTime date,
     required String drinkId,
+    int? goalMl,
   }) async {
     try {
       final dateKey =
@@ -150,7 +158,7 @@ class WaterTrackerService extends FirestoreService {
           .delete();
 
       // Update daily total
-      await _updateDailyTotal(userId, date);
+      await _updateDailyTotal(userId, date, goalMl: goalMl);
     } catch (e) {
       throw Exception(handleFirestoreError(e));
     }
@@ -164,6 +172,7 @@ class WaterTrackerService extends FirestoreService {
     required int amount,
     String? drinkType,
     String? drinkIcon,
+    int? goalMl,
   }) async {
     try {
       final dateKey =
@@ -190,7 +199,7 @@ class WaterTrackerService extends FirestoreService {
           .update(updateData);
 
       // Update daily total
-      await _updateDailyTotal(userId, date);
+      await _updateDailyTotal(userId, date, goalMl: goalMl);
     } catch (e) {
       throw Exception(handleFirestoreError(e));
     }

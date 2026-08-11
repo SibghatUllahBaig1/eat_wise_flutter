@@ -3,23 +3,51 @@ import 'firestore_service.dart';
 
 /// Service for managing recipes
 class RecipeService extends FirestoreService {
-  /// Get all recipes
-  Future<List<Map<String, dynamic>>> getAllRecipes({
-    int limit = 50,
-  }) async {
-    try {
-      final snapshot = await firestore
-          .collection('recipes')
-          .orderBy('createdAt', descending: true)
-          .limit(limit)
-          .get();
+  Map<String, dynamic> _mapRecipeDoc(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = Map<String, dynamic>.from(doc.data());
+    data['id'] = doc.id;
+    data['createdAt'] = timestampToDateTime(data['createdAt']);
+    data['updatedAt'] = timestampToDateTime(data['updatedAt']);
+    return data;
+  }
 
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        data['createdAt'] = timestampToDateTime(data['createdAt']);
-        return data;
-      }).toList();
+  void _sortRecipesNewestFirst(List<Map<String, dynamic>> recipes) {
+    recipes.sort((a, b) {
+      final aCreated = a['createdAt'] as DateTime?;
+      final bCreated = b['createdAt'] as DateTime?;
+      if (aCreated != null && bCreated != null) {
+        final byCreated = bCreated.compareTo(aCreated);
+        if (byCreated != 0) return byCreated;
+      } else if (aCreated != null) {
+        return -1;
+      } else if (bCreated != null) {
+        return 1;
+      }
+
+      final aUpdated = a['updatedAt'] as DateTime?;
+      final bUpdated = b['updatedAt'] as DateTime?;
+      if (aUpdated != null && bUpdated != null) {
+        final byUpdated = bUpdated.compareTo(aUpdated);
+        if (byUpdated != 0) return byUpdated;
+      } else if (aUpdated != null) {
+        return -1;
+      } else if (bUpdated != null) {
+        return 1;
+      }
+
+      final aName = (a['name'] as String? ?? '').toLowerCase();
+      final bName = (b['name'] as String? ?? '').toLowerCase();
+      return aName.compareTo(bName);
+    });
+  }
+
+  /// Get all recipes from Firestore (matches admin panel — no server-side limit).
+  Future<List<Map<String, dynamic>>> getAllRecipes() async {
+    try {
+      final snapshot = await firestore.collection('recipes').get();
+      final recipes = snapshot.docs.map(_mapRecipeDoc).toList();
+      _sortRecipesNewestFirst(recipes);
+      return recipes;
     } catch (e) {
       throw Exception(handleFirestoreError(e));
     }
@@ -86,6 +114,7 @@ class RecipeService extends FirestoreService {
       final data = doc.data()!;
       data['id'] = doc.id;
       data['createdAt'] = timestampToDateTime(data['createdAt']);
+      data['updatedAt'] = timestampToDateTime(data['updatedAt']);
 
       return data;
     } catch (e) {
@@ -93,22 +122,12 @@ class RecipeService extends FirestoreService {
     }
   }
 
-  /// Stream recipes
-  Stream<List<Map<String, dynamic>>> streamRecipes({
-    int limit = 50,
-  }) {
-    return firestore
-        .collection('recipes')
-        .orderBy('createdAt', descending: true)
-        .limit(limit)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        data['createdAt'] = timestampToDateTime(data['createdAt']);
-        return data;
-      }).toList();
+  /// Stream all recipes, sorted newest-first on the client.
+  Stream<List<Map<String, dynamic>>> streamRecipes() {
+    return firestore.collection('recipes').snapshots().map((snapshot) {
+      final recipes = snapshot.docs.map(_mapRecipeDoc).toList();
+      _sortRecipesNewestFirst(recipes);
+      return recipes;
     });
   }
 
@@ -194,17 +213,13 @@ class RecipeService extends FirestoreService {
     try {
       final snapshot = await firestore
           .collection('recipes')
-          .where('dietCategory', isEqualTo: category)
-          .orderBy('createdAt', descending: true)
+          .where('dietCategories', arrayContains: category)
           .limit(limit)
           .get();
 
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        data['createdAt'] = timestampToDateTime(data['createdAt']);
-        return data;
-      }).toList();
+      final recipes = snapshot.docs.map(_mapRecipeDoc).toList();
+      _sortRecipesNewestFirst(recipes);
+      return recipes;
     } catch (e) {
       throw Exception(handleFirestoreError(e));
     }
@@ -217,17 +232,13 @@ class RecipeService extends FirestoreService {
   }) {
     return firestore
         .collection('recipes')
-        .where('dietCategory', isEqualTo: category)
-        .orderBy('createdAt', descending: true)
+        .where('dietCategories', arrayContains: category)
         .limit(limit)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        data['createdAt'] = timestampToDateTime(data['createdAt']);
-        return data;
-      }).toList();
+      final recipes = snapshot.docs.map(_mapRecipeDoc).toList();
+      _sortRecipesNewestFirst(recipes);
+      return recipes;
     });
   }
 

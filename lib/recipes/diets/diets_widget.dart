@@ -1,5 +1,6 @@
 import '/backend/services/recipe_cache_service.dart';
 import '/backend/schema/structs/index.dart';
+import '/backend/utils/recipe_struct_utils.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -46,7 +47,7 @@ class _DietsWidgetState extends State<DietsWidget> {
   Future<void> _loadAllData() async {
     try {
       _model.categoryRecipes =
-          await RecipeCacheService.instance.getRecipes();
+          await RecipeCacheService.instance.getRecipes(forceRefresh: true);
       debugPrint('Loaded ${_model.categoryRecipes.length} recipes');
 
       // Debug: Log first recipe data
@@ -316,52 +317,8 @@ class _DietsWidgetState extends State<DietsWidget> {
                                     (recipeIndex) {
                               final recipeData = filteredRecipes[recipeIndex];
 
-                              // Convert recipe data to RecipesStruct
-                              final recipeStruct = RecipesStruct(
-                                name: recipeData['name'] ?? '',
-                                description: recipeData['description'] ?? '',
-                                imageUrl: recipeData['imageUrl'] ?? '',
-                                calories: recipeData['calories'] ?? 0,
-                                dietCategories: List<String>.from(
-                                    recipeData['dietCategories'] ?? []),
-                                instructions: (recipeData['instructions']
-                                            as List<dynamic>?)
-                                        ?.map((e) => e.toString())
-                                        .toList() ??
-                                    [],
-                                protein: (recipeData['protein'] as num?)
-                                        ?.toDouble() ??
-                                    0.0,
-                                carbs:
-                                    (recipeData['carbs'] as num?)?.toDouble() ??
-                                        0.0,
-                                fat: (recipeData['fat'] as num?)?.toDouble() ??
-                                    0.0,
-                                time: recipeData['time'] as int? ?? 0,
-                                difficulty:
-                                    recipeData['difficulty'] as String? ?? '',
-                                grams:
-                                    (recipeData['grams'] as num?)?.toDouble() ??
-                                        0.0,
-                                cholesterol: NutrientStruct.maybeFromMap(
-                                    recipeData['cholesterol']),
-                                sodium: NutrientStruct.maybeFromMap(
-                                    recipeData['sodium']),
-                                minerals: MineralsStruct.maybeFromMap(
-                                    recipeData['minerals']),
-                              );
-
-                              // Debug: Log converted recipe struct
-                              debugPrint(
-                                  'RecipeStruct for ${recipeStruct.name}:');
-                              debugPrint('  time: ${recipeStruct.time}');
-                              debugPrint(
-                                  '  difficulty: ${recipeStruct.difficulty}');
-                              debugPrint('  protein: ${recipeStruct.protein}');
-                              debugPrint('  carbs: ${recipeStruct.carbs}');
-                              debugPrint('  fat: ${recipeStruct.fat}');
-                              debugPrint(
-                                  '  dietCategories: ${recipeStruct.dietCategories}');
+                              final recipeStruct =
+                                  recipeStructFromMap(recipeData);
 
                               return wrapWithModel(
                                 model: _model.zRecipeCardModels.getModel(

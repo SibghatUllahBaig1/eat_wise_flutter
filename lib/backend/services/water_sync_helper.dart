@@ -14,6 +14,13 @@ class WaterSyncHelper {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
+  static int currentWaterGoalMl() => FFAppState().trackerSettings.water.goal;
+
+  static double calculateWaterProgress(int intakeMl, int goalMl) {
+    if (goalMl <= 0) return 0.0;
+    return intakeMl / goalMl;
+  }
+
   static int waterIntakeMlForDate(DateTime date) {
     final normalized = normalizeDate(date);
     for (final entry in FFAppState().tracker.water) {
@@ -25,13 +32,10 @@ class WaterSyncHelper {
   }
 
   static double waterProgressForDate(DateTime date) {
-    final normalized = normalizeDate(date);
-    for (final entry in FFAppState().tracker.water) {
-      if (isSameDay(entry.date, normalized)) {
-        return entry.progress;
-      }
-    }
-    return 0.0;
+    return calculateWaterProgress(
+      waterIntakeMlForDate(date),
+      currentWaterGoalMl(),
+    );
   }
 
   static void upsertLocalWaterEntry({
@@ -53,6 +57,17 @@ class WaterSyncHelper {
     });
   }
 
+  static void upsertLocalWaterEntryFromIntake({
+    required DateTime date,
+    required int intakeMl,
+  }) {
+    upsertLocalWaterEntry(
+      date: date,
+      intakeMl: intakeMl,
+      progress: calculateWaterProgress(intakeMl, currentWaterGoalMl()),
+    );
+  }
+
   /// Pull the latest daily total from Firestore into FFAppState.
   static Future<void> syncWaterForDate({
     required String userId,
@@ -67,7 +82,7 @@ class WaterSyncHelper {
     );
 
     final intake = data?['totalIntake'] as int? ?? data?['intake'] as int? ?? 0;
-    final progress = (data?['progress'] as num?)?.toDouble() ?? 0.0;
+    final progress = calculateWaterProgress(intake, currentWaterGoalMl());
 
     upsertLocalWaterEntry(
       date: normalizedDate,

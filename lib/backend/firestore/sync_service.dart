@@ -8,6 +8,7 @@ import 'weight_tracker_service.dart';
 import 'step_tracker_service.dart';
 import '/backend/services/profile_sync_helper.dart';
 import '/backend/services/weight_sync_helper.dart';
+import '/backend/services/water_sync_helper.dart';
 import '/backend/schema/structs/index.dart';
 
 /// Service for synchronizing data between app state and Firestore
@@ -245,7 +246,10 @@ class SyncService {
         final waterIntake = waterData?['totalIntake'] as int? ??
             waterData?['intake'] as int? ??
             0;
-        final waterProgress = waterData?['progress'] as double? ?? 0.0;
+        final waterProgress = WaterSyncHelper.calculateWaterProgress(
+          waterIntake,
+          appState.trackerSettings.water.goal,
+        );
 
         debugPrint(
             'Adding water entry: intake=$waterIntake, progress=$waterProgress, date=$normalizedDate');
