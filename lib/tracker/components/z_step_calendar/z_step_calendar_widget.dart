@@ -48,7 +48,7 @@ class _ZStepCalendarWidgetState extends State<ZStepCalendarWidget>
       // Load step progress for visible week
       final currentDate = FFAppState().tracker.currentDate ?? DateTime.now();
       final weekDates =
-          functions.lastDaysWindow(currentDate, 7).toList();
+          functions.weekDaysMondayToSunday(currentDate).toList();
       await _model.loadStepProgressForDates(weekDates);
 
       safeSetState(() {});
@@ -236,7 +236,7 @@ class _ZStepCalendarWidgetState extends State<ZStepCalendarWidget>
                               ),
                               Expanded(
                                 child: Text(
-                                  'Thu',
+                                  'Tue',
                                   textAlign: TextAlign.center,
                                   style: FlutterFlowTheme.of(context)
                                       .labelSmall
@@ -655,8 +655,8 @@ class _ZStepCalendarWidgetState extends State<ZStepCalendarWidget>
                     child: Builder(
                       builder: (context) {
                         final days = functions
-                            .lastDaysWindow(
-                                FFAppState().tracker.currentDate!, 7)
+                            .weekDaysMondayToSunday(
+                                FFAppState().tracker.currentDate!)
                             .toList();
 
                         return Row(

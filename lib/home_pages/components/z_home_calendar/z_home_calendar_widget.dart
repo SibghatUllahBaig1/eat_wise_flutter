@@ -19,7 +19,19 @@ import 'z_home_calendar_model.dart';
 export 'z_home_calendar_model.dart';
 
 class ZHomeCalendarWidget extends StatefulWidget {
-  const ZHomeCalendarWidget({super.key});
+  const ZHomeCalendarWidget({
+    super.key,
+    this.pickerMode = false,
+    this.initialSelectedDate,
+    this.onDateSelected,
+  });
+
+  /// When true, selection is local and reported via [onDateSelected].
+  final bool pickerMode;
+
+  final DateTime? initialSelectedDate;
+
+  final ValueChanged<DateTime>? onDateSelected;
 
   @override
   State<ZHomeCalendarWidget> createState() => _ZHomeCalendarWidgetState();
@@ -46,18 +58,36 @@ class _ZHomeCalendarWidgetState extends State<ZHomeCalendarWidget>
     _model = createModel(context, () => ZHomeCalendarModel());
 
     SchedulerBinding.instance.addPostFrameCallback((_) async {
-      _model.selectedDate = FFAppState().tracker.selectedDate;
-      _model.selectedMonthAndYear = FFAppState().tracker.currentDate;
       _model.size = (MediaQuery.sizeOf(context).width - 100) / 7;
-      _model.dates = functions
-          .lastDaysWindow(FFAppState().tracker.currentDate!, 7)
-          .toList()
-          .cast<DateTime>();
 
-      final weekDates = functions
-          .lastDaysWindow(FFAppState().tracker.currentDate!, 7)
-          .toList();
-      await _model.loadNutritionProgressForDates(weekDates);
+      if (widget.pickerMode) {
+        final initial = normalizeToDate(
+          widget.initialSelectedDate ??
+              FFAppState().tracker.selectedDate ??
+              FFAppState().tracker.currentDate ??
+              DateTime.now(),
+        );
+        _model.selectedDate = initial;
+        _model.selectedMonthAndYear = initial;
+        _model.dates = functions
+            .weekDaysMondayToSunday(initial)
+            .toList()
+            .cast<DateTime>();
+        await _model.loadNutritionProgressForDates(_model.dates);
+      } else {
+        _model.selectedDate = FFAppState().tracker.selectedDate;
+        _model.selectedMonthAndYear = FFAppState().tracker.currentDate;
+        _model.dates = functions
+            .weekDaysMondayToSunday(FFAppState().tracker.currentDate!)
+            .toList()
+            .cast<DateTime>();
+
+        final weekDates = functions
+            .weekDaysMondayToSunday(FFAppState().tracker.currentDate!)
+            .toList();
+        await _model.loadNutritionProgressForDates(weekDates);
+      }
+
       safeSetState(() {});
     });
 
@@ -90,12 +120,63 @@ class _ZHomeCalendarWidgetState extends State<ZHomeCalendarWidget>
     super.dispose();
   }
 
-  bool _isSelected(DateTime date) =>
-      isSameCalendarDay(date, FFAppState().tracker.selectedDate);
+  @override
+  void didUpdateWidget(covariant ZHomeCalendarWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!widget.pickerMode || widget.initialSelectedDate == null) return;
+    if (oldWidget.initialSelectedDate == widget.initialSelectedDate) return;
 
-  bool _isFuture(DateTime date) =>
-      !isSameCalendarDay(date, FFAppState().tracker.currentDate!) &&
-      date.isAfter(FFAppState().tracker.currentDate!);
+    final normalized = normalizeToDate(widget.initialSelectedDate!);
+    _model.selectedDate = normalized;
+    _model.selectedMonthAndYear = normalized;
+    _model.dates =
+        functions.weekDaysMondayToSunday(normalized).toList().cast<DateTime>();
+  }
+
+  DateTime get _currentDate => normalizeToDate(
+        FFAppState().tracker.currentDate ?? DateTime.now(),
+      );
+
+  DateTime get _weekAnchorDate {
+    if (widget.pickerMode) {
+      return normalizeToDate(_model.selectedDate ?? _currentDate);
+    }
+    return _currentDate;
+  }
+
+  bool _isSelected(DateTime date) {
+    if (widget.pickerMode) {
+      return isSameCalendarDay(date, _model.selectedDate);
+    }
+    return isSameCalendarDay(date, FFAppState().tracker.selectedDate);
+  }
+
+  bool _isFuture(DateTime date) {
+    final day = normalizeToDate(date);
+    return day.isAfter(_currentDate);
+  }
+
+  void _selectDate(DateTime date) {
+    if (_isFuture(date)) return;
+
+    final normalized = normalizeToDate(date);
+    if (widget.pickerMode) {
+      _model.selectedDate = normalized;
+      _model.selectedMonthAndYear = normalized;
+      _model.dates = functions
+          .weekDaysMondayToSunday(normalized)
+          .toList()
+          .cast<DateTime>();
+      widget.onDateSelected?.call(normalized);
+      safeSetState(() {});
+      return;
+    }
+
+    FFAppState().updateTrackerStruct(
+      (e) => e..selectedDate = normalized,
+    );
+    FFAppState().update(() {});
+  }
 
   List<DateTime> _monthDaysForSelectedMonth() => functions
       .getMonthDays(
@@ -120,6 +201,13 @@ class _ZHomeCalendarWidgetState extends State<ZHomeCalendarWidget>
     if (_model.showMore) {
       animationsMap['iconOnActionTriggerAnimation']?.controller.reverse();
       _model.showMore = false;
+      if (widget.pickerMode) {
+        final anchor = normalizeToDate(_model.selectedDate ?? _currentDate);
+        _model.dates = functions
+            .weekDaysMondayToSunday(anchor)
+            .toList()
+            .cast<DateTime>();
+      }
       safeSetState(() {});
       return;
     }
@@ -160,12 +248,7 @@ class _ZHomeCalendarWidgetState extends State<ZHomeCalendarWidget>
             hoverColor: Colors.transparent,
             highlightColor: Colors.transparent,
             onTap: () async {
-              if (!_isFuture(daysItem)) {
-                FFAppState().updateTrackerStruct(
-                  (e) => e..selectedDate = normalizeToDate(daysItem),
-                );
-                FFAppState().update(() {});
-              }
+              _selectDate(daysItem);
             },
             child: Container(
               decoration: BoxDecoration(
@@ -235,7 +318,8 @@ class _ZHomeCalendarWidgetState extends State<ZHomeCalendarWidget>
     context.watch<FFAppState>();
 
     return Padding(
-      padding: EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
+      padding: EdgeInsetsDirectional.fromSTEB(
+          widget.pickerMode ? 0.0 : 16.0, 0.0, widget.pickerMode ? 0.0 : 16.0, 0.0),
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
@@ -382,14 +466,7 @@ class _ZHomeCalendarWidgetState extends State<ZHomeCalendarWidget>
 
                                     return InkWell(
                                       onTap: () {
-                                        if (!_isFuture(day)) {
-                                          FFAppState().updateTrackerStruct(
-                                            (e) => e
-                                              ..selectedDate =
-                                                  normalizeToDate(day),
-                                          );
-                                          FFAppState().update(() {});
-                                        }
+                                        _selectDate(day);
                                       },
                                       child: Container(
                                         width: _model.size,
@@ -462,9 +539,11 @@ class _ZHomeCalendarWidgetState extends State<ZHomeCalendarWidget>
                     );
                   }
 
-                  final days = functions
-                      .lastDaysWindow(FFAppState().tracker.currentDate!, 7)
-                      .toList();
+                  final days = widget.pickerMode
+                      ? _model.dates
+                      : functions
+                          .weekDaysMondayToSunday(_weekAnchorDate)
+                          .toList();
 
                   return Padding(
                     padding: EdgeInsetsDirectional.fromSTEB(
@@ -473,7 +552,12 @@ class _ZHomeCalendarWidgetState extends State<ZHomeCalendarWidget>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          dateTimeFormat('yMMMM', _model.selectedDate),
+                          dateTimeFormat(
+                            'yMMMM',
+                            widget.pickerMode
+                                ? (_model.selectedDate ?? _currentDate)
+                                : _model.selectedDate,
+                          ),
                           style: FlutterFlowTheme.of(context).titleMedium,
                         ),
                         Padding(

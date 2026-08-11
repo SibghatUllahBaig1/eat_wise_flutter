@@ -1,3 +1,4 @@
+import '/backend/utils/date_utils.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -40,7 +41,15 @@ class _FoodDetailsWidgetState extends State<FoodDetailsWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => FoodDetailsModel());
+    _model.logDate = normalizeToDate(
+      FFAppState().tracker.selectedDate ??
+          FFAppState().tracker.currentDate ??
+          DateTime.now(),
+    );
   }
+
+  bool get _showDatePicker =>
+      widget.nutritionData?.mealId.isEmpty ?? true;
 
   @override
   void dispose() {
@@ -94,6 +103,11 @@ class _FoodDetailsWidgetState extends State<FoodDetailsWidget> {
                   shareborderRadius: 24.0,
                   homepage: () => ZFoodDetailsContentWidget(
                     nutritionData: widget.nutritionData,
+                    showDatePicker: _showDatePicker,
+                    selectedLogDate: _model.logDate,
+                    onLogDateSelected: (date) {
+                      setState(() => _model.logDate = date);
+                    },
                     onNutritionDataChanged: (updatedData) {
                       // Store the updated nutrition data in the model
                       // Preserve the mealId from the original nutrition data
@@ -134,8 +148,8 @@ class _FoodDetailsWidgetState extends State<FoodDetailsWidget> {
                 mainAxisSize: MainAxisSize.max,
                 children: [
                   Padding(
-                    padding:
-                        EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 16.0),
+                    padding: EdgeInsetsDirectional.fromSTEB(
+                        16.0, 16.0, 16.0, 16.0),
                     child: FFButtonWidget(
                       onPressed: () async {
                         await _model.saveMeal(context, widget.nutritionData,

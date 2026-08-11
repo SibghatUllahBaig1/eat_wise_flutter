@@ -1,4 +1,6 @@
+import '/backend/firestore/calorie_goal_history_service.dart';
 import '/backend/schema/structs/index.dart';
+import '/backend/services/calorie_goal_history_helper.dart';
 import '/backend/utils/date_utils.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -41,21 +43,49 @@ class ZHomeCalendarModel extends FlutterFlowModel<ZHomeCalendarWidget> {
   Map<String, double> nutritionProgressByDate = {};
   Map<String, bool> withinGoalByDate = {};
 
+  List<CalorieGoalHistoryEntry>? _goalHistory;
+  int? _cachedProfileCalorieGoal;
+
   String _dateKey(DateTime date) =>
       '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
-  int get _calorieGoal {
-    return FFAppState().userProfile.dailyCalorieGoal > 0
-        ? FFAppState().userProfile.dailyCalorieGoal
-        : (FFAppState().trackerSettings.calorie.goal > 0
-            ? FFAppState().trackerSettings.calorie.goal
-            : 2000);
+  int get _currentCalorieGoalFallback =>
+      CalorieGoalHistoryHelper.resolveCurrentCalorieGoal();
+
+  int _calorieGoalForDate(DateTime date) {
+    return CalorieGoalHistoryHelper.goalForDate(
+      history: _goalHistory ?? const [],
+      date: date,
+      fallback: _currentCalorieGoalFallback,
+    );
+  }
+
+  Future<void> _ensureGoalHistoryLoaded({bool forceReload = false}) async {
+    final currentFallback = _currentCalorieGoalFallback;
+    if (!forceReload &&
+        _goalHistory != null &&
+        _cachedProfileCalorieGoal == currentFallback) {
+      return;
+    }
+    if (currentUserUid.isEmpty) {
+      _goalHistory = const [];
+      _cachedProfileCalorieGoal = currentFallback;
+      return;
+    }
+    _goalHistory = await CalorieGoalHistoryHelper.fetchHistory(currentUserUid);
+    _cachedProfileCalorieGoal = currentFallback;
+  }
+
+  void invalidateGoalHistoryCache() {
+    _goalHistory = null;
+    _cachedProfileCalorieGoal = null;
   }
 
   Future<void> loadNutritionProgressForDates(List<DateTime> dates) async {
     if (currentUserUid.isEmpty || dates.isEmpty) return;
 
-    final calorieGoal = _calorieGoal;
+    await _ensureGoalHistoryLoaded(forceReload: true);
+
     final uniqueDays = <String, DateTime>{};
     for (final date in dates) {
       final day = normalizeToDate(date);
@@ -97,6 +127,8 @@ class ZHomeCalendarModel extends FlutterFlowModel<ZHomeCalendarWidget> {
       }
 
       for (final entry in caloriesByDay.entries) {
+        final day = uniqueDays[entry.key]!;
+        final calorieGoal = _calorieGoalForDate(day);
         final totalCalories = entry.value;
         nutritionProgressByDate[entry.key] = calorieGoal > 0
             ? (totalCalories / calorieGoal).clamp(0.0, 1.0)
@@ -130,31 +162,33 @@ class ZHomeCalendarModel extends FlutterFlowModel<ZHomeCalendarWidget> {
     }
 
     try {
-      final calorieGoal = _calorieGoal;
+      return Stream.fromFuture(_ensureGoalHistoryLoaded()).asyncExpand((_) {
+        final calorieGoal = _calorieGoalForDate(date);
 
-      return _backend.mealService
-          .streamMealsByDate(
-        userId: currentUserUid,
-        date: date,
-      )
-          .map((meals) {
-        var totalCalories = 0;
-        for (final meal in meals) {
-          totalCalories += (meal['totalCalories'] as int?) ?? 0;
-        }
+        return _backend.mealService
+            .streamMealsByDate(
+          userId: currentUserUid,
+          date: date,
+        )
+            .map((meals) {
+          var totalCalories = 0;
+          for (final meal in meals) {
+            totalCalories += (meal['totalCalories'] as int?) ?? 0;
+          }
 
-        final progress =
-            calorieGoal > 0 ? (totalCalories / calorieGoal) : 0.0;
-        final withinGoal = totalCalories <= calorieGoal;
+          final progress =
+              calorieGoal > 0 ? (totalCalories / calorieGoal) : 0.0;
+          final withinGoal = totalCalories <= calorieGoal;
 
-        return {
-          'progress': progress,
-          'withinGoal': withinGoal,
-        };
-      }).handleError((e) {
-        print(
-            'Error streaming nutrition data for ${date.toString().split(' ')[0]}: $e');
-        return {'progress': 0.0, 'withinGoal': true};
+          return {
+            'progress': progress,
+            'withinGoal': withinGoal,
+          };
+        }).handleError((e) {
+          print(
+              'Error streaming nutrition data for ${date.toString().split(' ')[0]}: $e');
+          return {'progress': 0.0, 'withinGoal': true};
+        });
       });
     } catch (e) {
       print('Error setting up nutrition stream: $e');

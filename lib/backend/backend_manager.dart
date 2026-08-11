@@ -21,6 +21,8 @@ class BackendManager {
   final AnalyticsService _analyticsService = AnalyticsService();
   final SyncService _syncService = SyncService();
   final ActivityService _activityService = ActivityService();
+  final CalorieGoalHistoryService _calorieGoalHistoryService =
+      CalorieGoalHistoryService();
   final FeedbackService _feedbackService = FeedbackService();
   final SupportService _supportService = SupportService();
   final NotificationService _notificationService = NotificationService();
@@ -36,6 +38,8 @@ class BackendManager {
   AnalyticsService get analyticsService => _analyticsService;
   SyncService get syncService => _syncService;
   ActivityService get activityService => _activityService;
+  CalorieGoalHistoryService get calorieGoalHistoryService =>
+      _calorieGoalHistoryService;
   FeedbackService get feedbackService => _feedbackService;
   SupportService get supportService => _supportService;
   NotificationService get notificationService => _notificationService;

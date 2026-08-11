@@ -3,6 +3,7 @@ import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/backend/firestore/user_service.dart';
 import '/backend/services/calorie_calculator_service.dart';
+import '/backend/services/calorie_goal_history_helper.dart';
 import '/backend/services/profile_sync_helper.dart';
 import '/backend/firestore/weight_tracker_service.dart';
 import '/auth/firebase_auth/auth_util.dart';
@@ -84,6 +85,11 @@ class _OnboardingStep7WidgetState extends State<OnboardingStep7Widget>
         await ProfileSyncHelper.seedWeightTrackerFromProfile(
           userId: currentUserUid,
           profile: savedProfile,
+        );
+        await CalorieGoalHistoryHelper.seedInitialGoal(
+          userId: currentUserUid,
+          dailyCalorieGoal: savedProfile.dailyCalorieGoal,
+          goalType: savedProfile.goal,
         );
       }
 

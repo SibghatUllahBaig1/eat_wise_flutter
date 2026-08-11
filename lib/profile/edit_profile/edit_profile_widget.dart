@@ -5,6 +5,7 @@ import '/backend/firestore/user_service.dart';
 import '/backend/services/profile_sync_helper.dart';
 import '/backend/services/weight_sync_helper.dart';
 import '/backend/services/calorie_calculator_service.dart';
+import '/backend/services/calorie_goal_history_helper.dart';
 import '/backend/services/permission_service.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -1172,6 +1173,8 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
                         await user.reload();
 
                         // Recalculate calories using Mifflin-St Jeor formula
+                        final previousCalorieGoal =
+                            CalorieGoalHistoryHelper.resolveCurrentCalorieGoal();
                         final result =
                             CalorieCalculatorService.calculateCalorieGoal(
                           gender: _model.selectedGender!,
@@ -1210,6 +1213,13 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
                         await ProfileSyncHelper.seedWeightTrackerFromProfile(
                           userId: user.uid,
                           profile: savedProfile,
+                        );
+
+                        await CalorieGoalHistoryHelper.recordGoalChange(
+                          userId: user.uid,
+                          previousGoal: previousCalorieGoal,
+                          newGoal: result['dailyCalories'] as int,
+                          goalType: _model.selectedGoal,
                         );
 
                         // Update Firebase Auth display name only

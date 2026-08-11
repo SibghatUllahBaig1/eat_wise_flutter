@@ -105,70 +105,75 @@ class _ZFoodDetailsHeadarWidgetState extends State<ZFoodDetailsHeadarWidget> {
                 ),
               ),
             ),
-            Padding(
-              padding: EdgeInsetsDirectional.fromSTEB(6.0, 6.0, 6.0, 6.0),
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  FlutterFlowIconButton(
-                    borderColor: FlutterFlowTheme.of(context).transparent,
-                    borderRadius: 22.0,
-                    borderWidth: 1.0,
-                    buttonSize: 44.0,
-                    icon: Icon(
-                      FFIcons.karrowLeft,
-                      color: FlutterFlowTheme.of(context).primaryText,
-                      size: 24.0,
+            SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: EdgeInsetsDirectional.fromSTEB(6.0, 6.0, 6.0, 6.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    FlutterFlowIconButton(
+                      borderColor: Colors.transparent,
+                      borderRadius: 22.0,
+                      borderWidth: 1.0,
+                      buttonSize: 44.0,
+                      fillColor: Colors.black.withValues(alpha: 0.4),
+                      icon: Icon(
+                        FFIcons.karrowLeft,
+                        color: Colors.white,
+                        size: 24.0,
+                      ),
+                      onPressed: () async {
+                        context.pop();
+                      },
                     ),
-                    onPressed: () async {
-                      context.pop();
-                    },
-                  ),
-                  Row(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      if (widget!.fromHistory ?? true)
-                        Builder(
-                          builder: (context) => Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(
-                                0.0, 0.0, 6.0, 0.0),
-                            child: FlutterFlowIconButton(
-                              borderColor: Colors.transparent,
-                              borderRadius: 22.0,
-                              borderWidth: 1.0,
-                              buttonSize: 44.0,
-                              icon: Icon(
-                                FFIcons.ktrash03,
-                                color: FlutterFlowTheme.of(context).primaryText,
-                                size: 24.0,
+                    Row(
+                      mainAxisSize: MainAxisSize.max,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        if (widget!.fromHistory ?? true)
+                          Builder(
+                            builder: (context) => Padding(
+                              padding: EdgeInsetsDirectional.fromSTEB(
+                                  0.0, 0.0, 6.0, 0.0),
+                              child: FlutterFlowIconButton(
+                                borderColor: Colors.transparent,
+                                borderRadius: 22.0,
+                                borderWidth: 1.0,
+                                buttonSize: 44.0,
+                                fillColor: Colors.black.withValues(alpha: 0.4),
+                                icon: Icon(
+                                  FFIcons.ktrash03,
+                                  color: Colors.white,
+                                  size: 24.0,
+                                ),
+                                onPressed: () async {
+                                  await showDialog(
+                                    barrierColor:
+                                        FlutterFlowTheme.of(context).barrier,
+                                    context: context,
+                                    builder: (dialogContext) {
+                                      return Dialog(
+                                        elevation: 0,
+                                        insetPadding: EdgeInsets.zero,
+                                        backgroundColor: Colors.transparent,
+                                        alignment: AlignmentDirectional(0.0, 0.0)
+                                            .resolve(Directionality.of(context)),
+                                        child: ZDeleteFoodWidget(
+                                          mealId: widget.nutritionData?.mealId,
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
                               ),
-                              onPressed: () async {
-                                await showDialog(
-                                  barrierColor:
-                                      FlutterFlowTheme.of(context).barrier,
-                                  context: context,
-                                  builder: (dialogContext) {
-                                    return Dialog(
-                                      elevation: 0,
-                                      insetPadding: EdgeInsets.zero,
-                                      backgroundColor: Colors.transparent,
-                                      alignment: AlignmentDirectional(0.0, 0.0)
-                                          .resolve(Directionality.of(context)),
-                                      child: ZDeleteFoodWidget(
-                                        mealId: widget.nutritionData?.mealId,
-                                      ),
-                                    );
-                                  },
-                                );
-                              },
                             ),
                           ),
-                        ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

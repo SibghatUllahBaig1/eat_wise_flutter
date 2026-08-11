@@ -13,12 +13,18 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '/backend/backend_manager.dart';
 import '/backend/schema/structs/index.dart';
+import '/backend/utils/date_utils.dart';
 import '/auth/firebase_auth/auth_util.dart';
 
 class FoodDetailsModel extends FlutterFlowModel<FoodDetailsWidget> {
   ///  Local state fields for this page.
 
   int? quantity = 1;
+
+  DateTime? logDate;
+
+  DateTime get effectiveLogDate =>
+      normalizeToDate(logDate ?? DateTime.now());
 
   final BackendManager _backend = BackendManager();
 
@@ -35,7 +41,6 @@ class FoodDetailsModel extends FlutterFlowModel<FoodDetailsWidget> {
   Future<void> saveMeal(
       BuildContext context, FoodNutritionStruct? nutritionData,
       {bool fromHistory = false}) async {
-    // Use the updated nutrition data from the content model if available
     final dataToSave = contentModel?.calculatedNutrition ?? nutritionData;
 
     if (dataToSave == null) {
@@ -57,8 +62,8 @@ class FoodDetailsModel extends FlutterFlowModel<FoodDetailsWidget> {
     }
 
     try {
-      // Get the selected date from FFAppState
-      final selectedDate = FFAppState().tracker.selectedDate ?? DateTime.now();
+      // Get the selected date from this screen (new meals) or keep existing date on update.
+      final selectedDate = effectiveLogDate;
 
       // Convert nutrition data to food map format with all nutritional data
       final foodMap = {

@@ -9,6 +9,7 @@ import 'lat_lng.dart';
 import 'place.dart';
 import 'uploaded_file.dart';
 import '/backend/schema/structs/index.dart';
+import '/backend/utils/date_utils.dart' as date_utils;
 import '/auth/firebase_auth/auth_util.dart';
 
 List<String> daysList() {
@@ -368,6 +369,11 @@ List<DateTime> daysFunction(
   }
 
   return dateList;
+}
+
+/// Returns Monday–Sunday for the week containing [referenceDate].
+List<DateTime> weekDaysMondayToSunday(DateTime referenceDate) {
+  return date_utils.weekDaysMondayToSunday(referenceDate);
 }
 
 /// Returns [dayCount] consecutive days ending on [endDate] (inclusive),

@@ -1,3 +1,4 @@
+import '/backend/utils/date_utils.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -26,6 +27,11 @@ class ActivityDetailsModel extends FlutterFlowModel<ActivityDetailsWidget> {
 
   // Store the base calories per minute from the template
   double? baseCaloriesPerMinute;
+
+  DateTime? logDate;
+
+  DateTime get effectiveLogDate =>
+      normalizeToDate(logDate ?? DateTime.now());
 
   ///  State fields for stateful widgets in this page.
 

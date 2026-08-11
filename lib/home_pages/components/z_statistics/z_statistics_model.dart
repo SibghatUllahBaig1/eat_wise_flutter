@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:provider/provider.dart';
 import '/backend/backend_manager.dart';
+import '/backend/services/calorie_goal_history_helper.dart';
 import '/backend/services/weight_sync_helper.dart';
 import '/auth/firebase_auth/auth_util.dart';
 
@@ -56,12 +57,12 @@ class ZStatisticsModel extends FlutterFlowModel<ZStatisticsWidget> {
     try {
       final selectedDate = FFAppState().tracker.selectedDate ?? DateTime.now();
 
-      // Get calorie goal from user profile (from onboarding) or tracker settings
-      final int localCalorieGoal = FFAppState().userProfile.dailyCalorieGoal > 0
-          ? FFAppState().userProfile.dailyCalorieGoal
-          : (FFAppState().trackerSettings.calorie.goal > 0
-              ? FFAppState().trackerSettings.calorie.goal
-              : 2000);
+      final goalHistory =
+          await CalorieGoalHistoryHelper.fetchHistory(currentUserUid);
+      final int localCalorieGoal = CalorieGoalHistoryHelper.goalForDate(
+        history: goalHistory,
+        date: selectedDate,
+      );
 
       // Calculate macros goals based on calorie goal (example ratios)
       // 50% carbs, 30% protein, 20% fat

@@ -1,5 +1,6 @@
+import 'package:flutter/scheduler.dart';
+
 import '/app_state.dart';
-import '/backend/schema/structs/index.dart';
 import '/backend/services/pedometer_service.dart';
 import '/backend/utils/date_utils.dart';
 
@@ -15,7 +16,9 @@ class AppDayService {
       t.currentDate = today;
       t.selectedDate = today;
     });
-    FFAppState().update(() {});
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      FFAppState().update(() {});
+    });
   }
 
   void checkDayRollover({String? userId}) {

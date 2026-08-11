@@ -3,6 +3,7 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/backend/schema/structs/index.dart';
+import '/home_pages/components/z_home_calendar/z_home_calendar_widget.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -16,10 +17,16 @@ class ZFoodDetailsContentWidget extends StatefulWidget {
     super.key,
     this.nutritionData,
     this.onNutritionDataChanged,
+    this.showDatePicker = false,
+    this.selectedLogDate,
+    this.onLogDateSelected,
   });
 
   final FoodNutritionStruct? nutritionData;
   final Function(FoodNutritionStruct?)? onNutritionDataChanged;
+  final bool showDatePicker;
+  final DateTime? selectedLogDate;
+  final ValueChanged<DateTime>? onLogDateSelected;
 
   @override
   State<ZFoodDetailsContentWidget> createState() =>
@@ -216,6 +223,16 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
           mainAxisSize: MainAxisSize.max,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (widget.showDatePicker)
+              Padding(
+                padding:
+                    EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 0.0),
+                child: ZHomeCalendarWidget(
+                  pickerMode: true,
+                  initialSelectedDate: widget.selectedLogDate,
+                  onDateSelected: widget.onLogDateSelected,
+                ),
+              ),
             Padding(
               padding: EdgeInsetsDirectional.fromSTEB(16.0, 24.0, 16.0, 0.0),
               child: Text(

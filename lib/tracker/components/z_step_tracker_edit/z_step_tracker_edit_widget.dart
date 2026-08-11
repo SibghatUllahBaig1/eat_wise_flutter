@@ -100,7 +100,7 @@ class _ZStepTrackerEditWidgetState extends State<ZStepTrackerEditWidget> {
               child: Builder(
                 builder: (context) {
                   final days = functions
-                      .lastDaysWindow(FFAppState().tracker.currentDate!, 7)
+                      .weekDaysMondayToSunday(FFAppState().tracker.currentDate!)
                       .toList();
 
                   return Row(

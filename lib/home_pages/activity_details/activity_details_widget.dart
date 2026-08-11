@@ -1,11 +1,14 @@
+import '/backend/utils/date_utils.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/backend/backend_manager.dart';
+import '/home_pages/components/z_activity_date_calendar/z_activity_date_calendar_widget.dart';
 import 'package:easy_debounce/easy_debounce.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'activity_details_model.dart';
 export 'activity_details_model.dart';
 
@@ -34,6 +37,11 @@ class _ActivityDetailsWidgetState extends State<ActivityDetailsWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => ActivityDetailsModel());
+    _model.logDate = normalizeToDate(
+      FFAppState().tracker.selectedDate ??
+          FFAppState().tracker.currentDate ??
+          DateTime.now(),
+    );
 
     // Prefill form if using template (activityData passed but will be used to create new activity)
     if (widget.activityData != null) {
@@ -439,6 +447,16 @@ class _ActivityDetailsWidgetState extends State<ActivityDetailsWidget> {
                               Padding(
                                 padding: EdgeInsetsDirectional.fromSTEB(
                                     0.0, 24.0, 0.0, 0.0),
+                                child: ZActivityDateCalendarWidget(
+                                  initialSelectedDate: _model.logDate,
+                                  onDateSelected: (date) {
+                                    _model.logDate = date;
+                                  },
+                                ),
+                              ),
+                              Padding(
+                                padding: EdgeInsetsDirectional.fromSTEB(
+                                    0.0, 24.0, 0.0, 0.0),
                                 child: Text(
                                   'Duration (min)',
                                   style: FlutterFlowTheme.of(context)
@@ -806,9 +824,8 @@ class _ActivityDetailsWidgetState extends State<ActivityDetailsWidget> {
                     // Use the calculated calories from the model (based on template's rate)
                     final calories = _model.caloriesBurned ?? 0;
 
-                    // Get the selected date from app state or use today
-                    final selectedDate =
-                        FFAppState().tracker.selectedDate ?? DateTime.now();
+                    // Log for the date selected on this screen.
+                    final selectedDate = _model.effectiveLogDate;
 
                     // Add new activity history entry (don't inherit favorite status from template)
                     await backend.activityService.addActivity(

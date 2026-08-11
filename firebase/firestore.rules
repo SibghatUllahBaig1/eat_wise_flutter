@@ -1,18 +1,13 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper functions
+
     function isAuthenticated() {
       return request.auth != null;
     }
-    
+
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
-    }
-    
-    function isValidTimestamp(value) {
-      return value is timestamp;
     }
 
     function isAdmin() {
@@ -20,141 +15,44 @@ service cloud.firestore {
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    function adminCanUpdateUser() {
-      return isAdmin() &&
-             request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-               'displayName',
-               'email',
-               'isSuspended',
-               'isBlocked',
-               'proGranted',
-               'updatedAt'
-             ]);
-    }
-    
-    // Users collection
+    // User profile + all subcollections (meals, trackers, activities, etc.)
     match /users/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
-      allow create: if isAuthenticated() && request.auth.uid == userId;
-      allow update: if isOwner(userId) || adminCanUpdateUser();
-      allow delete: if isAdmin();
-      
-      // User profile subcollection
-      match /profile/{document=**} {
-        allow read: if isOwner(userId) || isAdmin();
-        allow write: if isOwner(userId) || isAdmin();
-      }
-      
-      // User settings subcollection
-      match /settings/{document=**} {
-        allow read, write: if isOwner(userId);
-      }
+      allow read, write: if isOwner(userId) || isAdmin();
 
-      // Subscription mirror (RevenueCat sync + admin visibility)
-      match /subscription/{document=**} {
-        allow read: if isOwner(userId) || isAdmin();
-        allow write: if isOwner(userId);
-      }
-      
-      // Meals subcollection
-      match /meals/{mealId} {
-        allow read: if isOwner(userId);
-        allow create: if isOwner(userId) && 
-                       request.resource.data.keys().hasAll(['date', 'type', 'foods', 'totalCalories']) &&
-                       isValidTimestamp(request.resource.data.date);
-        allow update: if isOwner(userId);
-        allow delete: if isOwner(userId);
-      }
-      
-      // Water tracker subcollection
-      match /water_tracker/{trackerId} {
-        allow read: if isOwner(userId);
-        allow create: if isOwner(userId) && 
-                       request.resource.data.keys().hasAll(['date', 'intake', 'goal']) &&
-                       isValidTimestamp(request.resource.data.date);
-        allow update: if isOwner(userId);
-        allow delete: if isOwner(userId);
-      }
-      
-      // Weight tracker subcollection
-      match /weight_tracker/{trackerId} {
-        allow read: if isOwner(userId);
-        allow create: if isOwner(userId) && 
-                       request.resource.data.keys().hasAll(['date', 'weight', 'unit']) &&
-                       isValidTimestamp(request.resource.data.date);
-        allow update: if isOwner(userId);
-        allow delete: if isOwner(userId);
-      }
-      
-      // Step tracker subcollection
-      match /step_tracker/{trackerId} {
-        allow read: if isOwner(userId);
-        allow create: if isOwner(userId) && 
-                       request.resource.data.keys().hasAll(['date', 'steps', 'goal']) &&
-                       isValidTimestamp(request.resource.data.date);
-        allow update: if isOwner(userId);
-        allow delete: if isOwner(userId);
-      }
-      
-      // Goals subcollection
-      match /goals/{goalId} {
-        allow read: if isOwner(userId);
-        allow create: if isOwner(userId);
-        allow update: if isOwner(userId);
-        allow delete: if isOwner(userId);
-      }
-      
-      // Nutrition history subcollection
-      match /nutrition_history/{historyId} {
-        allow read: if isOwner(userId);
-        allow create: if isOwner(userId);
-        allow update: if isOwner(userId);
-        allow delete: if isOwner(userId);
-      }
-
-      // Notifications subcollection (written by Cloud Functions via Admin SDK,
-      // read and updated – mark as read – by the owning user)
-      match /notifications/{notificationId} {
-        allow read: if isOwner(userId);
-        // Allow updating only the 'read' field (mark as read)
-        allow update: if isOwner(userId) &&
-                       request.resource.data.diff(resource.data).affectedKeys()
-                           .hasOnly(['read']);
-        allow delete: if isOwner(userId);
-        // Cloud Functions use Admin SDK (bypasses rules); no client create needed
-        allow create: if false;
+      match /{document=**} {
+        allow read, write: if isOwner(userId) || isAdmin();
       }
     }
-    
-    // Recipes collection (public read, admin write)
-    match /recipes/{recipeId} {
+
+    // Public app content
+    match /recipes/{document=**} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-    
-    // Food database collection (public read, admin write)
-    match /foods/{foodId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
+      allow write: if isAdmin();
     }
 
-    // Diet categories (public read, admin write)
-    match /diet_categories/{categoryId} {
+    match /foods/{document=**} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+      allow write: if isAdmin();
     }
 
-    // Legal / CMS content (public read, admin write)
-    match /legal/{documentId} {
+    match /diet_categories/{document=**} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+      allow write: if isAdmin();
     }
 
-    // API keys collection (authenticated read, admin write)
-    match /api_keys/{keyId} {
+    match /legal/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // App config + user feedback
+    match /api_keys/{document=**} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
+
+    match /feedback/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
   }
 }
-

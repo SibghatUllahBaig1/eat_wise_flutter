@@ -1,4 +1,5 @@
 import '/backend/schema/structs/index.dart';
+import '/backend/utils/date_utils.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -13,7 +14,19 @@ import 'z_calendar_model.dart';
 export 'z_calendar_model.dart';
 
 class ZCalendarWidget extends StatefulWidget {
-  const ZCalendarWidget({super.key});
+  const ZCalendarWidget({
+    super.key,
+    this.embedded = false,
+    this.initialSelectedDate,
+    this.onDateSelected,
+  });
+
+  /// When true, hides Cancel/Save and reports selection via [onDateSelected].
+  final bool embedded;
+
+  final DateTime? initialSelectedDate;
+
+  final ValueChanged<DateTime>? onDateSelected;
 
   @override
   State<ZCalendarWidget> createState() => _ZCalendarWidgetState();
@@ -35,10 +48,51 @@ class _ZCalendarWidgetState extends State<ZCalendarWidget> {
 
     // On component load action.
     SchedulerBinding.instance.addPostFrameCallback((_) async {
-      _model.selectedMonthAndYear = FFAppState().tracker.currentDate;
-      _model.selectedDate = FFAppState().tracker.selectedDate;
+      _syncSelectedDateFromWidget();
       safeSetState(() {});
     });
+  }
+
+  void _syncSelectedDateFromWidget() {
+    final initial = widget.initialSelectedDate ??
+        FFAppState().tracker.selectedDate ??
+        FFAppState().tracker.currentDate ??
+        DateTime.now();
+    final normalized = normalizeToDate(initial);
+    _model.selectedDate = normalized;
+    _model.selectedMonthAndYear = normalized;
+  }
+
+  @override
+  void didUpdateWidget(covariant ZCalendarWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialSelectedDate != oldWidget.initialSelectedDate &&
+        widget.initialSelectedDate != null) {
+      final normalized = normalizeToDate(widget.initialSelectedDate!);
+      _model.selectedDate = normalized;
+      _model.selectedMonthAndYear = normalized;
+    }
+  }
+
+  DateTime? get _currentDate =>
+      FFAppState().tracker.currentDate != null
+          ? normalizeToDate(FFAppState().tracker.currentDate!)
+          : normalizeToDate(DateTime.now());
+
+  bool _isSameDay(DateTime? a, DateTime? b) => isSameCalendarDay(a, b);
+
+  void _selectDate(DateTime date) {
+    final normalized = normalizeToDate(date);
+    _model.selectedDate = normalized;
+    if (widget.embedded) {
+      widget.onDateSelected?.call(normalized);
+    }
+    safeSetState(() {});
+  }
+
+  double _dayCellSize(BuildContext context) {
+    final horizontalInset = widget.embedded ? 64.0 : 116.0;
+    return (MediaQuery.sizeOf(context).width - horizontalInset) / 7;
   }
 
   @override
@@ -55,7 +109,8 @@ class _ZCalendarWidgetState extends State<ZCalendarWidget> {
     return Align(
       alignment: AlignmentDirectional(0.0, 0.0),
       child: Padding(
-        padding: EdgeInsetsDirectional.fromSTEB(24.0, 0.0, 24.0, 0.0),
+        padding: EdgeInsetsDirectional.fromSTEB(
+            widget.embedded ? 0.0 : 24.0, 0.0, widget.embedded ? 0.0 : 24.0, 0.0),
         child: Container(
           width: double.infinity,
           decoration: BoxDecoration(
@@ -344,21 +399,19 @@ class _ZCalendarWidgetState extends State<ZCalendarWidget> {
                                   hoverColor: Colors.transparent,
                                   highlightColor: Colors.transparent,
                                   onTap: () async {
-                                    if (daysListItem <=
-                                        FFAppState().tracker.currentDate!) {
-                                      _model.selectedDate = daysListItem;
-                                      safeSetState(() {});
+                                    final currentDate = _currentDate;
+                                    if (currentDate != null &&
+                                        !normalizeToDate(daysListItem)
+                                            .isAfter(currentDate)) {
+                                      _selectDate(daysListItem);
                                     }
                                   },
                                   child: Container(
-                                    width: (MediaQuery.sizeOf(context).width -
-                                            116) /
-                                        7,
-                                    height: (MediaQuery.sizeOf(context).width -
-                                            116) /
-                                        7,
+                                    width: _dayCellSize(context),
+                                    height: _dayCellSize(context),
                                     decoration: BoxDecoration(
-                                      color: daysListItem == _model.selectedDate
+                                      color: _isSameDay(
+                                              daysListItem, _model.selectedDate)
                                           ? FlutterFlowTheme.of(context).primary
                                           : FlutterFlowTheme.of(context)
                                               .transparent,
@@ -382,15 +435,15 @@ class _ZCalendarWidgetState extends State<ZCalendarWidget> {
                                                       .fontStyle,
                                             ),
                                             color: () {
-                                              if (daysListItem ==
-                                                  _model.selectedDate) {
+                                              if (_isSameDay(daysListItem,
+                                                  _model.selectedDate)) {
                                                 return FlutterFlowTheme.of(
                                                         context)
                                                     .info;
-                                              } else if (daysListItem <=
-                                                  FFAppState()
-                                                      .tracker
-                                                      .currentDate!) {
+                                              } else if (_currentDate !=
+                                                      null &&
+                                                  !normalizeToDate(daysListItem)
+                                                      .isAfter(_currentDate!)) {
                                                 return FlutterFlowTheme.of(
                                                         context)
                                                     .primaryText;
@@ -416,12 +469,8 @@ class _ZCalendarWidgetState extends State<ZCalendarWidget> {
                                 );
                               } else {
                                 return Container(
-                                  width:
-                                      (MediaQuery.sizeOf(context).width - 116) /
-                                          7,
-                                  height:
-                                      (MediaQuery.sizeOf(context).width - 116) /
-                                          7,
+                                  width: _dayCellSize(context),
+                                  height: _dayCellSize(context),
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                   ),
@@ -435,81 +484,87 @@ class _ZCalendarWidgetState extends State<ZCalendarWidget> {
                     },
                   ),
                 ),
-                Padding(
-                  padding:
-                      EdgeInsetsDirectional.fromSTEB(16.0, 24.0, 16.0, 16.0),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      FFButtonWidget(
-                        onPressed: () async {
-                          Navigator.pop(context);
-                        },
-                        text: 'Cancel',
-                        options: FFButtonOptions(
-                          height: 40.0,
-                          padding: EdgeInsetsDirectional.fromSTEB(
-                              16.0, 0.0, 16.0, 0.0),
-                          iconPadding: EdgeInsetsDirectional.fromSTEB(
-                              0.0, 0.0, 0.0, 0.0),
-                          color: FlutterFlowTheme.of(context).transparent,
-                          textStyle:
-                              FlutterFlowTheme.of(context).labelMedium.override(
-                                    font: GoogleFonts.inter(
-                                      fontWeight: FontWeight.w500,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .labelMedium
-                                          .fontStyle,
-                                    ),
-                                    letterSpacing: 0.0,
+                if (!widget.embedded)
+                  Padding(
+                    padding: EdgeInsetsDirectional.fromSTEB(
+                        16.0, 24.0, 16.0, 16.0),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.max,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        FFButtonWidget(
+                          onPressed: () async {
+                            Navigator.pop(context);
+                          },
+                          text: 'Cancel',
+                          options: FFButtonOptions(
+                            height: 40.0,
+                            padding: EdgeInsetsDirectional.fromSTEB(
+                                16.0, 0.0, 16.0, 0.0),
+                            iconPadding: EdgeInsetsDirectional.fromSTEB(
+                                0.0, 0.0, 0.0, 0.0),
+                            color:
+                                FlutterFlowTheme.of(context).transparent,
+                            textStyle: FlutterFlowTheme.of(context)
+                                .labelMedium
+                                .override(
+                                  font: GoogleFonts.inter(
                                     fontWeight: FontWeight.w500,
                                     fontStyle: FlutterFlowTheme.of(context)
                                         .labelMedium
                                         .fontStyle,
                                   ),
-                          elevation: 0.0,
-                          borderRadius: BorderRadius.circular(10.0),
+                                  letterSpacing: 0.0,
+                                  fontWeight: FontWeight.w500,
+                                  fontStyle: FlutterFlowTheme.of(context)
+                                      .labelMedium
+                                      .fontStyle,
+                                ),
+                            elevation: 0.0,
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
                         ),
-                      ),
-                      FFButtonWidget(
-                        onPressed: () async {
-                          FFAppState().updateTrackerStruct(
-                            (e) => e..selectedDate = _model.selectedDate,
-                          );
-                          FFAppState().update(() {});
-                          Navigator.pop(context);
-                        },
-                        text: 'Save',
-                        options: FFButtonOptions(
-                          height: 40.0,
-                          padding: EdgeInsetsDirectional.fromSTEB(
-                              24.0, 0.0, 24.0, 0.0),
-                          iconPadding: EdgeInsetsDirectional.fromSTEB(
-                              0.0, 0.0, 0.0, 0.0),
-                          color: FlutterFlowTheme.of(context).primary,
-                          textStyle:
-                              FlutterFlowTheme.of(context).bodyMedium.override(
-                                    font: GoogleFonts.inter(
-                                      fontWeight: FontWeight.w500,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .bodyMedium
-                                          .fontStyle,
-                                    ),
-                                    color: FlutterFlowTheme.of(context).info,
-                                    letterSpacing: 0.0,
+                        FFButtonWidget(
+                          onPressed: () async {
+                            FFAppState().updateTrackerStruct(
+                              (e) => e..selectedDate = _model.selectedDate,
+                            );
+                            FFAppState().update(() {});
+                            Navigator.pop(context);
+                          },
+                          text: 'Save',
+                          options: FFButtonOptions(
+                            height: 40.0,
+                            padding: EdgeInsetsDirectional.fromSTEB(
+                                24.0, 0.0, 24.0, 0.0),
+                            iconPadding: EdgeInsetsDirectional.fromSTEB(
+                                0.0, 0.0, 0.0, 0.0),
+                            color: FlutterFlowTheme.of(context).primary,
+                            textStyle: FlutterFlowTheme.of(context)
+                                .bodyMedium
+                                .override(
+                                  font: GoogleFonts.inter(
                                     fontWeight: FontWeight.w500,
                                     fontStyle: FlutterFlowTheme.of(context)
                                         .bodyMedium
                                         .fontStyle,
                                   ),
-                          elevation: 0.0,
-                          borderRadius: BorderRadius.circular(10.0),
+                                  color: FlutterFlowTheme.of(context).info,
+                                  letterSpacing: 0.0,
+                                  fontWeight: FontWeight.w500,
+                                  fontStyle: FlutterFlowTheme.of(context)
+                                      .bodyMedium
+                                      .fontStyle,
+                                ),
+                            elevation: 0.0,
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
                         ),
-                      ),
-                    ].divide(SizedBox(width: 6.0)),
-                  ),
-                ),
+                      ].divide(SizedBox(width: 6.0)),
+                    ),
+                  )
+                else
+                  const SizedBox(height: 16.0),
               ],
             ),
           ),

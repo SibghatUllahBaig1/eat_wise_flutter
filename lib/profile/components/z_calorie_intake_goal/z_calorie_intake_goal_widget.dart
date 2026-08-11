@@ -1,4 +1,6 @@
 import '/backend/schema/structs/index.dart';
+import '/backend/services/calorie_goal_history_helper.dart';
+import '/auth/firebase_auth/auth_util.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -220,11 +222,21 @@ class _ZCalorieIntakeGoalWidgetState extends State<ZCalorieIntakeGoalWidget> {
                     ),
                     FFButtonWidget(
                       onPressed: () async {
+                        final newGoal = _model.value;
+                        if (newGoal == null || newGoal <= 0) return;
+
+                        final previousGoal =
+                            CalorieGoalHistoryHelper.resolveCurrentCalorieGoal();
                         FFAppState().updateTrackerSettingsStruct(
                           (e) => e
                             ..updateCalorie(
-                              (e) => e..goal = _model.value,
+                              (e) => e..goal = newGoal,
                             ),
+                        );
+                        await CalorieGoalHistoryHelper.recordGoalChange(
+                          userId: currentUserUid,
+                          previousGoal: previousGoal,
+                          newGoal: newGoal,
                         );
                         FFAppState().update(() {});
                         Navigator.pop(context);

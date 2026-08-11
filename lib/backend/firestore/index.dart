@@ -9,6 +9,7 @@ export 'recipe_service.dart';
 export 'analytics_service.dart';
 export 'sync_service.dart';
 export 'activity_service.dart';
+export 'calorie_goal_history_service.dart';
 export 'feedback_service.dart';
 export 'support_service.dart';
 export 'notification_service.dart';
