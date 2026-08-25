@@ -14,7 +14,9 @@ import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '/backend/backend_manager.dart';
+import '/backend/services/weight_sync_helper.dart';
 import '/auth/firebase_auth/auth_util.dart';
+import 'package:rxdart/rxdart.dart';
 
 class ZHomeCalendarModel extends FlutterFlowModel<ZHomeCalendarWidget> {
   final BackendManager _backend = BackendManager();
@@ -81,6 +83,38 @@ class ZHomeCalendarModel extends FlutterFlowModel<ZHomeCalendarWidget> {
     _cachedProfileCalorieGoal = null;
   }
 
+  int _stepCaloriesFromSummary(Map<String, dynamic>? stepSummary) {
+    if (stepSummary == null) return 0;
+    final totalSteps = (stepSummary['totalSteps'] as int?) ?? 0;
+    final weightKg = WeightSyncHelper.resolveCurrentWeightKg();
+    final kcalPerStep = weightKg > 0 ? 0.04 * (weightKg / 70.0) : 0.04;
+    return (totalSteps * kcalPerStep).round();
+  }
+
+  int _activityCaloriesFromList(List<Map<String, dynamic>> activities) {
+    var total = 0;
+    for (final activity in activities) {
+      total += (activity['caloriesBurned'] as int?) ?? 0;
+    }
+    return total;
+  }
+
+  bool _isWithinCalorieGoal({
+    required int totalCalories,
+    required int burnedCalories,
+    required int calorieGoal,
+  }) {
+    return (totalCalories - burnedCalories) <= calorieGoal;
+  }
+
+  double _calorieProgress({
+    required int totalCalories,
+    required int calorieGoal,
+  }) {
+    return calorieGoal > 0 ? (totalCalories / calorieGoal).clamp(0.0, 1.0) : 0.0;
+  }
+
+
   Future<void> loadNutritionProgressForDates(List<DateTime> dates) async {
     if (currentUserUid.isEmpty || dates.isEmpty) return;
 
@@ -110,11 +144,30 @@ class ZHomeCalendarModel extends FlutterFlowModel<ZHomeCalendarWidget> {
     );
 
     try {
-      final meals = await _backend.mealService.getMealsByDateRange(
+      final mealsFuture = _backend.mealService.getMealsByDateRange(
         userId: currentUserUid,
         startDate: rangeStart,
         endDate: rangeEnd,
       );
+      final activitiesFuture = _backend.activityService.getActivitiesByDateRange(
+        userId: currentUserUid,
+        startDate: rangeStart,
+        endDate: rangeEnd,
+      );
+      final stepsFuture = _backend.stepTrackerService.getStepHistory(
+        userId: currentUserUid,
+        startDate: rangeStart,
+        endDate: rangeEnd,
+      );
+
+      final results = await Future.wait([
+        mealsFuture,
+        activitiesFuture,
+        stepsFuture,
+      ]);
+      final meals = results[0] as List<Map<String, dynamic>>;
+      final activities = results[1] as List<Map<String, dynamic>>;
+      final stepSummaries = results[2] as List<Map<String, dynamic>>;
 
       final caloriesByDay = <String, int>{};
       for (final meal in meals) {
@@ -126,14 +179,38 @@ class ZHomeCalendarModel extends FlutterFlowModel<ZHomeCalendarWidget> {
             ((meal['totalCalories'] as int?) ?? 0);
       }
 
+      final burnedByDay = <String, int>{};
+      for (final activity in activities) {
+        final activityDate = activity['date'];
+        if (activityDate is! DateTime) continue;
+        final key = _dateKey(normalizeToDate(activityDate));
+        if (!uniqueDays.containsKey(key)) continue;
+        burnedByDay[key] = (burnedByDay[key] ?? 0) +
+            ((activity['caloriesBurned'] as int?) ?? 0);
+      }
+      for (final stepSummary in stepSummaries) {
+        final stepDate = stepSummary['date'];
+        if (stepDate is! DateTime) continue;
+        final key = _dateKey(normalizeToDate(stepDate));
+        if (!uniqueDays.containsKey(key)) continue;
+        burnedByDay[key] =
+            (burnedByDay[key] ?? 0) + _stepCaloriesFromSummary(stepSummary);
+      }
+
       for (final entry in caloriesByDay.entries) {
         final day = uniqueDays[entry.key]!;
         final calorieGoal = _calorieGoalForDate(day);
         final totalCalories = entry.value;
-        nutritionProgressByDate[entry.key] = calorieGoal > 0
-            ? (totalCalories / calorieGoal).clamp(0.0, 1.0)
-            : 0.0;
-        withinGoalByDate[entry.key] = totalCalories <= calorieGoal;
+        final burnedCalories = burnedByDay[entry.key] ?? 0;
+        nutritionProgressByDate[entry.key] = _calorieProgress(
+          totalCalories: totalCalories,
+          calorieGoal: calorieGoal,
+        );
+        withinGoalByDate[entry.key] = _isWithinCalorieGoal(
+          totalCalories: totalCalories,
+          burnedCalories: burnedCalories,
+          calorieGoal: calorieGoal,
+        );
       }
     } catch (e) {
       for (final key in uniqueDays.keys) {
@@ -165,24 +242,47 @@ class ZHomeCalendarModel extends FlutterFlowModel<ZHomeCalendarWidget> {
       return Stream.fromFuture(_ensureGoalHistoryLoaded()).asyncExpand((_) {
         final calorieGoal = _calorieGoalForDate(date);
 
-        return _backend.mealService
-            .streamMealsByDate(
+        final mealsStream = _backend.mealService.streamMealsByDate(
           userId: currentUserUid,
           date: date,
-        )
-            .map((meals) {
+        );
+        final stepsStream = _backend.stepTrackerService.streamStepSummary(
+          userId: currentUserUid,
+          date: date,
+        );
+
+        return Rx.combineLatest2(
+          mealsStream,
+          stepsStream,
+          (List<Map<String, dynamic>> meals, Map<String, dynamic>? stepSummary) =>
+              (meals, stepSummary),
+        ).asyncMap((data) async {
+          final meals = data.$1;
+          final stepSummary = data.$2;
           var totalCalories = 0;
           for (final meal in meals) {
             totalCalories += (meal['totalCalories'] as int?) ?? 0;
           }
 
-          final progress =
-              calorieGoal > 0 ? (totalCalories / calorieGoal) : 0.0;
-          final withinGoal = totalCalories <= calorieGoal;
+          final activityBurned = _activityCaloriesFromList(
+            await _backend.activityService.getActivitiesByDate(
+              userId: currentUserUid,
+              date: date,
+            ),
+          );
+          final burnedCalories =
+              activityBurned + _stepCaloriesFromSummary(stepSummary);
 
           return {
-            'progress': progress,
-            'withinGoal': withinGoal,
+            'progress': _calorieProgress(
+              totalCalories: totalCalories,
+              calorieGoal: calorieGoal,
+            ),
+            'withinGoal': _isWithinCalorieGoal(
+              totalCalories: totalCalories,
+              burnedCalories: burnedCalories,
+              calorieGoal: calorieGoal,
+            ),
           };
         }).handleError((e) {
           print(
