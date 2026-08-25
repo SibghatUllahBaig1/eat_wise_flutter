@@ -14,12 +14,47 @@ import '/auth/firebase_auth/auth_util.dart';
 class ZSwitchCupSizeModel extends FlutterFlowModel<ZSwitchCupSizeWidget> {
   ///  Local state fields for this component.
 
-  int? drinkAmount = 100;
+  static const int minDrinkAmountMl = 50;
+  static const int defaultDrinkAmountMl = 100;
+  static const int maxDrinkAmountMl = 1000;
+  static const int drinkAmountStepMl = 100;
+
+  int? drinkAmount = defaultDrinkAmountMl;
   String? selectedDrinkType;
   String? selectedDrinkIcon;
   bool isLoading = false;
 
   final WaterTrackerService _waterTrackerService = WaterTrackerService();
+
+  void decrementDrinkAmount() {
+    final current = drinkAmount ?? ZSwitchCupSizeModel.defaultDrinkAmountMl;
+    if (current > ZSwitchCupSizeModel.drinkAmountStepMl) {
+      drinkAmount = current - ZSwitchCupSizeModel.drinkAmountStepMl;
+    } else if (current > ZSwitchCupSizeModel.minDrinkAmountMl) {
+      drinkAmount = ZSwitchCupSizeModel.minDrinkAmountMl;
+    }
+  }
+
+  void incrementDrinkAmount() {
+    final current = drinkAmount ?? ZSwitchCupSizeModel.defaultDrinkAmountMl;
+    if (current < ZSwitchCupSizeModel.minDrinkAmountMl) {
+      drinkAmount = ZSwitchCupSizeModel.minDrinkAmountMl;
+    } else if (current == ZSwitchCupSizeModel.minDrinkAmountMl) {
+      drinkAmount = ZSwitchCupSizeModel.drinkAmountStepMl;
+    } else if (current < ZSwitchCupSizeModel.maxDrinkAmountMl) {
+      drinkAmount = current + ZSwitchCupSizeModel.drinkAmountStepMl;
+    }
+  }
+
+  bool get canDecrementDrinkAmount {
+    final current = drinkAmount ?? ZSwitchCupSizeModel.defaultDrinkAmountMl;
+    return current > ZSwitchCupSizeModel.minDrinkAmountMl;
+  }
+
+  bool get canIncrementDrinkAmount {
+    final current = drinkAmount ?? ZSwitchCupSizeModel.defaultDrinkAmountMl;
+    return current < ZSwitchCupSizeModel.maxDrinkAmountMl;
+  }
 
   /// Add drink entry to Firestore
   Future<void> addDrink(BuildContext context, Function() setState) async {
@@ -37,7 +72,7 @@ class ZSwitchCupSizeModel extends FlutterFlowModel<ZSwitchCupSizeWidget> {
       await _waterTrackerService.addDrinkEntry(
         userId: currentUserUid,
         date: selectedDate,
-        amount: drinkAmount ?? 100,
+        amount: drinkAmount ?? defaultDrinkAmountMl,
         drinkType: selectedDrinkType!,
         drinkIcon: selectedDrinkIcon!,
         goalMl: FFAppState().trackerSettings.water.goal,

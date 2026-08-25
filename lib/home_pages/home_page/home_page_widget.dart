@@ -135,6 +135,10 @@ class _HomePageWidgetState extends State<HomePageWidget>
   void activate() {
     super.activate();
     AppDayService.instance.resetSelectedDateToToday();
+    SchedulerBinding.instance.addPostFrameCallback((_) async {
+      await _loadStepsForSelectedDate();
+      if (mounted) safeSetState(() {});
+    });
   }
 
   @override

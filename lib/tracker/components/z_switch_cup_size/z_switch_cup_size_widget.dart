@@ -132,14 +132,14 @@ class _ZSwitchCupSizeWidgetState extends State<ZSwitchCupSizeWidget> {
                           buttonSize: 44.0,
                           icon: Icon(
                             FFIcons.kchevronLeft,
-                            color: _model.drinkAmount == 100
-                                ? FlutterFlowTheme.of(context).iconColor
-                                : FlutterFlowTheme.of(context).primaryText,
+                            color: _model.canDecrementDrinkAmount
+                                ? FlutterFlowTheme.of(context).primaryText
+                                : FlutterFlowTheme.of(context).iconColor,
                             size: 24.0,
                           ),
                           onPressed: () async {
-                            if (_model.drinkAmount! > 100) {
-                              _model.drinkAmount = _model.drinkAmount! - 100;
+                            if (_model.canDecrementDrinkAmount) {
+                              _model.decrementDrinkAmount();
                               safeSetState(() {});
                             }
                           },
@@ -161,14 +161,14 @@ class _ZSwitchCupSizeWidgetState extends State<ZSwitchCupSizeWidget> {
                           buttonSize: 44.0,
                           icon: Icon(
                             FFIcons.kchevronRight,
-                            color: _model.drinkAmount == 1000
-                                ? FlutterFlowTheme.of(context).iconColor
-                                : FlutterFlowTheme.of(context).primaryText,
+                            color: _model.canIncrementDrinkAmount
+                                ? FlutterFlowTheme.of(context).primaryText
+                                : FlutterFlowTheme.of(context).iconColor,
                             size: 24.0,
                           ),
                           onPressed: () async {
-                            if (_model.drinkAmount! < 1000) {
-                              _model.drinkAmount = _model.drinkAmount! + 100;
+                            if (_model.canIncrementDrinkAmount) {
+                              _model.incrementDrinkAmount();
                               safeSetState(() {});
                             }
                           },

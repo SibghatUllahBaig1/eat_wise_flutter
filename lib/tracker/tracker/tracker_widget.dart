@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import '/flutter_flow/flutter_flow_animations.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -9,6 +11,8 @@ import '/tracker/components/z_b_m_i_tracker/z_b_m_i_tracker_widget.dart';
 import '/tracker/components/z_calendar/z_calendar_widget.dart';
 import '/tracker/components/z_water_tracker/z_water_tracker_widget.dart';
 import '/tracker/components/z_weight_tracker/z_weight_tracker_widget.dart';
+import '/backend/services/pedometer_service.dart';
+import '/auth/firebase_auth/auth_util.dart';
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -73,6 +77,17 @@ class _TrackerWidgetState extends State<TrackerWidget>
           ),
         ],
       ),
+    });
+  }
+
+  @override
+  void activate() {
+    super.activate();
+    SchedulerBinding.instance.addPostFrameCallback((_) async {
+      if (Platform.isIOS && currentUserUid.isNotEmpty) {
+        await PedometerService().refreshOnScreenVisible(currentUserUid);
+      }
+      if (mounted) safeSetState(() {});
     });
   }
 

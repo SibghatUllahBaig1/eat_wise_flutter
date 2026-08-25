@@ -23,15 +23,29 @@ class PedometerService {
   final HealthStepService _healthSteps = HealthStepService.instance;
 
   StreamSubscription<StepCount>? _stepSub;
-  Timer? _healthPollTimer;
+  StreamSubscription<void>? _healthObserverSub;
+  Timer? _fallbackPollTimer;
+  Timer? _healthRefreshDebounceTimer;
   SharedPreferences? _prefs;
 
   bool _isInitialized = false;
   String? _userId;
   int _todaySteps = 0;
 
-  static const int _syncThrottleSeconds = 30;
-  DateTime? _lastSync;
+  /// Android pedometer → Firestore throttle.
+  static const int _androidSyncThrottleSeconds = 30;
+
+  /// iOS fallback poll when observer/pedometer events are quiet.
+  static const Duration _fallbackPollInterval = Duration(minutes: 5);
+
+  /// iOS Firestore heartbeat when the step count has not changed.
+  static const Duration _firestoreHeartbeatInterval = Duration(minutes: 5);
+
+  /// Debounce rapid HealthKit observer bursts.
+  static const Duration _healthRefreshDebounceDuration = Duration(seconds: 2);
+
+  DateTime? _lastFirestoreSync;
+  final Map<String, int> _lastSyncedStepsByDate = {};
 
   Future<void> initialize() async {
     if (_isInitialized) return;
@@ -44,13 +58,21 @@ class PedometerService {
     _userId = userId;
 
     await _stepSub?.cancel();
-    _healthPollTimer?.cancel();
+    await _healthObserverSub?.cancel();
+    _fallbackPollTimer?.cancel();
+    _healthRefreshDebounceTimer?.cancel();
 
     if (Platform.isIOS) {
       await _healthSteps.ensureAuthorized(requestIfNeeded: false);
       await refreshTodaySteps(userId);
-      _healthPollTimer = Timer.periodic(
-        const Duration(seconds: 60),
+
+      _healthObserverSub = _healthSteps.stepCountChanges.listen(
+        (_) => _scheduleHealthRefresh(),
+        onError: (_) {},
+      );
+
+      _fallbackPollTimer = Timer.periodic(
+        _fallbackPollInterval,
         (_) => refreshTodaySteps(userId),
       );
     }
@@ -65,9 +87,18 @@ class PedometerService {
   void stopListening() {
     _stepSub?.cancel();
     _stepSub = null;
-    _healthPollTimer?.cancel();
-    _healthPollTimer = null;
+    _healthObserverSub?.cancel();
+    _healthObserverSub = null;
+    _fallbackPollTimer?.cancel();
+    _fallbackPollTimer = null;
+    _healthRefreshDebounceTimer?.cancel();
+    _healthRefreshDebounceTimer = null;
     _userId = null;
+  }
+
+  /// Refresh steps when a screen that displays them becomes visible.
+  Future<void> refreshOnScreenVisible(String userId) async {
+    await refreshTodaySteps(userId);
   }
 
   Future<int> getTodaySteps(String userId) async {
@@ -97,11 +128,7 @@ class PedometerService {
         }
         _pushStepsToAppState(healthSteps, day);
         if (healthSteps > 0) {
-          await _syncStepsToFirestore(
-            healthSteps,
-            date: day,
-            force: true,
-          );
+          await _maybeSyncStepsToFirestore(healthSteps, date: day);
         }
         return;
       }
@@ -127,12 +154,19 @@ class PedometerService {
 
   void dispose() => stopListening();
 
-  void _onStepCount(StepCount event) {
-    if (Platform.isIOS) {
+  void _scheduleHealthRefresh() {
+    _healthRefreshDebounceTimer?.cancel();
+    _healthRefreshDebounceTimer = Timer(_healthRefreshDebounceDuration, () {
       final uid = _userId;
       if (uid != null && uid.isNotEmpty) {
         refreshTodaySteps(uid);
       }
+    });
+  }
+
+  void _onStepCount(StepCount event) {
+    if (Platform.isIOS) {
+      _scheduleHealthRefresh();
       return;
     }
 
@@ -195,28 +229,48 @@ class PedometerService {
   }
 
   Future<void> _maybeSyncToFirestore() async {
-    await _syncStepsToFirestore(
+    await _maybeSyncStepsToFirestore(
       _todaySteps,
       date: normalizeToDate(DateTime.now()),
-      force: false,
     );
+  }
+
+  Future<void> _maybeSyncStepsToFirestore(
+    int steps, {
+    required DateTime date,
+  }) async {
+    final uid = _userId;
+    if (uid == null || uid.isEmpty) return;
+
+    final dayKey = _dateStr(date);
+    final now = DateTime.now();
+    final lastSynced = _lastSyncedStepsByDate[dayKey];
+    final countChanged = lastSynced != steps;
+
+    if (Platform.isIOS) {
+      final heartbeatDue = _lastFirestoreSync == null ||
+          now.difference(_lastFirestoreSync!) >= _firestoreHeartbeatInterval;
+      if (!countChanged && !heartbeatDue) return;
+    } else {
+      if (!countChanged &&
+          _lastFirestoreSync != null &&
+          now.difference(_lastFirestoreSync!).inSeconds <
+              _androidSyncThrottleSeconds) {
+        return;
+      }
+    }
+
+    await _syncStepsToFirestore(steps, date: date);
+    _lastSyncedStepsByDate[dayKey] = steps;
+    _lastFirestoreSync = now;
   }
 
   Future<void> _syncStepsToFirestore(
     int steps, {
     required DateTime date,
-    required bool force,
   }) async {
     final uid = _userId;
     if (uid == null || uid.isEmpty) return;
-
-    final now = DateTime.now();
-    if (!force &&
-        _lastSync != null &&
-        now.difference(_lastSync!).inSeconds < _syncThrottleSeconds) {
-      return;
-    }
-    _lastSync = now;
 
     try {
       await _stepTrackerService.upsertPedometerEntry(

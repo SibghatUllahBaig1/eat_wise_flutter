@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:health/health.dart';
 
 import '/backend/utils/date_utils.dart';
@@ -10,9 +12,23 @@ class HealthStepService {
   static final HealthStepService instance = HealthStepService._();
   HealthStepService._();
 
+  static const EventChannel _stepEventsChannel =
+      EventChannel('eat_wise/health_steps_events');
+
   final Health _health = Health();
   bool _configured = false;
   bool _authorizationRequested = false;
+  Stream<void>? _stepCountChangesCache;
+
+  /// Fires when HealthKit reports new step samples (HKObserverQuery).
+  Stream<void> get stepCountChanges {
+    if (!Platform.isIOS) return const Stream.empty();
+    _stepCountChangesCache ??= _stepEventsChannel
+        .receiveBroadcastStream()
+        .map((_) => null)
+        .cast<void>();
+    return _stepCountChangesCache!;
+  }
 
   static const _stepTypes = [HealthDataType.STEPS];
   static const _readPermissions = [HealthDataAccess.READ];

@@ -25,6 +25,10 @@ class PedometerService {
     return 0;
   }
 
+  Future<void> refreshOnScreenVisible(String userId) async {
+    await refreshTodaySteps(userId);
+  }
+
   Future<void> refreshTodaySteps(String userId) async {
     debugPrint('PedometerService (Web Stub): refreshTodaySteps not available');
   }

@@ -307,7 +307,7 @@ class _ZStepTrackerWidgetState extends State<ZStepTrackerWidget> {
 
                                     return Text(
                                       stepGoal > 0
-                                          ? 'Goal: ${(stepGoal / 1000).toStringAsFixed(3)} steps'
+                                          ? 'Goal: $stepGoal steps'
                                           : 'Goal: --',
                                       style: FlutterFlowTheme.of(context)
                                           .bodyMedium
