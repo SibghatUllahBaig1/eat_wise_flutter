@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import '/backend/services/entitlement_status.dart';
+import '/backend/services/free_trial_service.dart';
 import '/backend/services/purchase_result.dart';
 import '/backend/services/subscription_controller.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
@@ -189,7 +190,7 @@ class _UpgradePlanWidgetState extends State<UpgradePlanWidget> {
                     children: [
                       if (subscription.status == EntitlementStatus.inGracePeriod)
                         _buildGracePeriodBanner(context),
-                      _buildHeader(context, subscription.isPro),
+                      _buildHeader(context, subscription),
                       if (!revenueCatAvailable)
                         _buildInfoBanner(context,
                             'Could not load live pricing. Please try again shortly.'),
@@ -264,13 +265,25 @@ class _UpgradePlanWidgetState extends State<UpgradePlanWidget> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, bool isPro) {
+  Widget _buildHeader(BuildContext context, SubscriptionController subscription) {
+    final isPro = subscription.isPro;
+    final title = subscription.isOnFreeTrial
+        ? 'Pro Trial — ${subscription.freeTrialDaysRemaining ?? 0} days left'
+        : isPro
+            ? "You're on EatWise Pro"
+            : 'Upgrade to EatWise Pro';
+    final subtitle = subscription.isOnFreeTrial
+        ? 'Enjoy full Pro access during your free trial. Subscribe anytime to keep access after it ends.'
+        : isPro
+            ? 'Unlimited meal tracking, macro breakdowns, and more.'
+            : 'Start with a ${FreeTrialService.duration.inDays}-day free trial, or subscribe for unlimited meal tracking, macro breakdowns, and full water & activity tracking.';
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
       child: Column(
         children: [
           Text(
-            isPro ? "You're on EatWise Pro" : 'Upgrade to EatWise Pro',
+            title,
             textAlign: TextAlign.center,
             style: FlutterFlowTheme.of(context).headlineLarge.override(
                   fontFamily: 'Outfit',
@@ -279,9 +292,7 @@ class _UpgradePlanWidgetState extends State<UpgradePlanWidget> {
           ),
           const SizedBox(height: 8),
           Text(
-            isPro
-                ? 'Unlimited meal tracking, macro breakdowns, and more.'
-                : 'Unlimited meal tracking, personalized macro breakdowns, and full water & activity tracking.',
+            subtitle,
             textAlign: TextAlign.center,
             style: FlutterFlowTheme.of(context).bodyMedium.override(
                   fontFamily: 'Readex Pro',

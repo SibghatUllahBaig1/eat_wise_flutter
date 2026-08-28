@@ -3,7 +3,6 @@ import '/profile/components/z_height_unit/z_height_unit_widget.dart';
 import '/profile/components/z_weight_unit/z_weight_unit_widget.dart';
 import '/auth/firebase_auth/auth_util.dart';
 import '/backend/firestore/user_service.dart';
-import '/backend/services/entitlement_status.dart';
 import '/backend/services/subscription_controller.dart';
 import '/backend/schema/structs/index.dart';
 import '/buttons/icon_text_right/icon_text_right_widget.dart';
@@ -1421,11 +1420,7 @@ class _ProfileWidgetState extends State<ProfileWidget>
       child: Consumer<SubscriptionController>(
         builder: (context, subscription, _) {
           final isPaid = subscription.isPro;
-          final tierLabel = subscription.status == EntitlementStatus.inGracePeriod
-              ? 'Pro (billing issue)'
-              : isPaid
-                  ? 'Pro'
-                  : 'Free';
+          final tierLabel = subscription.planLabel;
           return Container(
             width: double.infinity,
             decoration: BoxDecoration(

@@ -7,6 +7,7 @@ import '/auth/firebase_auth/apple_auth.dart';
 import '../backend_manager.dart';
 import '/app_state.dart';
 import '/backend/api_requests/api_config.dart';
+import '/backend/services/free_trial_service.dart';
 import '/backend/services/revenuecat_service.dart';
 import '/backend/services/subscription_controller.dart';
 
@@ -74,7 +75,6 @@ class AuthHandler extends ChangeNotifier {
 
       await RevenueCatService().initialize();
       await RevenueCatService().setUserId(user.uid);
-      await SubscriptionController.refreshIfReady();
 
       // Check if user profile exists
       final profile = await _backend.userService.getUserProfile(user.uid);
@@ -91,6 +91,9 @@ class AuthHandler extends ChangeNotifier {
         // Existing user - load data from Firestore (includes profile/data subcollection).
         await _backend.syncService.fullSync(userId: user.uid);
       }
+
+      await FreeTrialService.instance.ensureStartedIfEligible(user.uid);
+      await SubscriptionController.refreshIfReady();
     } catch (e) {
       debugPrint('Error handling user sign in: $e');
     }

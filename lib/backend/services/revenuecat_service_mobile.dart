@@ -7,6 +7,7 @@ import 'package:flutter/services.dart' show PlatformException;
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import '/backend/api_requests/api_config.dart';
+import 'free_trial_service.dart';
 import 'purchase_result.dart';
 
 /// RevenueCat entitlement identifier (not an API key).
@@ -222,8 +223,20 @@ class RevenueCatService {
   /// Write the current entitlement state to `users/{uid}/subscription/current`.
   Future<void> _syncCustomerInfo(String userId, CustomerInfo info) async {
     try {
-      final entitlement = info.entitlements.active[_RcConfig.entitlementId] ?? info.entitlements.all[_RcConfig.entitlementId];
-      final isActive = info.entitlements.active.containsKey(_RcConfig.entitlementId);
+      final isActive =
+          info.entitlements.active.containsKey(_RcConfig.entitlementId);
+
+      if (!isActive) {
+        await FreeTrialService.instance
+            .mirrorActiveTrialToSubscriptionDoc(userId);
+        final userSnap = await _firestore.collection('users').doc(userId).get();
+        if (FreeTrialService.isActive(userSnap.data())) {
+          return;
+        }
+      }
+
+      final entitlement = info.entitlements.active[_RcConfig.entitlementId] ??
+          info.entitlements.all[_RcConfig.entitlementId];
 
       final data = <String, dynamic>{
         'tier': isActive ? 'pro' : 'free',

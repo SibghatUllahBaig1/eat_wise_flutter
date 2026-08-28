@@ -18,6 +18,7 @@ import 'backend/api_requests/api_config.dart';
 import 'backend/services/app_day_service.dart';
 import 'backend/services/pedometer_service.dart';
 import 'backend/services/legal_content_service.dart';
+import 'backend/services/free_trial_service.dart';
 import 'backend/services/revenuecat_service.dart';
 import 'backend/services/subscription_controller.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -236,6 +237,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           final uid = user.uid;
           if (uid != null) {
             PedometerService().startListening(uid);
+            unawaited(FreeTrialService.instance.ensureStartedIfEligible(uid));
+            unawaited(SubscriptionController.refreshIfReady());
             // Sync FCM token to Firestore so Cloud Functions can send notifications
             _syncFcmToken(uid);
             // RevenueCat user identification runs in AuthHandler after API keys load.

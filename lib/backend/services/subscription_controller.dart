@@ -6,17 +6,17 @@ import 'package:flutter/foundation.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import 'entitlement_status.dart';
+import 'free_trial_service.dart';
 import 'purchase_result.dart';
 import 'revenuecat_service.dart';
 
-/// Single reactive source of truth for the user's `PSP yatoo LLC Pro`
-/// entitlement. Registered once as a `ChangeNotifierProvider` and read
-/// everywhere else via `context.watch<SubscriptionController>().isPro` —
-/// no other place in the app should query RevenueCat directly.
+/// Single reactive source of truth for Pro access:
+/// RevenueCat entitlement, admin [proGranted], or app-managed free trial.
 class SubscriptionController extends ChangeNotifier {
   final RevenueCatService _revenueCat = RevenueCatService();
+
   StreamSubscription<CustomerInfo>? _customerInfoSub;
-  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _proGrantedSub;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _userAccessSub;
 
   static SubscriptionController? _instance;
 
@@ -24,24 +24,23 @@ class SubscriptionController extends ChangeNotifier {
     _instance = this;
   }
 
-  /// Refresh subscription state after RevenueCat is configured post-login.
   static Future<void> refreshIfReady() async {
     await _instance?.refreshAfterAuth();
   }
 
-  /// Reset Pro state when the user signs out.
   static void onUserSignedOut() {
     final controller = _instance;
     if (controller == null) return;
-    controller._stopProGrantedListener();
-    controller.isPro = false;
-    controller.status = EntitlementStatus.none;
+    controller._stopUserAccessListener();
+    controller._resetAccessState();
     controller.notifyListeners();
   }
 
   bool isPro = false;
-  bool _proGranted = false;
-  String? _proGrantedUserId;
+  bool isOnFreeTrial = false;
+  int? freeTrialDaysRemaining;
+  DateTime? freeTrialEndsAt;
+
   EntitlementStatus status = EntitlementStatus.none;
   Offerings? offerings;
   bool isLoading = true;
@@ -49,19 +48,31 @@ class SubscriptionController extends ChangeNotifier {
   String? lastError;
   CustomerInfo? _customerInfo;
 
-  /// Deep link to the platform subscription-management page (App Store /
-  /// Play Store), when RevenueCat has one for the current customer.
+  bool _proGranted = false;
+  bool _freeTrialActive = false;
+  String? _userAccessListenerId;
+
   String? get managementUrl => _customerInfo?.managementURL;
 
   EntitlementInfo? get _activeEntitlement =>
       _customerInfo?.entitlements.active[RevenueCatService.entitlementId];
 
-  /// Full "product:basePlan" (Android) or product id (iOS) currently active,
-  /// or `null` if the user has no active Pro subscription.
   String? get activeProductIdentifier => _activeEntitlement?.productIdentifier;
 
   Package? get monthlyPackage => _findPackage(PackageType.monthly);
   Package? get annualPackage => _findPackage(PackageType.annual);
+
+  /// User-facing plan label for profile and upgrade screens.
+  String get planLabel {
+    if (status == EntitlementStatus.inGracePeriod) {
+      return 'Pro (billing issue)';
+    }
+    if (isOnFreeTrial && freeTrialDaysRemaining != null) {
+      return 'Pro Trial ($freeTrialDaysRemaining days left)';
+    }
+    if (isPro) return 'Pro';
+    return 'Free';
+  }
 
   Package? _findPackage(PackageType type) {
     final packages = offerings?.current?.availablePackages;
@@ -78,7 +89,7 @@ class SubscriptionController extends ChangeNotifier {
 
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null && uid.isNotEmpty) {
-      _startProGrantedListener(uid);
+      _startUserAccessListener(uid);
     }
 
     if (!_revenueCat.isConfigured) {
@@ -95,20 +106,20 @@ class SubscriptionController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Call after sign-in once RevenueCat has been configured.
   Future<void> refreshAfterAuth() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null && uid.isNotEmpty) {
-      _startProGrantedListener(uid);
+      _startUserAccessListener(uid);
     } else {
-      _stopProGrantedListener();
+      _stopUserAccessListener();
     }
 
     if (!_revenueCat.isConfigured) {
       isLoading = false;
-      _updateIsPro();
+      _recomputeAccess();
       return;
     }
+
     isLoading = true;
     notifyListeners();
     await Future.wait([
@@ -139,80 +150,99 @@ class SubscriptionController extends ChangeNotifier {
       info.entitlements.active[RevenueCatService.entitlementId] ??
           info.entitlements.all[RevenueCatService.entitlementId],
     );
-    isPro = isProStatus(status) || _proGranted;
-    notifyListeners();
+    _recomputeAccess();
   }
 
-  void _updateIsPro() {
-    final nextIsPro = isProStatus(status) || _proGranted;
-    if (isPro != nextIsPro) {
-      isPro = nextIsPro;
-      notifyListeners();
-    }
+  void _recomputeAccess() {
+    final hasPaidEntitlement = isProStatus(status);
+    final nextIsPro = hasPaidEntitlement || _proGranted || _freeTrialActive;
+    final nextOnTrial =
+        _freeTrialActive && !hasPaidEntitlement && !_proGranted;
+    final nextDaysRemaining =
+        nextOnTrial ? FreeTrialService.daysRemaining(_userAccessSnapshot) : null;
+    final nextEndsAt =
+        nextOnTrial ? FreeTrialService.endsAt(_userAccessSnapshot) : null;
+
+    final changed = isPro != nextIsPro ||
+        isOnFreeTrial != nextOnTrial ||
+        freeTrialDaysRemaining != nextDaysRemaining ||
+        freeTrialEndsAt != nextEndsAt;
+
+    isPro = nextIsPro;
+    isOnFreeTrial = nextOnTrial;
+    freeTrialDaysRemaining = nextDaysRemaining;
+    freeTrialEndsAt = nextEndsAt;
+
+    if (changed) notifyListeners();
   }
 
-  /// Fetch the latest admin-granted Pro flag before gating a feature.
+  Map<String, dynamic>? _userAccessSnapshot;
+
+  /// Refresh Firestore access flags (admin grant + free trial) before gating.
   Future<void> refreshProGrant() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null || uid.isEmpty) return;
 
-    _ensureProGrantedListener(uid);
-    await _fetchProGranted(uid);
+    _ensureUserAccessListener(uid);
+    await _fetchUserAccess(uid);
   }
 
-  void _ensureProGrantedListener(String userId) {
-    if (_proGrantedUserId == userId && _proGrantedSub != null) return;
+  void _ensureUserAccessListener(String userId) {
+    if (_userAccessListenerId == userId && _userAccessSub != null) return;
 
-    _proGrantedSub?.cancel();
-    _proGrantedUserId = userId;
-    _proGrantedSub = FirebaseFirestore.instance
+    _userAccessSub?.cancel();
+    _userAccessListenerId = userId;
+    _userAccessSub = FirebaseFirestore.instance
         .collection('users')
         .doc(userId)
         .snapshots()
         .listen(
-      (snapshot) {
-        _applyProGranted(snapshot.data()?['proGranted'] == true);
-      },
+      (snapshot) => _applyUserAccessData(snapshot.data()),
       onError: (Object e) {
-        debugPrint('SubscriptionController: proGranted listener failed: $e');
+        debugPrint('SubscriptionController: user access listener failed: $e');
       },
     );
   }
 
-  Future<void> _fetchProGranted(String userId) async {
+  Future<void> _fetchUserAccess(String userId) async {
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .get();
-      _applyProGranted(snapshot.data()?['proGranted'] == true);
+      final snapshot =
+          await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      _applyUserAccessData(snapshot.data());
     } catch (e) {
-      debugPrint('SubscriptionController: proGranted fetch failed: $e');
+      debugPrint('SubscriptionController: user access fetch failed: $e');
     }
   }
 
-  void _applyProGranted(bool granted) {
-    if (_proGranted == granted) return;
-    _proGranted = granted;
-    debugPrint('SubscriptionController: proGranted=$granted');
-    _updateIsPro();
+  void _applyUserAccessData(Map<String, dynamic>? data) {
+    _userAccessSnapshot = data;
+    _proGranted = data?['proGranted'] == true;
+    _freeTrialActive = FreeTrialService.isActive(data);
+    _recomputeAccess();
   }
 
-  void _startProGrantedListener(String userId) {
-    _ensureProGrantedListener(userId);
-    unawaited(_fetchProGranted(userId));
+  void _startUserAccessListener(String userId) {
+    _ensureUserAccessListener(userId);
+    unawaited(_fetchUserAccess(userId));
   }
 
-  void _stopProGrantedListener() {
-    _proGrantedSub?.cancel();
-    _proGrantedSub = null;
-    _proGrantedUserId = null;
+  void _stopUserAccessListener() {
+    _userAccessSub?.cancel();
+    _userAccessSub = null;
+    _userAccessListenerId = null;
+  }
+
+  void _resetAccessState() {
+    isPro = false;
+    isOnFreeTrial = false;
+    freeTrialDaysRemaining = null;
+    freeTrialEndsAt = null;
+    status = EntitlementStatus.none;
     _proGranted = false;
+    _freeTrialActive = false;
+    _userAccessSnapshot = null;
   }
 
-  /// Purchase [package]. On Android this automatically routes through the
-  /// plan-switch (proration) path if the user already holds a different
-  /// active Pro product — see [RevenueCatService.purchasePackage].
   Future<PurchaseAttemptResult> purchase(Package package) async {
     if (isPurchasing) {
       return const PurchaseAttemptResult.error('A purchase is already in progress.');
@@ -227,7 +257,6 @@ class SubscriptionController extends ChangeNotifier {
           _applyCustomerInfo(result.customerInfo!);
           break;
         case PurchaseOutcomeType.cancelled:
-          // No-op: user backed out of the purchase sheet, not an error.
           break;
         case PurchaseOutcomeType.error:
           lastError = result.message;
@@ -264,7 +293,7 @@ class SubscriptionController extends ChangeNotifier {
   @override
   void dispose() {
     _customerInfoSub?.cancel();
-    _proGrantedSub?.cancel();
+    _userAccessSub?.cancel();
     super.dispose();
   }
 }
