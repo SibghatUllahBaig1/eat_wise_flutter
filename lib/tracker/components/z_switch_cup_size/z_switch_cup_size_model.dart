@@ -17,7 +17,7 @@ class ZSwitchCupSizeModel extends FlutterFlowModel<ZSwitchCupSizeWidget> {
   static const int minDrinkAmountMl = 50;
   static const int defaultDrinkAmountMl = 100;
   static const int maxDrinkAmountMl = 1000;
-  static const int drinkAmountStepMl = 100;
+  static const int drinkAmountStepMl = 50;
 
   int? drinkAmount = defaultDrinkAmountMl;
   String? selectedDrinkType;
@@ -27,33 +27,25 @@ class ZSwitchCupSizeModel extends FlutterFlowModel<ZSwitchCupSizeWidget> {
   final WaterTrackerService _waterTrackerService = WaterTrackerService();
 
   void decrementDrinkAmount() {
-    final current = drinkAmount ?? ZSwitchCupSizeModel.defaultDrinkAmountMl;
-    if (current > ZSwitchCupSizeModel.drinkAmountStepMl) {
-      drinkAmount = current - ZSwitchCupSizeModel.drinkAmountStepMl;
-    } else if (current > ZSwitchCupSizeModel.minDrinkAmountMl) {
-      drinkAmount = ZSwitchCupSizeModel.minDrinkAmountMl;
-    }
+    final current = drinkAmount ?? defaultDrinkAmountMl;
+    if (current <= minDrinkAmountMl) return;
+    drinkAmount = (current - drinkAmountStepMl).clamp(minDrinkAmountMl, maxDrinkAmountMl);
   }
 
   void incrementDrinkAmount() {
-    final current = drinkAmount ?? ZSwitchCupSizeModel.defaultDrinkAmountMl;
-    if (current < ZSwitchCupSizeModel.minDrinkAmountMl) {
-      drinkAmount = ZSwitchCupSizeModel.minDrinkAmountMl;
-    } else if (current == ZSwitchCupSizeModel.minDrinkAmountMl) {
-      drinkAmount = ZSwitchCupSizeModel.drinkAmountStepMl;
-    } else if (current < ZSwitchCupSizeModel.maxDrinkAmountMl) {
-      drinkAmount = current + ZSwitchCupSizeModel.drinkAmountStepMl;
-    }
+    final current = drinkAmount ?? defaultDrinkAmountMl;
+    if (current >= maxDrinkAmountMl) return;
+    drinkAmount = (current + drinkAmountStepMl).clamp(minDrinkAmountMl, maxDrinkAmountMl);
   }
 
   bool get canDecrementDrinkAmount {
-    final current = drinkAmount ?? ZSwitchCupSizeModel.defaultDrinkAmountMl;
-    return current > ZSwitchCupSizeModel.minDrinkAmountMl;
+    final current = drinkAmount ?? defaultDrinkAmountMl;
+    return current > minDrinkAmountMl;
   }
 
   bool get canIncrementDrinkAmount {
-    final current = drinkAmount ?? ZSwitchCupSizeModel.defaultDrinkAmountMl;
-    return current < ZSwitchCupSizeModel.maxDrinkAmountMl;
+    final current = drinkAmount ?? defaultDrinkAmountMl;
+    return current < maxDrinkAmountMl;
   }
 
   /// Add drink entry to Firestore
