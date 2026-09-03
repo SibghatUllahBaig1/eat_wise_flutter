@@ -17,6 +17,8 @@ class FoodNutritionStruct extends BaseStruct {
     DateTime? timestamp,
     double? confidence,
     String? mealId,
+    String? usdaDescription,
+    String? usdaDataType,
   })  : _foodName = foodName,
         _grams = grams,
         _calories = calories,
@@ -27,7 +29,9 @@ class FoodNutritionStruct extends BaseStruct {
         _imageUrl = imageUrl,
         _timestamp = timestamp,
         _confidence = confidence,
-        _mealId = mealId;
+        _mealId = mealId,
+        _usdaDescription = usdaDescription,
+        _usdaDataType = usdaDataType;
 
   // "foodName" field.
   String? _foodName;
@@ -114,6 +118,18 @@ class FoodNutritionStruct extends BaseStruct {
   set mealId(String? val) => _mealId = val;
   bool hasMealId() => _mealId != null;
 
+  // "usdaDescription" field.
+  String? _usdaDescription;
+  String get usdaDescription => _usdaDescription ?? '';
+  set usdaDescription(String? val) => _usdaDescription = val;
+  bool hasUsdaDescription() => _usdaDescription != null;
+
+  // "usdaDataType" field.
+  String? _usdaDataType;
+  String get usdaDataType => _usdaDataType ?? '';
+  set usdaDataType(String? val) => _usdaDataType = val;
+  bool hasUsdaDataType() => _usdaDataType != null;
+
   static FoodNutritionStruct fromMap(Map<String, dynamic> data) =>
       FoodNutritionStruct(
         foodName: data['foodName'] as String?,
@@ -127,6 +143,8 @@ class FoodNutritionStruct extends BaseStruct {
         timestamp: data['timestamp'] as DateTime?,
         confidence: castToType<double>(data['confidence']),
         mealId: data['mealId'] as String?,
+        usdaDescription: data['usdaDescription'] as String?,
+        usdaDataType: data['usdaDataType'] as String?,
       );
 
   static FoodNutritionStruct? maybeFromMap(dynamic data) => data is Map
@@ -145,6 +163,8 @@ class FoodNutritionStruct extends BaseStruct {
         'timestamp': _timestamp,
         'confidence': _confidence,
         'mealId': _mealId,
+        'usdaDescription': _usdaDescription,
+        'usdaDataType': _usdaDataType,
       }.withoutNulls;
 
   @override
@@ -160,6 +180,9 @@ class FoodNutritionStruct extends BaseStruct {
         'timestamp': serializeParam(_timestamp, ParamType.DateTime),
         'confidence': serializeParam(_confidence, ParamType.double),
         'mealId': serializeParam(_mealId, ParamType.String),
+        'usdaDescription':
+            serializeParam(_usdaDescription, ParamType.String),
+        'usdaDataType': serializeParam(_usdaDataType, ParamType.String),
       }.withoutNulls;
 
   static FoodNutritionStruct fromSerializableMap(Map<String, dynamic> data) =>
@@ -185,6 +208,10 @@ class FoodNutritionStruct extends BaseStruct {
         confidence:
             deserializeParam(data['confidence'], ParamType.double, false),
         mealId: deserializeParam(data['mealId'], ParamType.String, false),
+        usdaDescription:
+            deserializeParam(data['usdaDescription'], ParamType.String, false),
+        usdaDataType:
+            deserializeParam(data['usdaDataType'], ParamType.String, false),
       );
 
   @override
@@ -203,7 +230,9 @@ class FoodNutritionStruct extends BaseStruct {
         imageUrl == other.imageUrl &&
         timestamp == other.timestamp &&
         confidence == other.confidence &&
-        mealId == other.mealId;
+        mealId == other.mealId &&
+        usdaDescription == other.usdaDescription &&
+        usdaDataType == other.usdaDataType;
   }
 
   @override
@@ -218,7 +247,9 @@ class FoodNutritionStruct extends BaseStruct {
         imageUrl,
         timestamp,
         confidence,
-        mealId
+        mealId,
+        usdaDescription,
+        usdaDataType,
       ]);
 }
 
@@ -234,6 +265,8 @@ FoodNutritionStruct createFoodNutritionStruct({
   DateTime? timestamp,
   double? confidence,
   String? mealId,
+  String? usdaDescription,
+  String? usdaDataType,
 }) =>
     FoodNutritionStruct(
       foodName: foodName,
@@ -247,4 +280,6 @@ FoodNutritionStruct createFoodNutritionStruct({
       timestamp: timestamp,
       confidence: confidence,
       mealId: mealId,
+      usdaDescription: usdaDescription,
+      usdaDataType: usdaDataType,
     );

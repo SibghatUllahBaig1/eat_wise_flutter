@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'api_config.dart';
+import 'openai_service.dart';
+import 'usda_food_matcher.dart';
 
 /// Service for interacting with USDA FoodData Central API
 /// Fetches detailed nutrition information for foods
@@ -133,52 +135,131 @@ class USDAService {
     };
   }
 
-  /// Get nutrition data for a food by name
-  /// Searches for the food and returns nutrition data for the best match
+  /// Resolve nutrition for a food using hybrid rule + AI matching.
+  static Future<Map<String, dynamic>> resolveNutrition({
+    required String foodName,
+    String? description,
+    String? userInput,
+    double? estimatedGrams,
+  }) async {
+    try {
+      print('\n🥗 USDA Service - Resolving nutrition for: $foodName');
+
+      var searchQuery = UsdaFoodMatcher.buildSearchQuery(
+        foodName: foodName,
+        description: description,
+        userInput: userInput,
+      );
+      print('🔍 USDA search query: $searchQuery');
+
+      var result = await _resolveWithQuery(
+        foodName: foodName,
+        searchQuery: searchQuery,
+        description: description,
+        userInput: userInput,
+        estimatedGrams: estimatedGrams,
+      );
+
+      final caloriesPer100g = (result['calories'] as num?)?.toDouble() ?? 0;
+      final sanityPassed = UsdaFoodMatcher.passesCalorieSanity(
+        foodName: foodName,
+        caloriesPer100g: caloriesPer100g,
+        description: description,
+        userInput: userInput,
+      );
+
+      if (!sanityPassed && !searchQuery.toLowerCase().contains(' raw')) {
+        print('⚠️ Calorie sanity check failed ($caloriesPer100g kcal/100g). '
+            'Retrying with raw suffix...');
+        searchQuery = '${foodName.trim()} raw';
+        result = await _resolveWithQuery(
+          foodName: foodName,
+          searchQuery: searchQuery,
+          description: description,
+          userInput: userInput,
+          estimatedGrams: estimatedGrams,
+        );
+        result['searchQueryUsed'] = searchQuery;
+      }
+
+      return result;
+    } catch (e) {
+      print('❌ Error in resolveNutrition: $e');
+      throw Exception('Failed to resolve nutrition: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> _resolveWithQuery({
+    required String foodName,
+    required String searchQuery,
+    String? description,
+    String? userInput,
+    double? estimatedGrams,
+  }) async {
+    print('🔍 Searching USDA database...');
+    final searchResults = await searchFood(searchQuery);
+    print('📊 Found ${searchResults.length} results');
+
+    if (searchResults.isEmpty) {
+      throw Exception('No food found matching: $foodName');
+    }
+
+    for (var i = 0; i < searchResults.length && i < 3; i++) {
+      print(
+          '   ${i + 1}. ${searchResults[i]['description']} (FDC ID: ${searchResults[i]['fdcId']})');
+    }
+
+    final ranked = UsdaFoodMatcher.rankCandidates(
+      foodName: foodName,
+      searchResults: searchResults,
+      description: description,
+      userInput: userInput,
+    );
+
+    int fdcId;
+    UsdaCandidate selected;
+
+    if (UsdaFoodMatcher.isClearWinner(ranked)) {
+      selected = ranked.first;
+      fdcId = selected.fdcId;
+      print('✅ Clear rule-based winner: ${selected.description}');
+    } else {
+      print('🤖 Ambiguous match — asking OpenAI to disambiguate...');
+      fdcId = await OpenAIService.pickUsdaCandidate(
+        foodName: foodName,
+        description: description,
+        userInput: userInput,
+        estimatedGrams: estimatedGrams,
+        candidates: ranked,
+      );
+      selected = ranked.firstWhere(
+        (c) => c.fdcId == fdcId,
+        orElse: () => ranked.first,
+      );
+      print('✅ Selected match: ${selected.description}');
+    }
+
+    print('📥 Fetching detailed nutrition data for fdcId $fdcId...');
+    final nutritionData = await getFoodDetails(fdcId);
+
+    print('📊 USDA Nutrition Data Retrieved:');
+    print('   Calories: ${nutritionData['calories']} kcal');
+    print('   Protein: ${nutritionData['protein']}g');
+    print('   Carbs: ${nutritionData['carbs']}g');
+    print('   Fat: ${nutritionData['fat']}g');
+
+    return {
+      ...nutritionData,
+      'fdcId': fdcId,
+      'usdaDescription': selected.description,
+      'usdaDataType': selected.dataType,
+      'searchQueryUsed': searchQuery,
+    };
+  }
+
+  /// Get nutrition data for a food by name (legacy wrapper).
   static Future<Map<String, dynamic>> getNutritionByName(
       String foodName) async {
-    try {
-      print('\n🥗 USDA Service - Getting nutrition for: $foodName');
-
-      // Search for the food
-      print('🔍 Searching USDA database...');
-      final searchResults = await searchFood(foodName);
-      print('📊 Found ${searchResults.length} results');
-
-      if (searchResults.isEmpty) {
-        print('❌ No food found matching: $foodName');
-        throw Exception('No food found matching: $foodName');
-      }
-
-      // Log search results
-      for (var i = 0; i < searchResults.length && i < 3; i++) {
-        print(
-            '   ${i + 1}. ${searchResults[i]['description']} (FDC ID: ${searchResults[i]['fdcId']})');
-      }
-
-      // Get details for the first (best) match
-      final fdcId = searchResults[0]['fdcId'] as int;
-      print('✅ Using best match: ${searchResults[0]['description']}');
-      print('📥 Fetching detailed nutrition data...');
-
-      final nutritionData = await getFoodDetails(fdcId);
-
-      print('📊 USDA Nutrition Data Retrieved:');
-      print('   Calories: ${nutritionData['calories']} kcal');
-      print('   Protein: ${nutritionData['protein']}g');
-      print('   Carbs: ${nutritionData['carbs']}g');
-      print('   Fat: ${nutritionData['fat']}g');
-      print('   Fiber: ${nutritionData['fiber']}g');
-      print('   Sugar: ${nutritionData['sugar']}g');
-      print('   Cholesterol: ${nutritionData['cholesterol']}mg');
-      print('   Sodium: ${nutritionData['sodium']}mg');
-      print('   Calcium: ${nutritionData['calcium']}mg');
-      print('   Iron: ${nutritionData['iron']}mg');
-
-      return nutritionData;
-    } catch (e) {
-      print('❌ Error in getNutritionByName: $e');
-      throw Exception('Failed to get nutrition by name: $e');
-    }
+    return resolveNutrition(foodName: foodName);
   }
 }

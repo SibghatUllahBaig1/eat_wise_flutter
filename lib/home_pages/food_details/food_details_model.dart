@@ -75,6 +75,10 @@ class FoodDetailsModel extends FlutterFlowModel<FoodDetailsWidget> {
         'fat': dataToSave.macros.fat.grams.round(),
         // Image URL (if available from photo search)
         if (dataToSave.imageUrl.isNotEmpty) 'imageUrl': dataToSave.imageUrl,
+        if (dataToSave.usdaDescription.isNotEmpty)
+          'usdaDescription': dataToSave.usdaDescription,
+        if (dataToSave.usdaDataType.isNotEmpty)
+          'usdaDataType': dataToSave.usdaDataType,
         // Additional nutritional data
         'cholesterol': {
           'mg': dataToSave.cholesterol.mg,

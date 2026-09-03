@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'api_config.dart';
+import 'usda_food_matcher.dart';
 
 /// Service for interacting with OpenAI API
 /// Supports both Vision API (for images) and GPT API (for text)
@@ -146,10 +147,16 @@ class OpenAIService {
   ///   "confidence": 0.9
   /// }
   static Future<Map<String, dynamic>> analyzeFoodText(
-      String foodDescription) async {
+    String foodDescription, {
+    double? explicitGrams,
+  }) async {
     if (!ApiConfig.isOpenAiConfigured) {
       throw Exception('OpenAI API key not configured');
     }
+
+    final gramsHint = explicitGrams != null
+        ? ' The user explicitly stated a portion of ${explicitGrams.round()}g — use that exact value for estimatedGrams unless it is clearly wrong for the food described.'
+        : '';
 
     try {
       final response = await http
@@ -165,12 +172,12 @@ class OpenAIService {
                 {
                   'role': 'system',
                   'content':
-                      'You are a nutrition expert. Analyze food descriptions and identify the food items with estimated portion sizes in grams. Return ONLY valid JSON with no markdown formatting.',
+                      'You are a nutrition expert. Analyze food descriptions and identify the food items with estimated portion sizes in grams. If the user states an explicit weight (e.g. "50g banana"), honor that portion. Return ONLY valid JSON with no markdown formatting.',
                 },
                 {
                   'role': 'user',
                   'content':
-                      'Identify the food from this description: "$foodDescription". Estimate a typical portion size in grams. Return a JSON object with: foodName (string), description (string), estimatedGrams (number), confidence (number 0-1). Return ONLY the JSON object, no markdown or code blocks.',
+                      'Identify the food from this description: "$foodDescription".$gramsHint Return a JSON object with: foodName (string), description (string), estimatedGrams (number), confidence (number 0-1). Return ONLY the JSON object, no markdown or code blocks.',
                 },
               ],
               'max_tokens': 300,
@@ -182,22 +189,7 @@ class OpenAIService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final content = data['choices'][0]['message']['content'] as String;
-
-        // Parse the JSON response from the content
-        // Remove any markdown code blocks if present
-        String cleanContent = content.trim();
-        if (cleanContent.startsWith('```json')) {
-          cleanContent = cleanContent.substring(7);
-        }
-        if (cleanContent.startsWith('```')) {
-          cleanContent = cleanContent.substring(3);
-        }
-        if (cleanContent.endsWith('```')) {
-          cleanContent = cleanContent.substring(0, cleanContent.length - 3);
-        }
-        cleanContent = cleanContent.trim();
-
-        return jsonDecode(cleanContent) as Map<String, dynamic>;
+        return _parseJsonContent(content);
       } else {
         throw Exception(
             'OpenAI API error: ${response.statusCode} - ${response.body}');
@@ -205,5 +197,93 @@ class OpenAIService {
     } catch (e) {
       throw Exception('Failed to analyze food text: $e');
     }
+  }
+
+  /// Picks the best USDA candidate when rule-based ranking is ambiguous.
+  static Future<int> pickUsdaCandidate({
+    required String foodName,
+    String? description,
+    String? userInput,
+    double? estimatedGrams,
+    required List<UsdaCandidate> candidates,
+  }) async {
+    if (candidates.isEmpty) {
+      throw Exception('No USDA candidates to pick from');
+    }
+
+    if (!ApiConfig.isOpenAiConfigured) {
+      return candidates.first.fdcId;
+    }
+
+    final payload = {
+      'foodName': foodName,
+      'description': description,
+      'userInput': userInput,
+      'estimatedGrams': estimatedGrams,
+      'candidates': candidates.map((c) => c.toMap()).toList(),
+    };
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse('${ApiConfig.openAiBaseUrl}/chat/completions'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ${ApiConfig.openAiApiKey}',
+            },
+            body: jsonEncode({
+              'model': ApiConfig.openAiTextModel,
+              'messages': [
+                {
+                  'role': 'system',
+                  'content':
+                      'You are a nutrition database expert. Pick the USDA FoodData Central entry that best matches what the user actually ate. Prefer raw/fresh whole foods unless the user clearly ate a branded or prepared item. Return ONLY valid JSON.',
+                },
+                {
+                  'role': 'user',
+                  'content':
+                      'Pick the best USDA match from the candidates below. Return JSON: {"selectedFdcId": number, "reason": string}. You must pick one of the provided fdcId values.\n\n${jsonEncode(payload)}',
+                },
+              ],
+              'max_tokens': 200,
+              'temperature': 0.1,
+            }),
+          )
+          .timeout(ApiConfig.apiTimeout);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final content = data['choices'][0]['message']['content'] as String;
+        final parsed = _parseJsonContent(content);
+        final selectedId = parsed['selectedFdcId'];
+        if (selectedId is num) {
+          final fdcId = selectedId.toInt();
+          final valid = candidates.any((c) => c.fdcId == fdcId);
+          if (valid) {
+            print('✅ OpenAI picked USDA fdcId: $fdcId (${parsed['reason']})');
+            return fdcId;
+          }
+        }
+      }
+    } catch (e) {
+      print('⚠️ OpenAI USDA disambiguation failed, using top rule match: $e');
+    }
+
+    return candidates.first.fdcId;
+  }
+
+  static Map<String, dynamic> _parseJsonContent(String content) {
+    String cleanContent = content.trim();
+    if (cleanContent.startsWith('```json')) {
+      cleanContent = cleanContent.substring(7);
+    }
+    if (cleanContent.startsWith('```')) {
+      cleanContent = cleanContent.substring(3);
+    }
+    if (cleanContent.endsWith('```')) {
+      cleanContent = cleanContent.substring(0, cleanContent.length - 3);
+    }
+    cleanContent = cleanContent.trim();
+    return jsonDecode(cleanContent) as Map<String, dynamic>;
   }
 }

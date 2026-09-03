@@ -187,6 +187,8 @@ class _ZFoodDetailsContentWidgetState extends State<ZFoodDetailsContentWidget> {
         timestamp: widget.nutritionData!.timestamp,
         confidence: widget.nutritionData!.confidence,
         mealId: widget.nutritionData!.mealId, // Preserve mealId
+        usdaDescription: widget.nutritionData!.usdaDescription,
+        usdaDataType: widget.nutritionData!.usdaDataType,
       );
 
       // Update pie chart legend values

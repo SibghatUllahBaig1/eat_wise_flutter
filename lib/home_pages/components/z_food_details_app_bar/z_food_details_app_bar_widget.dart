@@ -86,26 +86,59 @@ class _ZFoodDetailsAppBarWidgetState extends State<ZFoodDetailsAppBarWidget> {
                   child: Padding(
                     padding:
                         EdgeInsetsDirectional.fromSTEB(12.0, 0.0, 0.0, 0.0),
-                    child: Text(
-                      widget.nutritionData?.foodName ?? 'Food Details',
-                      textAlign: TextAlign.start,
-                      style: FlutterFlowTheme.of(context).titleLarge.override(
-                            font: GoogleFonts.inter(
-                              fontWeight: FlutterFlowTheme.of(context)
-                                  .titleLarge
-                                  .fontWeight,
-                              fontStyle: FlutterFlowTheme.of(context)
-                                  .titleLarge
-                                  .fontStyle,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.nutritionData?.foodName ?? 'Food Details',
+                          textAlign: TextAlign.start,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              FlutterFlowTheme.of(context).titleLarge.override(
+                                    font: GoogleFonts.inter(
+                                      fontWeight: FlutterFlowTheme.of(context)
+                                          .titleLarge
+                                          .fontWeight,
+                                      fontStyle: FlutterFlowTheme.of(context)
+                                          .titleLarge
+                                          .fontStyle,
+                                    ),
+                                    letterSpacing: 0.0,
+                                    fontWeight: FlutterFlowTheme.of(context)
+                                        .titleLarge
+                                        .fontWeight,
+                                    fontStyle: FlutterFlowTheme.of(context)
+                                        .titleLarge
+                                        .fontStyle,
+                                  ),
+                        ),
+                        if (_usdaMatchSubtitle(widget.nutritionData).isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsetsDirectional.only(top: 2.0),
+                            child: Text(
+                              _usdaMatchSubtitle(widget.nutritionData),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: FlutterFlowTheme.of(context)
+                                  .bodySmall
+                                  .override(
+                                    font: GoogleFonts.inter(
+                                      fontWeight: FlutterFlowTheme.of(context)
+                                          .bodySmall
+                                          .fontWeight,
+                                      fontStyle: FlutterFlowTheme.of(context)
+                                          .bodySmall
+                                          .fontStyle,
+                                    ),
+                                    color: FlutterFlowTheme.of(context)
+                                        .secondaryText,
+                                    letterSpacing: 0.0,
+                                  ),
                             ),
-                            letterSpacing: 0.0,
-                            fontWeight: FlutterFlowTheme.of(context)
-                                .titleLarge
-                                .fontWeight,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .titleLarge
-                                .fontStyle,
                           ),
+                      ],
                     ),
                   ),
                 ),
@@ -158,5 +191,15 @@ class _ZFoodDetailsAppBarWidgetState extends State<ZFoodDetailsAppBarWidget> {
         ),
       ],
     );
+  }
+
+  String _usdaMatchSubtitle(FoodNutritionStruct? data) {
+    if (data == null || data.usdaDescription.isEmpty) {
+      return '';
+    }
+    if (data.usdaDataType.isNotEmpty) {
+      return 'Matched: ${data.usdaDescription} (${data.usdaDataType})';
+    }
+    return 'Matched: ${data.usdaDescription}';
   }
 }

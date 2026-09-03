@@ -183,6 +183,8 @@ class ZNutritionModel extends FlutterFlowModel<ZNutritionWidget> {
       minerals: minerals,
       imageUrl: food['imageUrl']?.toString() ?? '',
       timestamp: DateTime.now(),
+      usdaDescription: food['usdaDescription']?.toString(),
+      usdaDataType: food['usdaDataType']?.toString(),
     );
   }
 }

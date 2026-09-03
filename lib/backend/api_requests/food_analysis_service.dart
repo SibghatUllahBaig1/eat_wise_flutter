@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import '/backend/schema/structs/index.dart';
 import 'openai_service.dart';
+import 'portion_parser.dart';
 import 'usda_service.dart';
 
 /// Main service for analyzing food and getting complete nutrition data
@@ -34,13 +35,18 @@ class FoodAnalysisService {
       print('   - Confidence: ${aiResult['confidence']}');
 
       final foodName = aiResult['foodName'] as String;
+      final description = aiResult['description'] as String?;
       final estimatedGrams = (aiResult['estimatedGrams'] as num).toDouble();
       final confidence = (aiResult['confidence'] as num).toDouble();
 
       // Step 3: Fetch nutrition data from USDA (per 100g)
       print('\n🥗 Step 3: Fetching nutrition data from USDA...');
       print('   Searching for: $foodName');
-      final usdaData = await USDAService.getNutritionByName(foodName);
+      final usdaData = await USDAService.resolveNutrition(
+        foodName: foodName,
+        description: description,
+        estimatedGrams: estimatedGrams,
+      );
       print('📊 USDA Data (per 100g):');
       print('   - Calories: ${usdaData['calories']}');
       print('   - Carbs: ${usdaData['carbs']}g');
@@ -63,16 +69,12 @@ class FoodAnalysisService {
 
       // Step 5: Create and return FoodNutritionStruct
       print('\n✅ Step 5: Creating FoodNutritionStruct...');
-      final result = FoodNutritionStruct(
+      final result = _buildNutritionStruct(
         foodName: foodName,
         grams: estimatedGrams,
-        calories: nutritionData['calories'],
-        macros: nutritionData['macros'],
-        cholesterol: nutritionData['cholesterol'],
-        sodium: nutritionData['sodium'],
-        minerals: nutritionData['minerals'],
+        usdaData: usdaData,
+        nutritionData: nutritionData,
         imageUrl: imageUrl,
-        timestamp: DateTime.now(),
         confidence: confidence,
       );
 
@@ -100,22 +102,37 @@ class FoodAnalysisService {
       print('\n🔍 ===== FOOD ANALYSIS FROM TEXT =====');
       print('📝 Description: $foodDescription');
 
+      final explicitGrams = PortionParser.parseExplicitGrams(foodDescription);
+      if (explicitGrams != null) {
+        print('📏 Parsed explicit portion: ${explicitGrams}g');
+      }
+
       // Step 1: Use OpenAI GPT to identify the food
       print('\n🤖 Step 1: Analyzing text with OpenAI GPT...');
-      final aiResult = await OpenAIService.analyzeFoodText(foodDescription);
+      final aiResult = await OpenAIService.analyzeFoodText(
+        foodDescription,
+        explicitGrams: explicitGrams,
+      );
       print('📊 OpenAI Result:');
       print('   - Food Name: ${aiResult['foodName']}');
       print('   - Estimated Grams: ${aiResult['estimatedGrams']}');
       print('   - Confidence: ${aiResult['confidence']}');
 
       final foodName = aiResult['foodName'] as String;
-      final estimatedGrams = (aiResult['estimatedGrams'] as num).toDouble();
+      final description = aiResult['description'] as String?;
+      final aiGrams = (aiResult['estimatedGrams'] as num).toDouble();
+      final estimatedGrams = explicitGrams ?? aiGrams;
       final confidence = (aiResult['confidence'] as num).toDouble();
 
       // Step 2: Fetch nutrition data from USDA (per 100g)
       print('\n🥗 Step 2: Fetching nutrition data from USDA...');
       print('   Searching for: $foodName');
-      final usdaData = await USDAService.getNutritionByName(foodName);
+      final usdaData = await USDAService.resolveNutrition(
+        foodName: foodName,
+        description: description,
+        userInput: foodDescription,
+        estimatedGrams: estimatedGrams,
+      );
       print('📊 USDA Data (per 100g):');
       print('   - Calories: ${usdaData['calories']}');
       print('   - Carbs: ${usdaData['carbs']}g');
@@ -136,16 +153,12 @@ class FoodAnalysisService {
 
       // Step 4: Create and return FoodNutritionStruct
       print('\n✅ Step 4: Creating FoodNutritionStruct...');
-      final result = FoodNutritionStruct(
+      final result = _buildNutritionStruct(
         foodName: foodName,
         grams: estimatedGrams,
-        calories: nutritionData['calories'],
-        macros: nutritionData['macros'],
-        cholesterol: nutritionData['cholesterol'],
-        sodium: nutritionData['sodium'],
-        minerals: nutritionData['minerals'],
+        usdaData: usdaData,
+        nutritionData: nutritionData,
         imageUrl: '',
-        timestamp: DateTime.now(),
         confidence: confidence,
       );
 
@@ -158,6 +171,30 @@ class FoodAnalysisService {
       print('Stack trace: ${StackTrace.current}');
       throw Exception('Failed to analyze food from text: $e');
     }
+  }
+
+  static FoodNutritionStruct _buildNutritionStruct({
+    required String foodName,
+    required double grams,
+    required Map<String, dynamic> usdaData,
+    required Map<String, dynamic> nutritionData,
+    required String imageUrl,
+    required double confidence,
+  }) {
+    return FoodNutritionStruct(
+      foodName: foodName,
+      grams: grams,
+      calories: nutritionData['calories'],
+      macros: nutritionData['macros'],
+      cholesterol: nutritionData['cholesterol'],
+      sodium: nutritionData['sodium'],
+      minerals: nutritionData['minerals'],
+      imageUrl: imageUrl,
+      timestamp: DateTime.now(),
+      confidence: confidence,
+      usdaDescription: usdaData['usdaDescription'] as String?,
+      usdaDataType: usdaData['usdaDataType'] as String?,
+    );
   }
 
   /// Upload image to Firebase Storage and return the download URL
