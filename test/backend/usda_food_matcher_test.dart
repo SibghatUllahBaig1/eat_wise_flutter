@@ -40,6 +40,34 @@ void main() {
       );
     });
 
+    test('buildSearchQuery uses whole milk query for milk', () {
+      expect(
+        UsdaFoodMatcher.buildSearchQuery(foodName: 'milk'),
+        'milk whole',
+      );
+    });
+
+    test('hasValidNutrition detects empty and valid nutrition', () {
+      expect(
+        UsdaFoodMatcher.hasValidNutrition({
+          'calories': 0,
+          'protein': 0,
+          'carbs': 0,
+          'fat': 0,
+        }),
+        isFalse,
+      );
+      expect(
+        UsdaFoodMatcher.hasValidNutrition({
+          'calories': 61,
+          'protein': 3.2,
+          'carbs': 4.8,
+          'fat': 3.3,
+        }),
+        isTrue,
+      );
+    });
+
     test('buildSearchQuery does not append raw for prepared foods', () {
       expect(
         UsdaFoodMatcher.buildSearchQuery(

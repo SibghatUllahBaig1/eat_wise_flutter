@@ -55,6 +55,33 @@ class UsdaFoodMatcher {
     'ripe',
   ];
 
+  static const _wholeFoodStaples = [
+    'milk',
+    'egg',
+    'cheese',
+    'yogurt',
+    'butter',
+    'cream',
+    'chicken',
+    'beef',
+    'pork',
+    'fish',
+    'salmon',
+    'tuna',
+    'rice',
+    'oats',
+    'oatmeal',
+    'pasta',
+    'flour',
+    'honey',
+  ];
+
+  static const preferredSearchDataTypes = [
+    'Foundation',
+    'SR Legacy',
+    'Survey (FNDDS)',
+  ];
+
   static const _produceCalorieRanges = {
     'banana': (50.0, 120.0),
     'apple': (40.0, 70.0),
@@ -89,6 +116,18 @@ class UsdaFoodMatcher {
       return foodName.trim();
     }
 
+    if (_looksLikeWholeStaple(context)) {
+      final trimmed = foodName.trim().toLowerCase();
+      if (trimmed == 'milk') return 'milk whole';
+      if (!trimmed.contains('whole') &&
+          !trimmed.contains('raw') &&
+          !trimmed.contains('skim') &&
+          !trimmed.contains('2%') &&
+          !trimmed.contains('1%')) {
+        return '${foodName.trim()} whole';
+      }
+    }
+
     if (_looksLikeWholeProduce(context)) {
       final trimmed = foodName.trim();
       if (!trimmed.toLowerCase().contains('raw')) {
@@ -97,6 +136,15 @@ class UsdaFoodMatcher {
     }
 
     return foodName.trim();
+  }
+
+  /// True when parsed nutrition contains usable macro/calorie data.
+  static bool hasValidNutrition(Map<String, dynamic> nutritionData) {
+    final calories = (nutritionData['calories'] as num?)?.toDouble() ?? 0;
+    final protein = (nutritionData['protein'] as num?)?.toDouble() ?? 0;
+    final carbs = (nutritionData['carbs'] as num?)?.toDouble() ?? 0;
+    final fat = (nutritionData['fat'] as num?)?.toDouble() ?? 0;
+    return calories > 0 || protein > 0 || carbs > 0 || fat > 0;
   }
 
   /// Scores and ranks USDA search results (highest score first).
@@ -111,7 +159,8 @@ class UsdaFoodMatcher {
       description: description,
       userInput: userInput,
     );
-    final looksLikeWholeFood = _looksLikeWholeProduce(context) &&
+    final looksLikeWholeFood = (_looksLikeWholeProduce(context) ||
+            _looksLikeWholeStaple(context)) &&
         !_looksPreparedOrBranded(context);
     final queryTokens = _tokenize(foodName);
 
@@ -186,6 +235,11 @@ class UsdaFoodMatcher {
 
   static bool _looksPreparedOrBranded(String context) {
     return _preparedKeywords.any(context.contains);
+  }
+
+  static bool _looksLikeWholeStaple(String context) {
+    if (_looksPreparedOrBranded(context)) return false;
+    return _wholeFoodStaples.any(context.contains);
   }
 
   static bool _looksLikeWholeProduce(String context) {
