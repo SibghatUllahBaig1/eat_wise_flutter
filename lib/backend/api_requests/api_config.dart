@@ -16,7 +16,7 @@ class ApiConfig {
   static String _revenueCatAndroidApiKey = '';
 
   static const String openAiBaseUrl = 'https://api.openai.com/v1';
-  static const String openAiVisionModel = 'gpt-4o';
+  static const String openAiVisionModel = 'gpt-4o-mini';
   static const String openAiTextModel = 'gpt-4o-mini';
   static const String usdaBaseUrl = 'https://api.nal.usda.gov/fdc/v1';
 

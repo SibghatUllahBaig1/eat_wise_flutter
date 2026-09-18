@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import '/backend/schema/structs/index.dart';
 import 'openai_service.dart';
 import 'portion_parser.dart';
@@ -171,6 +172,78 @@ class FoodAnalysisService {
       print('Stack trace: ${StackTrace.current}');
       throw Exception('Failed to analyze food from text: $e');
     }
+  }
+
+  /// Build nutrition from a user-selected USDA entry (text mode, no OpenAI).
+  static Future<FoodNutritionStruct> analyzeFromTextSelection({
+    required String userDescription,
+    required int fdcId,
+    required String usdaDescription,
+    required String usdaDataType,
+  }) async {
+    try {
+      print('\n🔍 ===== FOOD ANALYSIS FROM TEXT SELECTION =====');
+      print('📝 Description: $userDescription');
+      print('🎯 Selected fdcId: $fdcId ($usdaDescription)');
+
+      final explicitGrams = PortionParser.parseExplicitGrams(userDescription);
+      final grams = explicitGrams ?? 100.0;
+      if (explicitGrams != null) {
+        print('📏 Parsed explicit portion: ${explicitGrams}g');
+      } else {
+        print('📏 No portion stated — defaulting to ${grams}g');
+      }
+
+      print('\n🥗 Fetching nutrition for selected USDA entry...');
+      final usdaData = await USDAService.getFoodDetails(fdcId);
+      usdaData['usdaDescription'] = usdaDescription;
+      usdaData['usdaDataType'] = usdaDataType;
+
+      final nutritionData = _calculateNutrition(usdaData, grams);
+      final foodName =
+          usdaDescription.trim().isNotEmpty ? usdaDescription : userDescription.trim();
+
+      return _buildNutritionStruct(
+        foodName: foodName,
+        grams: grams,
+        usdaData: usdaData,
+        nutritionData: nutritionData,
+        imageUrl: '',
+        confidence: 1.0,
+      );
+    } catch (e) {
+      print('❌ ERROR in analyzeFromTextSelection: $e');
+      throw Exception('Failed to analyze selected food: $e');
+    }
+  }
+
+  /// Exposed for unit tests without network calls.
+  @visibleForTesting
+  static FoodNutritionStruct buildFromSelectionData({
+    required String userDescription,
+    required Map<String, dynamic> usdaData,
+    required String usdaDescription,
+    required String usdaDataType,
+  }) {
+    final explicitGrams = PortionParser.parseExplicitGrams(userDescription);
+    final grams = explicitGrams ?? 100.0;
+    final enrichedUsda = {
+      ...usdaData,
+      'usdaDescription': usdaDescription,
+      'usdaDataType': usdaDataType,
+    };
+    final nutritionData = _calculateNutrition(enrichedUsda, grams);
+    final foodName =
+        usdaDescription.trim().isNotEmpty ? usdaDescription : userDescription.trim();
+
+    return _buildNutritionStruct(
+      foodName: foodName,
+      grams: grams,
+      usdaData: enrichedUsda,
+      nutritionData: nutritionData,
+      imageUrl: '',
+      confidence: 1.0,
+    );
   }
 
   static FoodNutritionStruct _buildNutritionStruct({

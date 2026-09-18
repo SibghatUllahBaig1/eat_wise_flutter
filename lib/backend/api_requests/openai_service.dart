@@ -202,10 +202,12 @@ class OpenAIService {
   /// Picks the best USDA candidate when rule-based ranking is ambiguous.
   static Future<int> pickUsdaCandidate({
     required String foodName,
+    String? searchKeyword,
     String? description,
     String? userInput,
     double? estimatedGrams,
     required List<UsdaCandidate> candidates,
+    bool preferReference = true,
   }) async {
     if (candidates.isEmpty) {
       throw Exception('No USDA candidates to pick from');
@@ -215,11 +217,14 @@ class OpenAIService {
       return candidates.first.fdcId;
     }
 
+    final keyword = searchKeyword ?? userInput ?? foodName;
     final payload = {
+      'searchKeyword': keyword,
       'foodName': foodName,
       'description': description,
       'userInput': userInput,
       'estimatedGrams': estimatedGrams,
+      'preferReference': preferReference,
       'candidates': candidates.map((c) => c.toMap()).toList(),
     };
 
@@ -237,12 +242,19 @@ class OpenAIService {
                 {
                   'role': 'system',
                   'content':
-                      'You are a nutrition database expert. Pick the USDA FoodData Central entry that best matches what the user actually ate. Prefer raw/fresh whole foods unless the user clearly ate a branded or prepared item. Return ONLY valid JSON.',
+                      'You are a nutrition database expert helping someone log food. The user typed a search keyword — pick the USDA entry whose PRIMARY food matches that keyword, the way a human would. '
+                      'If they searched "milk", pick drinkable/plain milk — NOT cheese, yogurt, or other foods that merely contain milk as an ingredient. '
+                      'If they searched "banana", pick a banana — NOT banana bread or banana chips. '
+                      'Prefer the simplest, most common form (e.g. whole milk over buttermilk unless the query specifies). '
+                      'Prefer Foundation/SR Legacy/Survey entries over Branded when both fit equally. '
+                      'Return ONLY valid JSON.',
                 },
                 {
                   'role': 'user',
                   'content':
-                      'Pick the best USDA match from the candidates below. Return JSON: {"selectedFdcId": number, "reason": string}. You must pick one of the provided fdcId values.\n\n${jsonEncode(payload)}',
+                      'The user searched for: "$keyword". Pick the best USDA match from the candidates. '
+                      'The primary food (text before the first comma in description) must match what the user searched for. '
+                      'Return JSON: {"selectedFdcId": number, "reason": string}. You must pick one of the provided fdcId values.\n\n${jsonEncode(payload)}',
                 },
               ],
               'max_tokens': 200,

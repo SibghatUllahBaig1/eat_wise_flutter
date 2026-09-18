@@ -4,6 +4,9 @@ import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/flutter_flow/upload_data.dart';
 import '/backend/api_requests/food_analysis_service.dart';
+import '/backend/api_requests/portion_parser.dart';
+import '/backend/api_requests/usda_search_option.dart';
+import '/backend/api_requests/usda_service.dart';
 import '/backend/schema/structs/index.dart';
 import '/recipes/components/recipe_image_widget.dart';
 import '/components/paywall_widget.dart';
@@ -32,7 +35,7 @@ class _FoodCaptureWidgetState extends State<FoodCaptureWidget> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
   bool _isAnalyzing = false;
 
-  Future<void> _analyzeFood() async {
+  Future<void> _analyzeFoodFromCamera() async {
     FocusScope.of(context).unfocus();
     await Future<void>.delayed(Duration.zero);
     if (!mounted) return;
@@ -44,45 +47,26 @@ class _FoodCaptureWidgetState extends State<FoodCaptureWidget> {
     );
     if (!hasAccess || !mounted) return;
 
+    if (_model.uploadedLocalFile.bytes == null ||
+        _model.uploadedLocalFile.bytes!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please capture or select an image first'),
+          backgroundColor: FlutterFlowTheme.of(context).error,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isAnalyzing = true);
     try {
-      FoodNutritionStruct nutritionData;
+      final tempDir = await getTemporaryDirectory();
+      final tempFile = File('${tempDir.path}/temp_food_image.jpg');
+      await tempFile.writeAsBytes(_model.uploadedLocalFile.bytes!);
 
-      if (_model.captureMode == CaptureMode.CAMERA) {
-        if (_model.uploadedLocalFile.bytes == null ||
-            _model.uploadedLocalFile.bytes!.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Please capture or select an image first'),
-              backgroundColor: FlutterFlowTheme.of(context).error,
-            ),
-          );
-          return;
-        }
-
-        final tempDir = await getTemporaryDirectory();
-        final tempFile = File('${tempDir.path}/temp_food_image.jpg');
-        await tempFile.writeAsBytes(_model.uploadedLocalFile.bytes!);
-
-        nutritionData = await FoodAnalysisService.analyzeFromImage(
-          tempFile.path,
-        );
-      } else {
-        final foodDescription = _model.textController?.text.trim() ?? '';
-        if (foodDescription.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Please enter a food description'),
-              backgroundColor: FlutterFlowTheme.of(context).error,
-            ),
-          );
-          return;
-        }
-
-        nutritionData = await FoodAnalysisService.analyzeFromText(
-          foodDescription,
-        );
-      }
+      final nutritionData = await FoodAnalysisService.analyzeFromImage(
+        tempFile.path,
+      );
 
       if (!mounted) return;
 
@@ -119,12 +103,235 @@ class _FoodCaptureWidgetState extends State<FoodCaptureWidget> {
     }
   }
 
+  Future<void> _searchUsdaFood() async {
+    FocusScope.of(context).unfocus();
+    final query = _model.textController?.text.trim() ?? '';
+    if (query.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please enter a food description'),
+          backgroundColor: FlutterFlowTheme.of(context).error,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _model.isSearchingUsda = true;
+      _model.selectedFdcId = null;
+    });
+
+    try {
+      final pickerResult = await USDAService.prepareTextPickerResults(
+        query: query,
+        pageSize: 25,
+        estimatedGrams: PortionParser.parseExplicitGrams(query),
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _model.usdaReferenceOptions = pickerResult.referenceOptions;
+        _model.usdaGeneralOptions = pickerResult.generalOptions;
+        _model.hasSearched = true;
+        _model.lastSearchQuery = query;
+        _model.selectedFdcId = pickerResult.selectedFdcId;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_friendlyAnalysisError(e)),
+          backgroundColor: FlutterFlowTheme.of(context).error,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _model.isSearchingUsda = false);
+      }
+    }
+  }
+
+  Future<void> _continueWithSelectedFood() async {
+    FocusScope.of(context).unfocus();
+    final selected = _model.selectedUsdaOption;
+    if (selected == null) return;
+
+    final hasAccess = await checkFeatureAccess(
+      context: context,
+      featureName: 'ai_food_analysis',
+      displayName: 'AI Food Analysis',
+    );
+    if (!hasAccess || !mounted) return;
+
+    setState(() => _isAnalyzing = true);
+    try {
+      final foodDescription = _model.textController?.text.trim() ?? '';
+      final nutritionData = await FoodAnalysisService.analyzeFromTextSelection(
+        userDescription: foodDescription,
+        fdcId: selected.fdcId,
+        usdaDescription: selected.description,
+        usdaDataType: selected.dataType,
+      );
+
+      if (!mounted) return;
+
+      if (!_isRecognizedFood(nutritionData)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_unrecognizedFoodMessage()),
+            backgroundColor: FlutterFlowTheme.of(context).error,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+        return;
+      }
+
+      context.pushNamed(
+        'FoodDetails',
+        extra: <String, dynamic>{
+          'nutritionData': nutritionData,
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_friendlyAnalysisError(e)),
+          backgroundColor: FlutterFlowTheme.of(context).error,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isAnalyzing = false);
+      }
+    }
+  }
+
+  void _onTextModePrimaryAction() {
+    if (_model.hasSearched) {
+      _continueWithSelectedFood();
+    } else {
+      _searchUsdaFood();
+    }
+  }
+
+  bool get _textModeButtonEnabled {
+    if (_isAnalyzing || _model.isSearchingUsda) return false;
+    final text = _model.textController?.text.trim() ?? '';
+    if (text.isEmpty) return false;
+    if (!_model.hasSearched) return true;
+    return _model.selectedFdcId != null;
+  }
+
+  String get _textModeButtonLabel =>
+      _model.hasSearched ? 'Continue' : 'Search';
+
+  Widget _buildUsdaSectionHeader(
+    BuildContext context,
+    String title,
+    String subtitle,
+  ) {
+    return Padding(
+      padding: EdgeInsetsDirectional.fromSTEB(4.0, 0.0, 4.0, 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: FlutterFlowTheme.of(context).bodySmall.override(
+                  fontFamily: 'Readex Pro',
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.0,
+                ),
+          ),
+          Text(
+            subtitle,
+            style: FlutterFlowTheme.of(context).bodySmall.override(
+                  fontFamily: 'Readex Pro',
+                  color: FlutterFlowTheme.of(context).secondaryText,
+                  letterSpacing: 0.0,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUsdaOptionTile(UsdaSearchOption option) {
+    final isSelected = _model.selectedFdcId == option.fdcId;
+
+    return Padding(
+      padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 8.0),
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _model.selectUsdaOption(option.fdcId);
+          });
+        },
+        borderRadius: BorderRadius.circular(8.0),
+        child: Container(
+          padding: EdgeInsets.all(12.0),
+          decoration: BoxDecoration(
+            color: FlutterFlowTheme.of(context).secondaryBackground,
+            borderRadius: BorderRadius.circular(8.0),
+            border: Border.all(
+              color: isSelected
+                  ? FlutterFlowTheme.of(context).primary
+                  : FlutterFlowTheme.of(context).alternate,
+              width: isSelected ? 2.0 : 1.0,
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      option.description,
+                      style: FlutterFlowTheme.of(context).bodyMedium.override(
+                            fontFamily: 'Readex Pro',
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.0,
+                          ),
+                    ),
+                    SizedBox(height: 4.0),
+                    Text(
+                      option.subtitle,
+                      style: FlutterFlowTheme.of(context).bodySmall.override(
+                            fontFamily: 'Readex Pro',
+                            color: FlutterFlowTheme.of(context).secondaryText,
+                            letterSpacing: 0.0,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isSelected)
+                Icon(
+                  Icons.check_circle,
+                  color: FlutterFlowTheme.of(context).primary,
+                  size: 22.0,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
     _model = createModel(context, () => FoodCaptureModel());
     _model.textController ??= TextEditingController();
     _model.textFieldFocusNode ??= FocusNode();
+    _model.textController!.addListener(() {
+      _model.onTextInputChanged(_model.textController!.text);
+      if (mounted) setState(() {});
+    });
 
     // Load recent meals
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -198,6 +405,9 @@ class _FoodCaptureWidgetState extends State<FoodCaptureWidget> {
                         child: InkWell(
                           onTap: () async {
                             setState(() {
+                              if (_model.captureMode == CaptureMode.TEXT) {
+                                _model.clearTextSearchState();
+                              }
                               _model.captureMode = CaptureMode.CAMERA;
                             });
                           },
@@ -270,6 +480,9 @@ class _FoodCaptureWidgetState extends State<FoodCaptureWidget> {
                         child: InkWell(
                           onTap: () async {
                             setState(() {
+                              if (_model.captureMode == CaptureMode.TEXT) {
+                                _model.clearTextSearchState();
+                              }
                               _model.captureMode = CaptureMode.RECENTS;
                             });
                           },
@@ -476,6 +689,7 @@ class _FoodCaptureWidgetState extends State<FoodCaptureWidget> {
                   Expanded(
                     child: Column(
                       mainAxisSize: MainAxisSize.max,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         TextFormField(
                           controller: _model.textController,
@@ -490,7 +704,7 @@ class _FoodCaptureWidgetState extends State<FoodCaptureWidget> {
                                   fontFamily: 'Readex Pro',
                                   letterSpacing: 0.0,
                                 ),
-                            hintText: 'e.g., Grilled chicken breast with rice',
+                            hintText: 'e.g., 50g banana or milk',
                             hintStyle: FlutterFlowTheme.of(context)
                                 .labelMedium
                                 .override(
@@ -531,10 +745,85 @@ class _FoodCaptureWidgetState extends State<FoodCaptureWidget> {
                                     fontFamily: 'Readex Pro',
                                     letterSpacing: 0.0,
                                   ),
-                          maxLines: 5,
+                          maxLines: 3,
                           validator: _model.textControllerValidator
                               .asValidator(context),
                         ),
+                        if (!_model.hasSearched && !_model.isSearchingUsda)
+                          Padding(
+                            padding: EdgeInsetsDirectional.fromSTEB(
+                                4.0, 8.0, 4.0, 0.0),
+                            child: Text(
+                              'Tap Search to see USDA matches',
+                              style: FlutterFlowTheme.of(context)
+                                  .bodySmall
+                                  .override(
+                                    fontFamily: 'Readex Pro',
+                                    color: FlutterFlowTheme.of(context)
+                                        .secondaryText,
+                                    letterSpacing: 0.0,
+                                  ),
+                            ),
+                          ),
+                        if (_model.isSearchingUsda)
+                          Expanded(
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: FlutterFlowTheme.of(context).primary,
+                              ),
+                            ),
+                          )
+                        else if (_model.hasSearched &&
+                            !_model.hasUsdaSearchResults)
+                          Expanded(
+                            child: Center(
+                              child: Text(
+                                'No foods found. Try a more specific description.',
+                                textAlign: TextAlign.center,
+                                style: FlutterFlowTheme.of(context)
+                                    .bodyMedium
+                                    .override(
+                                      fontFamily: 'Readex Pro',
+                                      color: FlutterFlowTheme.of(context)
+                                          .secondaryText,
+                                      letterSpacing: 0.0,
+                                    ),
+                              ),
+                            ),
+                          )
+                        else if (_model.hasSearched)
+                          Expanded(
+                            child: Padding(
+                              padding: EdgeInsetsDirectional.fromSTEB(
+                                  0.0, 12.0, 0.0, 0.0),
+                              child: ListView(
+                                children: [
+                                  if (_model.usdaReferenceOptions.isNotEmpty) ...[
+                                    _buildUsdaSectionHeader(
+                                      context,
+                                      'Reference foods',
+                                      'Foundation / SR Legacy / Survey',
+                                    ),
+                                    ..._model.usdaReferenceOptions.map(
+                                      (option) => _buildUsdaOptionTile(option),
+                                    ),
+                                  ],
+                                  if (_model.usdaGeneralOptions.isNotEmpty) ...[
+                                    if (_model.usdaReferenceOptions.isNotEmpty)
+                                      SizedBox(height: 16.0),
+                                    _buildUsdaSectionHeader(
+                                      context,
+                                      'Other matches',
+                                      'Branded & more',
+                                    ),
+                                    ..._model.usdaGeneralOptions.map(
+                                      (option) => _buildUsdaOptionTile(option),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -809,7 +1098,7 @@ class _FoodCaptureWidgetState extends State<FoodCaptureWidget> {
                                 },
                               ),
                   ),
-                // Analyze Button
+                // Analyze / Search / Continue Button
                 if (_model.captureMode != CaptureMode.RECENTS)
                   Padding(
                     padding:
@@ -818,17 +1107,25 @@ class _FoodCaptureWidgetState extends State<FoodCaptureWidget> {
                       width: double.infinity,
                       height: 50.0,
                       child: ElevatedButton(
-                        onPressed: _isAnalyzing ? null : _analyzeFood,
+                        onPressed: _model.captureMode == CaptureMode.TEXT
+                            ? (_textModeButtonEnabled
+                                ? _onTextModePrimaryAction
+                                : null)
+                            : (_isAnalyzing ? null : _analyzeFoodFromCamera),
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
                               FlutterFlowTheme.of(context).primary,
                           foregroundColor: Colors.white,
+                          disabledBackgroundColor:
+                              FlutterFlowTheme.of(context).alternate,
+                          disabledForegroundColor:
+                              FlutterFlowTheme.of(context).secondaryText,
                           elevation: 3.0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8.0),
                           ),
                         ),
-                        child: _isAnalyzing
+                        child: _isAnalyzing || _model.isSearchingUsda
                             ? const SizedBox(
                                 width: 23.0,
                                 height: 23.0,
@@ -840,7 +1137,9 @@ class _FoodCaptureWidgetState extends State<FoodCaptureWidget> {
                                 ),
                               )
                             : Text(
-                                'Analyze Food',
+                                _model.captureMode == CaptureMode.TEXT
+                                    ? _textModeButtonLabel
+                                    : 'Analyze Food',
                                 style: FlutterFlowTheme.of(context)
                                     .titleSmall
                                     .override(

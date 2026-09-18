@@ -82,6 +82,17 @@ class UsdaFoodMatcher {
     'Survey (FNDDS)',
   ];
 
+  /// Primary segments that conflict with a single-word staple query.
+  static const _conflictingPrimariesForMilk = {
+    'cheese',
+    'yogurt',
+    'butter',
+    'cream',
+    'ice cream',
+    'kefir',
+    'whey',
+  };
+
   static const _produceCalorieRanges = {
     'banana': (50.0, 120.0),
     'apple': (40.0, 70.0),
@@ -138,6 +149,44 @@ class UsdaFoodMatcher {
     return foodName.trim();
   }
 
+  /// Parses the primary food name from a USDA description (before first comma).
+  static String primarySegment(String description) {
+    final segment = description.split(',').first.trim().toLowerCase();
+    return segment;
+  }
+
+  /// True when the USDA entry's primary food matches the user's search keyword.
+  static bool isRelevantPrimaryFood(String query, String description) {
+    final normalizedQuery = _normalizeQuery(query);
+    if (normalizedQuery.isEmpty) return true;
+
+    final primary = primarySegment(description);
+    if (primary.isEmpty) return false;
+
+    if (_primaryMatchesQuery(primary, normalizedQuery)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /// Drops USDA hits whose primary food does not match the search keyword.
+  static List<Map<String, dynamic>> filterRelevantResults(
+    String query,
+    List<Map<String, dynamic>> searchResults,
+  ) {
+    return searchResults
+        .where((result) {
+          final description = (result['description'] as String?) ?? '';
+          return isRelevantPrimaryFood(query, description);
+        })
+        .toList();
+  }
+
+  static bool isReferenceDataType(String dataType) {
+    return preferredSearchDataTypes.contains(dataType);
+  }
+
   /// True when parsed nutrition contains usable macro/calorie data.
   static bool hasValidNutrition(Map<String, dynamic> nutritionData) {
     final calories = (nutritionData['calories'] as num?)?.toDouble() ?? 0;
@@ -163,6 +212,7 @@ class UsdaFoodMatcher {
             _looksLikeWholeStaple(context)) &&
         !_looksPreparedOrBranded(context);
     final queryTokens = _tokenize(foodName);
+    final normalizedQuery = _normalizeQuery(foodName);
 
     final candidates = searchResults.map((result) {
       final candidate = UsdaCandidate(
@@ -174,6 +224,7 @@ class UsdaFoodMatcher {
       candidate.score = _scoreCandidate(
         candidate: candidate,
         queryTokens: queryTokens,
+        normalizedQuery: normalizedQuery,
         looksLikeWholeFood: looksLikeWholeFood,
       );
       return candidate;
@@ -263,15 +314,67 @@ class UsdaFoodMatcher {
     return false;
   }
 
+  static String _normalizeQuery(String query) {
+    return query
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'\d+(?:\.\d+)?\s*(?:g|grams?|kg)\b'), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
+  static bool _primaryMatchesQuery(String primary, String normalizedQuery) {
+    if (primary == normalizedQuery) return true;
+    if (_matchesPlural(primary, normalizedQuery)) return true;
+
+    final queryTokens = normalizedQuery.split(RegExp(r'\s+')).where((t) => t.length > 2);
+    if (queryTokens.length > 1) {
+      return queryTokens.every((token) => primary.contains(token));
+    }
+
+    if (normalizedQuery == 'milk' && _conflictingPrimariesForMilk.contains(primary)) {
+      return false;
+    }
+
+    if (normalizedQuery.length >= 3 && primary.startsWith(normalizedQuery)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  static bool _matchesPlural(String primary, String query) {
+    if (primary == query) return true;
+    if (primary == '${query}s') return true;
+    if (query.endsWith('s') && primary == query.substring(0, query.length - 1)) {
+      return true;
+    }
+    if (primary.endsWith('s') && query == primary.substring(0, primary.length - 1)) {
+      return true;
+    }
+    if (primary.endsWith('es') && query == primary.substring(0, primary.length - 2)) {
+      return true;
+    }
+    return false;
+  }
+
   static double _scoreCandidate({
     required UsdaCandidate candidate,
     required List<String> queryTokens,
+    required String normalizedQuery,
     required bool looksLikeWholeFood,
   }) {
     var score = 0.0;
     score += _dataTypeScore(candidate.dataType);
 
     final descLower = candidate.description.toLowerCase();
+    final primary = primarySegment(candidate.description);
+
+    if (isRelevantPrimaryFood(normalizedQuery, candidate.description)) {
+      score += 50;
+    } else {
+      score -= 80;
+    }
     for (final keyword in _rawKeywords) {
       if (descLower.contains(keyword)) {
         score += 25;

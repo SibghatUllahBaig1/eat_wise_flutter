@@ -3,6 +3,7 @@ import '/flutter_flow/form_field_controller.dart';
 import 'food_capture_widget.dart' show FoodCaptureWidget, CaptureMode;
 import 'package:flutter/material.dart';
 import '/backend/backend_manager.dart';
+import '/backend/api_requests/usda_search_option.dart';
 import '/auth/firebase_auth/auth_util.dart';
 
 class FoodCaptureModel extends FlutterFlowModel<FoodCaptureWidget> {
@@ -26,6 +27,47 @@ class FoodCaptureModel extends FlutterFlowModel<FoodCaptureWidget> {
   bool isLoadingRecents = false;
   List<Map<String, dynamic>> recentMeals = [];
   final BackendManager _backend = BackendManager();
+
+  // Text mode USDA manual picker
+  bool isSearchingUsda = false;
+  bool hasSearched = false;
+  String lastSearchQuery = '';
+  List<UsdaSearchOption> usdaReferenceOptions = [];
+  List<UsdaSearchOption> usdaGeneralOptions = [];
+  int? selectedFdcId;
+
+  List<UsdaSearchOption> get usdaSearchResults =>
+      [...usdaReferenceOptions, ...usdaGeneralOptions];
+
+  bool get hasUsdaSearchResults =>
+      usdaReferenceOptions.isNotEmpty || usdaGeneralOptions.isNotEmpty;
+
+  UsdaSearchOption? get selectedUsdaOption {
+    if (selectedFdcId == null) return null;
+    for (final option in usdaSearchResults) {
+      if (option.fdcId == selectedFdcId) return option;
+    }
+    return null;
+  }
+
+  void clearTextSearchState() {
+    isSearchingUsda = false;
+    hasSearched = false;
+    lastSearchQuery = '';
+    usdaReferenceOptions = [];
+    usdaGeneralOptions = [];
+    selectedFdcId = null;
+  }
+
+  void selectUsdaOption(int fdcId) {
+    selectedFdcId = fdcId;
+  }
+
+  void onTextInputChanged(String currentText) {
+    if (hasSearched && currentText.trim() != lastSearchQuery) {
+      clearTextSearchState();
+    }
+  }
 
   /// Load recent meals with images
   Future<void> loadRecentMeals() async {

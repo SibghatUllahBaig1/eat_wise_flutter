@@ -4,15 +4,19 @@ import 'package:http/http.dart' as http;
 import 'api_config.dart';
 import 'openai_service.dart';
 import 'usda_food_matcher.dart';
+import 'usda_search_option.dart';
 
 /// Service for interacting with USDA FoodData Central API
 /// Fetches detailed nutrition information for foods
 class USDAService {
   /// Search for a food in the USDA database
   /// Returns a list of matching foods with their FDC IDs
+  static const defaultSearchPageSize = 5;
+
   static Future<List<Map<String, dynamic>>> searchFood(
     String foodName, {
     List<String>? dataTypes,
+    int pageSize = defaultSearchPageSize,
   }) async {
     if (!ApiConfig.isUsdaConfigured) {
       throw Exception('USDA API key not configured');
@@ -20,14 +24,18 @@ class USDAService {
 
     try {
       if (dataTypes != null && dataTypes.isNotEmpty) {
-        return await _searchFoodPost(foodName, dataTypes);
+        return await _searchFoodPost(
+          foodName,
+          dataTypes,
+          pageSize: pageSize,
+        );
       }
-      return await _searchFoodGet(foodName);
+      return await _searchFoodGet(foodName, pageSize: pageSize);
     } catch (e) {
       if (dataTypes != null && dataTypes.isNotEmpty) {
         print('⚠️ Filtered USDA search failed ($e). Retrying without dataType filter...');
         try {
-          return await _searchFoodGet(foodName);
+          return await _searchFoodGet(foodName, pageSize: pageSize);
         } catch (fallbackError) {
           throw Exception('Failed to search food: $fallbackError');
         }
@@ -36,11 +44,190 @@ class USDAService {
     }
   }
 
-  static Future<List<Map<String, dynamic>>> _searchFoodGet(String foodName) async {
+  /// Maps raw USDA search hits to typed options for the text picker UI.
+  static List<UsdaSearchOption> mapSearchResults(
+    List<Map<String, dynamic>> raw,
+  ) {
+    return raw.map(UsdaSearchOption.fromMap).toList();
+  }
+
+  /// Searches USDA and splits results into reference vs general buckets.
+  static Future<UsdaPickerSearchBuckets> searchFoodForPicker(
+    String query, {
+    int pageSize = 25,
+  }) async {
+    final searchQuery = UsdaFoodMatcher.buildSearchQuery(
+      foodName: query,
+      userInput: query,
+    );
+
+    var reference = <Map<String, dynamic>>[];
+    try {
+      reference = await searchFood(
+        searchQuery,
+        dataTypes: UsdaFoodMatcher.preferredSearchDataTypes,
+        pageSize: 15,
+      );
+    } catch (e) {
+      print('⚠️ Preferred-type picker search failed: $e');
+    }
+
+    final generalRaw = await searchFood(searchQuery, pageSize: pageSize);
+    final referenceIds = reference.map((r) => r['fdcId'] as int).toSet();
+    final general = generalRaw
+        .where((item) => !referenceIds.contains(item['fdcId'] as int))
+        .toList();
+
+    reference = UsdaFoodMatcher.filterRelevantResults(query, reference);
+    final filteredGeneral = UsdaFoodMatcher.filterRelevantResults(query, general);
+
+    return UsdaPickerSearchBuckets(
+      reference: reference,
+      general: filteredGeneral,
+    );
+  }
+
+  static List<UsdaSearchOption> _candidatesToOptions(List<UsdaCandidate> ranked) {
+    return ranked
+        .map(
+          (candidate) => UsdaSearchOption(
+            fdcId: candidate.fdcId,
+            description: candidate.description,
+            dataType: candidate.dataType,
+            brandName: candidate.brandName,
+          ),
+        )
+        .toList();
+  }
+
+  static List<UsdaSearchOption> _moveSelectedFirst(
+    List<UsdaSearchOption> options,
+    int selectedFdcId,
+  ) {
+    if (options.isEmpty) return options;
+    final index = options.indexWhere((o) => o.fdcId == selectedFdcId);
+    if (index <= 0) return options;
+    final selected = options.removeAt(index);
+    return [selected, ...options];
+  }
+
+  static List<UsdaCandidate> _relevantRanked(
+    String foodName,
+    List<UsdaCandidate> ranked,
+  ) {
+    final relevant = ranked
+        .where(
+          (c) => UsdaFoodMatcher.isRelevantPrimaryFood(
+            foodName,
+            c.description,
+          ),
+        )
+        .toList();
+    return relevant.isNotEmpty ? relevant : ranked;
+  }
+
+  /// Picks the best USDA candidate using rules + OpenAI disambiguation.
+  static Future<int> pickBestCandidate({
+    required String foodName,
+    required List<UsdaCandidate> rankedReference,
+    required List<UsdaCandidate> rankedGeneral,
+    String? userInput,
+    double? estimatedGrams,
+  }) async {
+    final filteredReference = _relevantRanked(foodName, rankedReference);
+    final filteredGeneral = _relevantRanked(foodName, rankedGeneral);
+    final ranked =
+        filteredReference.isNotEmpty ? filteredReference : filteredGeneral;
+    if (ranked.isEmpty) {
+      throw Exception('No USDA candidates to pick from');
+    }
+    if (ranked.length == 1) {
+      return ranked.first.fdcId;
+    }
+
+    final top = ranked.first;
+    final useClearWinner = UsdaFoodMatcher.isClearWinner(ranked) &&
+        UsdaFoodMatcher.isRelevantPrimaryFood(foodName, top.description);
+
+    if (useClearWinner) {
+      print('✅ Clear rule-based winner for picker: ${top.description}');
+      return top.fdcId;
+    }
+
+    print('🤖 Asking OpenAI to pick best USDA match for picker...');
+    return OpenAIService.pickUsdaCandidate(
+      foodName: foodName,
+      searchKeyword: foodName,
+      userInput: userInput,
+      estimatedGrams: estimatedGrams,
+      candidates: ranked.take(5).toList(),
+      preferReference: filteredReference.isNotEmpty,
+    );
+  }
+
+  /// Search, rank, AI-pick, and order options for the text food picker.
+  static Future<UsdaTextPickerResult> prepareTextPickerResults({
+    required String query,
+    int pageSize = 25,
+    double? estimatedGrams,
+  }) async {
+    final buckets = await searchFoodForPicker(query, pageSize: pageSize);
+
+    final rankedReference = UsdaFoodMatcher.rankCandidates(
+      foodName: query,
+      searchResults: buckets.reference,
+      userInput: query,
+    );
+    final rankedGeneral = UsdaFoodMatcher.rankCandidates(
+      foodName: query,
+      searchResults: buckets.general,
+      userInput: query,
+    );
+
+    if (rankedReference.isEmpty && rankedGeneral.isEmpty) {
+      return const UsdaTextPickerResult();
+    }
+
+    final selectedFdcId = await pickBestCandidate(
+      foodName: query,
+      rankedReference: rankedReference,
+      rankedGeneral: rankedGeneral,
+      userInput: query,
+      estimatedGrams: estimatedGrams,
+    );
+
+    var referenceOptions = _moveSelectedFirst(
+      _candidatesToOptions(rankedReference),
+      selectedFdcId,
+    );
+    var generalOptions = _moveSelectedFirst(
+      _candidatesToOptions(rankedGeneral),
+      selectedFdcId,
+    );
+
+    final selectedInReference =
+        referenceOptions.any((o) => o.fdcId == selectedFdcId);
+    if (selectedInReference) {
+      generalOptions = _candidatesToOptions(rankedGeneral);
+    } else {
+      referenceOptions = _candidatesToOptions(rankedReference);
+    }
+
+    return UsdaTextPickerResult(
+      referenceOptions: referenceOptions,
+      generalOptions: generalOptions,
+      selectedFdcId: selectedFdcId,
+    );
+  }
+
+  static Future<List<Map<String, dynamic>>> _searchFoodGet(
+    String foodName, {
+    int pageSize = defaultSearchPageSize,
+  }) async {
     final uri = Uri.parse('${ApiConfig.usdaBaseUrl}/foods/search').replace(
       queryParameters: {
         'query': foodName,
-        'pageSize': '5',
+        'pageSize': pageSize.toString(),
         'api_key': ApiConfig.usdaApiKey,
       },
     );
@@ -53,8 +240,9 @@ class USDAService {
   /// POST avoids malformed GET query strings for dataType values like "Survey (FNDDS)".
   static Future<List<Map<String, dynamic>>> _searchFoodPost(
     String foodName,
-    List<String> dataTypes,
-  ) async {
+    List<String> dataTypes, {
+    int pageSize = defaultSearchPageSize,
+  }) async {
     final uri = Uri.parse('${ApiConfig.usdaBaseUrl}/foods/search').replace(
       queryParameters: {'api_key': ApiConfig.usdaApiKey},
     );
@@ -65,7 +253,7 @@ class USDAService {
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
             'query': foodName,
-            'pageSize': 5,
+            'pageSize': pageSize,
             'dataType': dataTypes,
           }),
         )
@@ -395,10 +583,11 @@ class USDAService {
       print('🤖 Ambiguous match — asking OpenAI to disambiguate...');
       final fdcId = await OpenAIService.pickUsdaCandidate(
         foodName: foodName,
+        searchKeyword: userInput ?? foodName,
         description: description,
         userInput: userInput,
         estimatedGrams: estimatedGrams,
-        candidates: ranked,
+        candidates: ranked.take(5).toList(),
       );
       final aiSelected = ranked.firstWhere(
         (c) => c.fdcId == fdcId,

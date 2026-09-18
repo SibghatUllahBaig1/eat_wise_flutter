@@ -152,6 +152,76 @@ void main() {
       );
     });
 
+    test('isRelevantPrimaryFood keeps milk and rejects cheese yogurt', () {
+      expect(
+        UsdaFoodMatcher.isRelevantPrimaryFood(
+          'milk',
+          'Milk, whole, 3.25% milkfat',
+        ),
+        isTrue,
+      );
+      expect(
+        UsdaFoodMatcher.isRelevantPrimaryFood(
+          'milk',
+          'Milk, buttermilk, fluid, whole',
+        ),
+        isTrue,
+      );
+      expect(
+        UsdaFoodMatcher.isRelevantPrimaryFood(
+          'milk',
+          'Cheese, ricotta, whole milk',
+        ),
+        isFalse,
+      );
+      expect(
+        UsdaFoodMatcher.isRelevantPrimaryFood(
+          'milk',
+          'Yogurt, plain, whole milk',
+        ),
+        isFalse,
+      );
+      expect(
+        UsdaFoodMatcher.isRelevantPrimaryFood(
+          'milk',
+          'Strawberry milk, whole',
+        ),
+        isFalse,
+      );
+    });
+
+    test('isRelevantPrimaryFood handles banana vs banana bread', () {
+      expect(
+        UsdaFoodMatcher.isRelevantPrimaryFood('banana', 'Bananas, raw'),
+        isTrue,
+      );
+      expect(
+        UsdaFoodMatcher.isRelevantPrimaryFood(
+          'banana',
+          'Bread, banana nut',
+        ),
+        isFalse,
+      );
+    });
+
+    test('filterRelevantResults removes irrelevant hits', () {
+      final filtered = UsdaFoodMatcher.filterRelevantResults('milk', [
+        {
+          'fdcId': 1,
+          'description': 'Milk, whole, 3.25% milkfat',
+          'dataType': 'Foundation',
+        },
+        {
+          'fdcId': 2,
+          'description': 'Cheese, ricotta, whole milk',
+          'dataType': 'Foundation',
+        },
+      ]);
+
+      expect(filtered.length, 1);
+      expect(filtered.first['fdcId'], 1);
+    });
+
     test('passesCalorieSanity skips strict checks for prepared foods', () {
       expect(
         UsdaFoodMatcher.passesCalorieSanity(
