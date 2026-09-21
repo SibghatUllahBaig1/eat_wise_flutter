@@ -1,3 +1,4 @@
+import 'package:eat_wise/backend/api_requests/usda_food_matcher.dart';
 import 'package:eat_wise/backend/api_requests/usda_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -69,6 +70,49 @@ void main() {
       expect(parsed['protein'], closeTo(3.3, 0.2));
       expect(parsed['carbs'], closeTo(5.0, 0.2));
       expect(parsed['fat'], closeTo(3.3, 0.2));
+    });
+
+    test('detects unlabeled foodNutrients shape', () {
+      expect(
+        USDAService.foodNutrientsAreUnlabeledForTest([
+          {'type': 'FoodNutrient', 'id': 25495928, 'amount': 179.0},
+        ]),
+        isTrue,
+      );
+      expect(
+        USDAService.foodNutrientsAreUnlabeledForTest([
+          {'number': '208', 'amount': 179},
+        ]),
+        isFalse,
+      );
+      expect(
+        USDAService.foodNutrientsAreUnlabeledForTest([
+          {'nutrientId': 1008, 'value': 146},
+        ]),
+        isFalse,
+      );
+    });
+
+    test('parses Branded abridged nutrients scaled to per 100g', () {
+      final parsed = USDAService.parseNutritionDataForTest({
+        'description': 'FRENCH FRIES',
+        'dataType': 'Branded',
+        'servingSize': 84,
+        'servingSizeUnit': 'g',
+        '_nutrientsArePerServing': true,
+        'foodNutrients': [
+          {'number': '208', 'name': 'Energy', 'amount': 179, 'unitName': 'KCAL'},
+          {'number': '204', 'name': 'Total lipid (fat)', 'amount': 8.33, 'unitName': 'G'},
+          {'number': '205', 'name': 'Carbohydrate, by difference', 'amount': 22.6, 'unitName': 'G'},
+          {'number': '203', 'name': 'Protein', 'amount': 2.38, 'unitName': 'G'},
+        ],
+      });
+
+      expect(parsed['calories'], closeTo(213.1, 0.5));
+      expect(parsed['fat'], closeTo(9.92, 0.1));
+      expect(parsed['carbs'], closeTo(26.9, 0.2));
+      expect(parsed['protein'], closeTo(2.83, 0.1));
+      expect(UsdaFoodMatcher.hasValidNutrition(parsed), isTrue);
     });
   });
 }

@@ -289,24 +289,84 @@ class USDAService {
     }
 
     try {
-      final response = await http
-          .get(
-            Uri.parse(
-              '${ApiConfig.usdaBaseUrl}/food/$fdcId?api_key=${ApiConfig.usdaApiKey}',
-            ),
-          )
-          .timeout(ApiConfig.apiTimeout);
+      final fullData = await _fetchFoodJson(fdcId);
+      var dataToParse = fullData;
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return _parseNutritionData(data);
-      } else {
-        throw Exception(
-            'USDA API error: ${response.statusCode} - ${response.body}');
+      if (_shouldFetchAbridgedNutrients(fullData)) {
+        print('📋 Fetching abridged nutrients for fdcId $fdcId...');
+        final abridged = await _fetchFoodJson(fdcId, format: 'abridged');
+        final abridgedNutrients = abridged['foodNutrients'];
+        if (abridgedNutrients is List && abridgedNutrients.isNotEmpty) {
+          dataToParse = {
+            ...fullData,
+            'foodNutrients': abridgedNutrients,
+            '_nutrientsArePerServing': fullData['dataType'] == 'Branded',
+          };
+        }
       }
+
+      return _parseNutritionData(dataToParse);
     } catch (e) {
       throw Exception('Failed to get food details: $e');
     }
+  }
+
+  static Future<Map<String, dynamic>> _fetchFoodJson(
+    int fdcId, {
+    String? format,
+  }) async {
+    final queryParameters = <String, String>{
+      'api_key': ApiConfig.usdaApiKey,
+    };
+    if (format != null) {
+      queryParameters['format'] = format;
+    }
+
+    final response = await http
+        .get(
+          Uri.parse('${ApiConfig.usdaBaseUrl}/food/$fdcId').replace(
+            queryParameters: queryParameters,
+          ),
+        )
+        .timeout(ApiConfig.apiTimeout);
+
+    if (response.statusCode != 200) {
+      throw Exception(
+          'USDA API error: ${response.statusCode} - ${response.body}');
+    }
+
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  static bool _shouldFetchAbridgedNutrients(Map<String, dynamic> data) {
+    final labelNutrients = data['labelNutrients'];
+    final hasLabelNutrients =
+        labelNutrients is Map && labelNutrients.isNotEmpty;
+    if (hasLabelNutrients) return false;
+    return _foodNutrientsAreUnlabeled(data['foodNutrients']);
+  }
+
+  /// True when foodNutrients entries lack nutrient numbers/ids (id+amount only).
+  @visibleForTesting
+  static bool foodNutrientsAreUnlabeledForTest(dynamic nutrients) {
+    return _foodNutrientsAreUnlabeled(nutrients);
+  }
+
+  static bool _foodNutrientsAreUnlabeled(dynamic nutrients) {
+    if (nutrients is! List || nutrients.isEmpty) {
+      return true;
+    }
+
+    for (final nutrient in nutrients) {
+      if (nutrient is! Map) continue;
+      final map = nutrient.cast<String, dynamic>();
+      if (map['nutrient']?['number'] != null) return false;
+      if (map['nutrientNumber'] != null) return false;
+      if (map['nutrientId'] != null) return false;
+      if (map['number'] != null) return false;
+    }
+
+    return true;
   }
 
   /// Exposed for unit tests.
@@ -321,6 +381,7 @@ class USDAService {
       Map<String, dynamic> usdaData) {
     final nutrients = usdaData['foodNutrients'];
     final labelNutrients = usdaData['labelNutrients'] as Map<String, dynamic>?;
+    final nutrientsArePerServing = usdaData['_nutrientsArePerServing'] == true;
 
     double getNutrientValue(
       List<String> nutrientNumbers,
@@ -334,10 +395,14 @@ class USDAService {
           final map = nutrient.cast<String, dynamic>();
 
           final number = map['nutrient']?['number']?.toString() ??
-              map['nutrientNumber']?.toString();
+              map['nutrientNumber']?.toString() ??
+              map['number']?.toString();
           if (number != null && nutrientNumbers.contains(number)) {
-            final amount = _readNutrientAmount(map);
+            var amount = _readNutrientAmount(map);
             if (amount > 0) {
+              if (nutrientsArePerServing) {
+                amount = _scaleLabelToPer100g(amount, usdaData);
+              }
               print('   ✓ Found $nutrientName ($number): $amount');
               return amount;
             }
@@ -345,8 +410,11 @@ class USDAService {
 
           final id = map['nutrientId'] as int?;
           if (id != null && nutrientIds.contains(id)) {
-            final amount = _readNutrientAmount(map);
+            var amount = _readNutrientAmount(map);
             if (amount > 0) {
+              if (nutrientsArePerServing) {
+                amount = _scaleLabelToPer100g(amount, usdaData);
+              }
               print('   ✓ Found $nutrientName (id $id): $amount');
               return amount;
             }

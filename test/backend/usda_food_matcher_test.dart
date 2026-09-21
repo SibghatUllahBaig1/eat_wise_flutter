@@ -204,6 +204,30 @@ void main() {
       );
     });
 
+    test('isRelevantPrimaryFood handles french fries queries', () {
+      expect(
+        UsdaFoodMatcher.isRelevantPrimaryFood(
+          'french fries',
+          'Potatoes, french fried, all types, salt added in processing, frozen, unprepared',
+        ),
+        isTrue,
+      );
+      expect(
+        UsdaFoodMatcher.isRelevantPrimaryFood(
+          'french fries',
+          'FRENCH FRIES',
+        ),
+        isTrue,
+      );
+      expect(
+        UsdaFoodMatcher.isRelevantPrimaryFood(
+          'french fries',
+          'Bread, white, commercially prepared',
+        ),
+        isFalse,
+      );
+    });
+
     test('filterRelevantResults removes irrelevant hits', () {
       final filtered = UsdaFoodMatcher.filterRelevantResults('milk', [
         {

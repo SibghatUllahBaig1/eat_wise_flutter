@@ -167,7 +167,7 @@ class UsdaFoodMatcher {
       return true;
     }
 
-    return false;
+    return _descriptionMatchesQuery(description.toLowerCase(), normalizedQuery);
   }
 
   /// Drops USDA hits whose primary food does not match the search keyword.
@@ -327,9 +327,12 @@ class UsdaFoodMatcher {
     if (primary == normalizedQuery) return true;
     if (_matchesPlural(primary, normalizedQuery)) return true;
 
-    final queryTokens = normalizedQuery.split(RegExp(r'\s+')).where((t) => t.length > 2);
+    final queryTokens =
+        normalizedQuery.split(RegExp(r'\s+')).where((t) => t.length > 2);
     if (queryTokens.length > 1) {
-      return queryTokens.every((token) => primary.contains(token));
+      if (queryTokens.every((token) => _tokenMatchesInText(token, primary))) {
+        return true;
+      }
     }
 
     if (normalizedQuery == 'milk' && _conflictingPrimariesForMilk.contains(primary)) {
@@ -340,6 +343,23 @@ class UsdaFoodMatcher {
       return true;
     }
 
+    return false;
+  }
+
+  static bool _descriptionMatchesQuery(
+    String descLower,
+    String normalizedQuery,
+  ) {
+    final queryTokens =
+        normalizedQuery.split(RegExp(r'\s+')).where((t) => t.length > 2).toList();
+    if (queryTokens.length <= 1) return false;
+    return queryTokens.every((token) => _tokenMatchesInText(token, descLower));
+  }
+
+  static bool _tokenMatchesInText(String token, String text) {
+    if (text.contains(token)) return true;
+    if (token == 'fries' && text.contains('fried')) return true;
+    if (token == 'fried' && text.contains('fries')) return true;
     return false;
   }
 
