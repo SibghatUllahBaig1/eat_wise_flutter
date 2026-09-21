@@ -290,25 +290,49 @@ class USDAService {
 
     try {
       final fullData = await _fetchFoodJson(fdcId);
-      var dataToParse = fullData;
-
-      if (_shouldFetchAbridgedNutrients(fullData)) {
-        print('📋 Fetching abridged nutrients for fdcId $fdcId...');
-        final abridged = await _fetchFoodJson(fdcId, format: 'abridged');
-        final abridgedNutrients = abridged['foodNutrients'];
-        if (abridgedNutrients is List && abridgedNutrients.isNotEmpty) {
-          dataToParse = {
-            ...fullData,
-            'foodNutrients': abridgedNutrients,
-            '_nutrientsArePerServing': fullData['dataType'] == 'Branded',
-          };
-        }
+      final fullParsed = _parseNutritionData(fullData);
+      if (UsdaFoodMatcher.hasValidNutrition(fullParsed)) {
+        return fullParsed;
       }
 
-      return _parseNutritionData(dataToParse);
+      print(
+        '⚠️ Full USDA format yielded no usable nutrition for fdcId $fdcId — '
+        'trying abridged...',
+      );
+      try {
+        final merged = await _dataWithAbridgedNutrients(fullData);
+        final abridgedParsed = _parseNutritionData(merged);
+        return abridgedParsed;
+      } catch (abridgedError) {
+        print('⚠️ Abridged nutrient fetch failed: $abridgedError');
+        return fullParsed;
+      }
     } catch (e) {
       throw Exception('Failed to get food details: $e');
     }
+  }
+
+  static Future<Map<String, dynamic>> _dataWithAbridgedNutrients(
+    Map<String, dynamic> fullData,
+  ) async {
+    final labelNutrients = fullData['labelNutrients'];
+    if (labelNutrients is Map && labelNutrients.isNotEmpty) {
+      return fullData;
+    }
+
+    final fdcId = fullData['fdcId'] as int;
+    print('📋 Fetching abridged nutrients for fdcId $fdcId...');
+    final abridged = await _fetchFoodJson(fdcId, format: 'abridged');
+    final abridgedNutrients = abridged['foodNutrients'];
+    if (abridgedNutrients is! List || abridgedNutrients.isEmpty) {
+      return fullData;
+    }
+
+    return {
+      ...fullData,
+      'foodNutrients': abridgedNutrients,
+      '_nutrientsArePerServing': fullData['dataType'] == 'Branded',
+    };
   }
 
   static Future<Map<String, dynamic>> _fetchFoodJson(
@@ -338,14 +362,6 @@ class USDAService {
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
-  static bool _shouldFetchAbridgedNutrients(Map<String, dynamic> data) {
-    final labelNutrients = data['labelNutrients'];
-    final hasLabelNutrients =
-        labelNutrients is Map && labelNutrients.isNotEmpty;
-    if (hasLabelNutrients) return false;
-    return _foodNutrientsAreUnlabeled(data['foodNutrients']);
-  }
-
   /// True when foodNutrients entries lack nutrient numbers/ids (id+amount only).
   @visibleForTesting
   static bool foodNutrientsAreUnlabeledForTest(dynamic nutrients) {
@@ -361,6 +377,7 @@ class USDAService {
       if (nutrient is! Map) continue;
       final map = nutrient.cast<String, dynamic>();
       if (map['nutrient']?['number'] != null) return false;
+      if (map['nutrient']?['id'] != null) return false;
       if (map['nutrientNumber'] != null) return false;
       if (map['nutrientId'] != null) return false;
       if (map['number'] != null) return false;
@@ -408,7 +425,9 @@ class USDAService {
             }
           }
 
-          final id = map['nutrientId'] as int?;
+          final nestedNutrientId = map['nutrient']?['id'];
+          final id = map['nutrientId'] as int? ??
+              (nestedNutrientId is num ? nestedNutrientId.toInt() : null);
           if (id != null && nutrientIds.contains(id)) {
             var amount = _readNutrientAmount(map);
             if (amount > 0) {
@@ -436,12 +455,20 @@ class USDAService {
     }
 
     print('🔍 Parsing nutrients from USDA data...');
-    final calories = getNutrientValue(
+    var calories = getNutrientValue(
       ['208', '957', '958'],
       [1008, 2047, 2048],
       'Calories',
       labelKey: 'calories',
     );
+    if (calories <= 0) {
+      calories = _energyKcalFromKj(
+        nutrients: nutrients,
+        labelNutrients: labelNutrients,
+        nutrientsArePerServing: nutrientsArePerServing,
+        usdaData: usdaData,
+      );
+    }
     final protein = getNutrientValue(['203'], [1003], 'Protein', labelKey: 'protein');
     final carbs = getNutrientValue(['205'], [1005], 'Carbohydrate',
         labelKey: 'carbohydrates');
@@ -492,6 +519,41 @@ class USDAService {
   static double _readNutrientAmount(Map<String, dynamic> nutrient) {
     final amount = nutrient['amount'] ?? nutrient['value'];
     if (amount is num) return amount.toDouble();
+    return 0.0;
+  }
+
+  /// Converts kJ-only energy entries (nutrient 268) to kcal when kcal is absent.
+  static double _energyKcalFromKj({
+    required dynamic nutrients,
+    required Map<String, dynamic>? labelNutrients,
+    required bool nutrientsArePerServing,
+    required Map<String, dynamic> usdaData,
+  }) {
+    if (nutrients is List) {
+      for (final nutrient in nutrients) {
+        if (nutrient is! Map) continue;
+        final map = nutrient.cast<String, dynamic>();
+        final number = map['nutrient']?['number']?.toString() ??
+            map['nutrientNumber']?.toString() ??
+            map['number']?.toString();
+        final nestedNutrientId = map['nutrient']?['id'];
+        final id = map['nutrientId'] as int? ??
+            (nestedNutrientId is num ? nestedNutrientId.toInt() : null);
+
+        final isKj = number == '268' || id == 1062;
+        if (!isKj) continue;
+
+        var kJ = _readNutrientAmount(map);
+        if (kJ <= 0) continue;
+        if (nutrientsArePerServing) {
+          kJ = _scaleLabelToPer100g(kJ, usdaData);
+        }
+        final kcal = kJ / 4.184;
+        print('   ✓ Found Calories from kJ ($kJ kJ): $kcal kcal/100g');
+        return kcal;
+      }
+    }
+
     return 0.0;
   }
 
